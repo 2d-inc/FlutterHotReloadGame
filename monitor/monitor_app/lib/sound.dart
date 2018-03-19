@@ -25,7 +25,7 @@ class Sound
 		bool isPlaying = data["isPlaying"] == 1;
 		print("Received platform message ${id} ${isPlaying}");
 		Sound sound = _lookup[id];
-		if(sound)
+		if(sound != null)
 		{
 			sound._isPlaying = isPlaying;
 		}
