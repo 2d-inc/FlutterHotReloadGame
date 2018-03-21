@@ -36,7 +36,7 @@ class Sound
 		}
 	}
 
-	Future<bool> load(filename) async
+	Future<bool> load(String filename) async
 	{
 		try 
     	{

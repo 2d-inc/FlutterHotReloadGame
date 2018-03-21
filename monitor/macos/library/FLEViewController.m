@@ -16,6 +16,7 @@
 
 #import <FlutterEmbedder/FlutterEmbedder.h>
 #import "FLEAudioPlayerPlugin.h"
+#import "FLEFlutterTaskPlugin.h"
 #import "FLEColorPanelPlugin.h"
 #import "FLEFileChooserPlugin.h"
 #import "FLEReshapeListener.h"
@@ -363,6 +364,9 @@ static bool HeadlessOnMakeResourceCurrent(FLEViewController *controller) { retur
 
     FLEAudioPlayerPlugin *audioPlugin = [[FLEAudioPlayerPlugin alloc] init];
     [self _addPlugin:audioPlugin];
+
+    FLEFlutterTaskPlugin *flutterTaskPlugin = [[FLEFlutterTaskPlugin alloc] init];
+    [self _addPlugin:flutterTaskPlugin];
 }
 
 - (BOOL)acceptsFirstResponder {
