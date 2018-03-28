@@ -94,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
 				_ready = true;
 			});
 		});
-		_flutterTask.load("~/Projects/BiggerLogo/logo_app", "Android");
+		_flutterTask.load("~/Projects/BiggerLogo/logo_app", "emulator-5554");
 		_sounds = new List<Sound>();
 		for(int i = 1; i <= 5; i++)
 		{

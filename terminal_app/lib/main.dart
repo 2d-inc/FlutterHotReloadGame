@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+import "package:flutter/material.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/rendering.dart";
-
+import "package:web_socket_channel/web_socket_channel.dart";
+import "package:web_socket_channel/io.dart";
+import "dart:io";
 void main() => runApp(new MyApp());
 
 class MyApp extends StatelessWidget {
@@ -9,27 +11,31 @@ class MyApp extends StatelessWidget {
 	@override
 	Widget build(BuildContext context) {
 		return new MaterialApp(
-			title: 'Flutter Demo',
-			theme: new ThemeData(
-				// This is the theme of your application.
-				//
-				// Try running your application with "flutter run". You'll see the
-				// application has a blue toolbar. Then, without quitting the app, try
-				// changing the primarySwatch below to Colors.green and then invoke
-				// "hot reload" (press "r" in the console where you ran "flutter run",
-				// or press Run > Flutter Hot Reload in IntelliJ). Notice that the
-				// counter didn't reset back to zero; the application is not restarted.
-				primarySwatch: Colors.blue,
-			),
-			home: new MyHomePage(title: 'Flutter Demo Home Page'),
+			title: "Terminal",
+			home: new MyHomePage(
+				title: "Terminal"
+			)
 		);
 	}
 }
 
 class MyHomePage extends StatefulWidget 
 {
-	MyHomePage({Key key, this.title}) : super(key: key);
+	MyHomePage({Key key, this.title}) : super(key: key)
+	{
+		WebSocket.connect("ws://10.0.2.2:8080/ws").then((ws)
+		{
+			print("CONNECTED");
+			socket = ws;
+			ws.listen((message)
+			{
+				print("GOT MESSAGE $message");
+			});
+		});
+		
+	}
 	final String title;
+	WebSocket socket;
 
 	@override
 	_MyHomePageState createState() => new _MyHomePageState();
@@ -39,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage>
 {
 	void _handleTap()
 	{
-		print("TAP!");
+		widget.socket.add("hi");
 	}
 
 	@override
