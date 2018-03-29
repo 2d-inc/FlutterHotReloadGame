@@ -47,7 +47,7 @@ class TextRenderObject extends RenderBox
 		{
 			txt = "Loading...";
 		}
-		print("Paint");
+		//print("Paint");
 		final Canvas canvas = context.canvas;
 
 		double lineHeight = this.style.height * this.fontSize;

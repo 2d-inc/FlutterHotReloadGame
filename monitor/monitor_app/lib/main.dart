@@ -85,6 +85,14 @@ class CodeBoxState extends State<CodeBox>
 		{
 			_contents = _contents.replaceAll("RestaurantSimple", "RestaurantAligned");
 		}
+		else
+		{
+			// Reset.
+			_contents = _contents.replaceAll("FeaturedRestaurantAligned", "FeaturedRestaurantSimple");
+			_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
+			_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
+			_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
+		}
 		_flutterTask.write("/lib/main.dart", _contents).then((ok)
 		{
 			// Start emulator.
@@ -151,7 +159,7 @@ class CodeBoxState extends State<CodeBox>
 			_flutterTask.write("/lib/main.dart", _contents).then((ok)
 			{
 				// Start emulator.
-				_flutterTask.load("emulator-5554").then((success)
+				_flutterTask.load("iPhone").then((success)
 				{
 					
 				});
