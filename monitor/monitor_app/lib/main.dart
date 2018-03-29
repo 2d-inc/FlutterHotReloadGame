@@ -69,36 +69,39 @@ class CodeBoxState extends State<CodeBox>
 			return;
 		}
 		_isReloading = true;
-		if(_contents.indexOf("FeaturedRestaurantSimple") != -1)
+		setState(() 
 		{
-			_contents = _contents.replaceAll("FeaturedRestaurantSimple", "FeaturedRestaurantAligned");
-		}
-		else if(_contents.indexOf("CategorySimple") != -1)
-		{
-			_contents = _contents.replaceAll("CategorySimple", "CategoryAligned");
-		}
-		else if(_contents.indexOf("RestaurantsHeaderSimple") != -1)
-		{
-			_contents = _contents.replaceAll("RestaurantsHeaderSimple", "RestaurantsHeaderAligned");
-		}
-		else if(_contents.indexOf("RestaurantSimple") != -1)
-		{
-			_contents = _contents.replaceAll("RestaurantSimple", "RestaurantAligned");
-		}
-		else
-		{
-			// Reset.
-			_contents = _contents.replaceAll("FeaturedRestaurantAligned", "FeaturedRestaurantSimple");
-			_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
-			_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
-			_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
-		}
-		_flutterTask.write("/lib/main.dart", _contents).then((ok)
-		{
-			// Start emulator.
-			_flutterTask.hotReload().then((ok)
+			if(_contents.indexOf("FeaturedRestaurantSimple") != -1)
 			{
-				_isReloading = false;
+				_contents = _contents.replaceAll("FeaturedRestaurantSimple", "FeaturedRestaurantAligned");
+			}
+			else if(_contents.indexOf("CategorySimple") != -1)
+			{
+				_contents = _contents.replaceAll("CategorySimple", "CategoryAligned");
+			}
+			else if(_contents.indexOf("RestaurantsHeaderSimple") != -1)
+			{
+				_contents = _contents.replaceAll("RestaurantsHeaderSimple", "RestaurantsHeaderAligned");
+			}
+			else if(_contents.indexOf("RestaurantSimple") != -1)
+			{
+				_contents = _contents.replaceAll("RestaurantSimple", "RestaurantAligned");
+			}
+			else
+			{
+				// Reset.
+				_contents = _contents.replaceAll("FeaturedRestaurantAligned", "FeaturedRestaurantSimple");
+				_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
+				_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
+				_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
+			}
+			_flutterTask.write("/lib/main.dart", _contents).then((ok)
+			{
+				// Start emulator.
+				_flutterTask.hotReload().then((ok)
+				{
+					_isReloading = false;
+				});
 			});
 		});
 	}
@@ -154,6 +157,7 @@ class CodeBoxState extends State<CodeBox>
 				_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
 				_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
 				_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
+				this._offset = new Offset(0.0, 1500.0);
 			}
 
 			_flutterTask.write("/lib/main.dart", _contents).then((ok)
@@ -377,7 +381,7 @@ class NimaRenderObject extends RenderBox
 			_actor.loadFromBundle(filename).then((ok)
 			{
 				_actorInstance = _actor;//.makeInstance();
-				_animation = _actor.getAnimation("Upset");
+				_animation = _actor.getAnimation("Angry");
 				_animationTime = 0.0;
 				markNeedsPaint();
 			});
