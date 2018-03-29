@@ -201,11 +201,11 @@ class CodeBoxState extends State<CodeBox>
 	{
 		Size sz = MediaQuery.of(context).size;
 		// TODO: revisit sizes and alignments
-		double width = sz.width / 2 + 55;
-		double height = sz.height / 3 + 51;
+		double width = 1050.0;//sz.width / 2 + 55;
+		double height = 570.0;//sz.height / 3 + 51;
 
 		Stack stack = new Stack(
-					alignment: const Alignment(0.66, -0.132),
+					alignment: const Alignment(0.6575, -0.22),
 					children: [
 						new Container(
 							// padding: const EdgeInsets.only(top: 24.0, left: 12.0),
