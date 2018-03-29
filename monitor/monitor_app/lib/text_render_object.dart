@@ -42,6 +42,11 @@ class TextRenderObject extends RenderBox
 	@override
 	void paint(PaintingContext context, Offset offset)
 	{
+		String txt = this._text;
+		if(txt == null)
+		{
+			txt = "Loading...";
+		}
 		print("Paint");
 		final Canvas canvas = context.canvas;
 
@@ -50,7 +55,7 @@ class TextRenderObject extends RenderBox
 		double maxLines = size.height / lineHeight;
 		double baseOffset = max(this.offset.dy, 0.0) / lineHeight;
 		
-		List<String> lines = this._text.split('\n');
+		List<String> lines = txt.split('\n');
 
 		int startLine = max(0, baseOffset.floor());
 		int endLine = min( lines.length, (startLine + maxLines).ceil() );
@@ -146,6 +151,15 @@ class TextRenderObject extends RenderBox
 			);
 		}
 		super.markNeedsPaint();
+	}
+
+	set offset(Offset value)
+	{
+		if(this.screenOffset != value)
+		{
+			this.screenOffset = value;
+			markNeedsPaint();
+		}
 	}
 
 	Offset get offset => this.screenOffset;

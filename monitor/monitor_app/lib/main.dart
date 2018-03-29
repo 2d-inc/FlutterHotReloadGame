@@ -16,25 +16,21 @@ Future<String> loadFileAssets(String filename) async
 
 class CodeBoxWidget extends LeafRenderObjectWidget
 {
-	TextRenderObject child;
 	final Offset _offset;
+	final String _contents;
 
-	CodeBoxWidget(this._offset, {Key key}): super(key: key);
+	CodeBoxWidget(this._offset, this._contents, {Key key}): super(key: key);
 
 	@override
-	RenderObject createRenderObject(BuildContext context) 
+	RenderObject createRenderObject(BuildContext context) => new TextRenderObject(screenOffset: this._offset,fontSize: 16.0);
+
+	@override
+	void updateRenderObject(BuildContext context, TextRenderObject renderObject) 
 	{
-		child = new TextRenderObject(screenOffset: this._offset,fontSize: 16.0);
-		loadFileAssets("main.dart").then(
-			(String code)
-			{
-				print("Got ${code.split('\n').length} lines of code!");
-				child.text = code;
-			}
-		);
-		
-		return child;
+		renderObject.text = this._contents;
+		renderObject.offset = this._offset;
 	}
+
 }
 
 class CodeBox extends StatefulWidget
@@ -98,7 +94,7 @@ class CodeBoxState extends State<CodeBox>
 		_offset = Offset.zero,
 		upArrowIcon = new Icon(Icons.arrow_upward), 
 		downArrowIcon = new Icon(Icons.arrow_downward), 
-		arrowIcon = new Icon(Icons.arrow_upward)
+		arrowIcon = new Icon(Icons.arrow_downward)
 	{
 		HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080).then(
 			(server) async
@@ -127,8 +123,6 @@ class CodeBoxState extends State<CodeBox>
 			setState(() 
 			{
 				_ready = true;
-				// TODO: Show _contents in monitor.
-				
 			});
 		});
 
@@ -167,21 +161,21 @@ class CodeBoxState extends State<CodeBox>
 
 	void _scrollToPosition()
 	{
+		const double offset = 1000.0;
 		_flutterTask.hotReload();
 		int idx = _rng.nextInt(_sounds.length);
 		_sounds[idx].play();
 
 		setState(() 
 		{
-			const double offset = 3050.0;
 			upFacing = !upFacing;
 			if(upFacing)
 			{
-				arrowIcon = upArrowIcon;
+				arrowIcon = downArrowIcon;
 			}
 			else
 			{
-				arrowIcon = downArrowIcon;
+				arrowIcon = upArrowIcon;
 			}
 			if(upFacing)
 			{
@@ -198,9 +192,7 @@ class CodeBoxState extends State<CodeBox>
 	Widget build(BuildContext context)
 	{
 		Size sz = MediaQuery.of(context).size;
-		print("BUILD CodeBoxState");
-		// double left = sz.width / 3;
-		// double top = sz.height / 3;
+		// TODO: revisit sizes and alignments
 		double width = sz.width / 2 + 55;
 		double height = sz.height / 3 + 51;
 
@@ -227,7 +219,7 @@ class CodeBoxState extends State<CodeBox>
 						new Container(
 							width: width,
 							height: height,
-							child: new CodeBoxWidget(this._offset)
+							child: new CodeBoxWidget(this._offset, this._contents)
 						)
 						],
 			);
@@ -260,7 +252,7 @@ void main()
 	runApp(new WidgetTest());
 	// runApp(new MyApp());
 }
-
+/*
 class MyApp extends StatelessWidget 
 {
 	// This widget is the root of your application.
@@ -484,3 +476,4 @@ class _MyHomePageState extends State<MyHomePage> {
 		);
 	}
 }
+*/
