@@ -25,6 +25,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  fonts:
+  - family: Terminus
+    fonts:
+      - asset: assets/fonts/Terminus.ttf
 
   assets:
     - assets/button1.mp3
@@ -32,6 +36,11 @@ flutter:
     - assets/button3.mp3
     - assets/button4.mp3
     - assets/button5.mp3
+    # assets/files
+    - assets/files/main.dart
+    - assets/files/test.dart
+    # assets/images
+    - assets/images/tv_background.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
