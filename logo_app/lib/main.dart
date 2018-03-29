@@ -78,9 +78,9 @@ class _MyHomePageState extends State<MyHomePage> {
 							shrinkWrap: true,
 							scrollDirection: Axis.horizontal,
 							children: <Widget> [
-								const FeaturedRestaurantAligned('Pizzeria Delfina', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15),
-								const FeaturedRestaurantAligned('Bushido Izakaya', description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime:32),
-								const FeaturedRestaurantAligned('Umami Burgers', description: "Umami Burgers serves burgers, fries...", deliveryTime:45)
+								const FeaturedRestaurantSimple('Pizzeria Delfina', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15),
+								const FeaturedRestaurantSimple('Bushido Izakaya', description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime:32),
+								const FeaturedRestaurantSimple('Umami Burgers', description: "Umami Burgers serves burgers, fries...", deliveryTime:45)
 							]
 						)
 					),
@@ -90,19 +90,19 @@ class _MyHomePageState extends State<MyHomePage> {
 							shrinkWrap: true,
 							scrollDirection: Axis.horizontal,
 							children: <Widget> [
-								const CategoryAligned('Pizza'),
-								const CategoryAligned('Burgers'),
-								const CategoryAligned('Dessert'),
-								const CategoryAligned('Sushi'),
-								const CategoryAligned('Chinese'),
+								const CategorySimple('Pizza'),
+								const CategorySimple('Burgers'),
+								const CategorySimple('Dessert'),
+								const CategorySimple('Sushi'),
+								const CategorySimple('Chinese'),
 							]
 						)
 					),
-					new RestaurantsHeaderAligned(),
-					const RestaurantAligned('Curry Up Now', description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
-					const RestaurantAligned('Sprout Cafe', description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2),
-					const RestaurantAligned('Asian Box', description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
-					const RestaurantAligned('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2),
+					new RestaurantsHeaderSimple(),
+					const RestaurantSimple('Curry Up Now', description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
+					const RestaurantSimple('Sprout Cafe', description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2),
+					const RestaurantSimple('Asian Box', description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
+					const RestaurantSimple('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2),
 				],
 			)
 		);
