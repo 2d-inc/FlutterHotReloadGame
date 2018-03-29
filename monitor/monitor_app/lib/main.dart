@@ -8,6 +8,11 @@ import "dart:io";
 import 'sound.dart';
 import 'flutter_task.dart';
 import "text_render_object.dart";
+import "package:nima/nima_flutter.dart";
+import "package:nima/animation/actor_animation.dart";
+import "package:flutter/animation.dart";
+import "dart:ui" as ui;
+import "package:flutter/scheduler.dart";
 
 Future<String> loadFileAssets(String filename) async
 {
@@ -141,10 +146,13 @@ class CodeBoxState extends State<CodeBox>
 			// 	return "FeaturedRestaurantSimple('";
 			// });
 			_contents = contents;
-			_contents = _contents.replaceAll("FeaturedRestaurantAligned", "FeaturedRestaurantSimple");
-			_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
-			_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
-			_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
+			if(_contents != null)
+			{
+				_contents = _contents.replaceAll("FeaturedRestaurantAligned", "FeaturedRestaurantSimple");
+				_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
+				_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
+				_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
+			}
 
 			_flutterTask.write("/lib/main.dart", _contents).then((ok)
 			{
@@ -220,7 +228,8 @@ class CodeBoxState extends State<CodeBox>
 												bundle: rootBundle,
 												width: sz.width,
 												height: sz.height
-											)
+											),
+											new NimaWidget("/assets/nima/NPC1/NPC1")
 										]
 									)
 						),
@@ -482,5 +491,124 @@ class _MyHomePageState extends State<MyHomePage> {
 				child: new Icon(Icons.add),
 			) : null, // This trailing comma makes auto-formatting nicer for build methods.
 		);
+	}
+}
+
+
+class NimaWidget extends LeafRenderObjectWidget
+{
+	final String _filename;
+
+	NimaWidget(this._filename, {Key key}): super(key: key);
+
+	@override
+	RenderObject createRenderObject(BuildContext context) 
+	{
+		return new NimaRenderObject(_filename);
+	}
+
+	@override
+	void updateRenderObject(BuildContext context, covariant NimaRenderObject renderObject)
+	{
+		renderObject.filename = _filename;
+	}
+}
+
+class NimaRenderObject extends RenderBox
+{
+	String filename;
+	String _loadedFilename;//
+	FlutterActor _actor;
+	FlutterActor _actorInstance;
+	ActorAnimation _animation;
+	double _animationTime;
+	double _lastFrameTime = 0.0;
+	
+	//final AnimationController controller = new AnimationController(duration: const Duration(milliseconds: 500), vsync: this);
+
+	void beginFrame(Duration timeStamp) 
+	{
+		final double t = timeStamp.inMicroseconds / Duration.MICROSECONDS_PER_MILLISECOND / 1000.0;
+		
+		if(_lastFrameTime == 0)
+		{
+			_lastFrameTime = t;
+			SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
+			// hack to circumvent not being enable to initialize lastFrameTime to a starting timeStamp (maybe it's just the date?)
+			// Is the FrameCallback supposed to pass elapsed time since last frame? timeStamp seems to behave more like a date
+			return;
+		}
+
+		double elapsed = t - _lastFrameTime;
+		_lastFrameTime = t;
+		//print("ELAPSED $elapsed");
+		
+		if(_actorInstance != null)
+		{
+			_animationTime += elapsed;
+			if(_animation != null)
+			{
+				_animation.apply(_animationTime%2.0, _actorInstance, 1.0);
+			}
+			_actorInstance.advance(elapsed);
+		}
+
+		markNeedsPaint();
+		//SchedulerBinding.instance.scheduleFrame();
+		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
+	}
+
+	NimaRenderObject(this.filename)
+	{
+		//Ticker ticker = new Ticker(this.onTick);
+		//SchedulerBinding.instance.addPersistentFrameCallback(beginFrame);
+		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
+	}
+
+	@override
+	bool get sizedByParent => true;
+	
+	@override
+	bool hitTestSelf(Offset screenOffset) => true;
+
+	@override
+	void performResize() 
+	{
+		size = constraints.biggest;
+	}
+
+	@override
+	void paint(PaintingContext context, Offset offset)
+	{
+		//print("Paint Nima");
+		final Canvas canvas = context.canvas;
+		if(_actorInstance == null)
+		{
+			return;
+		}
+		canvas.save();
+		canvas.scale(0.80, -0.80);
+		canvas.translate(410.0, -1250.0);
+		//_actorInstance.advance(0.0);
+		_actorInstance.draw(canvas);
+		canvas.restore();
+	}
+
+	@override
+	markNeedsPaint()
+	{
+		if(_loadedFilename != filename)
+		{
+			_actor = new FlutterActor();
+			_loadedFilename = filename;
+			_actor.loadFromBundle(filename).then((ok)
+			{
+				_actorInstance = _actor;//.makeInstance();
+				_animation = _actor.getAnimation("Upset");
+				_animationTime = 0.0;
+				markNeedsPaint();
+			});
+		}
+		super.markNeedsPaint();
 	}
 }

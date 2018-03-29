@@ -41,6 +41,8 @@ flutter:
     - assets/files/test.dart
     # assets/images
     - assets/images/tv_background.png
+    - assets/nima/NPC1/NPC1.nima
+    - assets/nima/NPC1/NPC1.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

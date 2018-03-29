@@ -680,16 +680,16 @@
             </items>
         </menu>
         <window title="Monitor Shell" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" animationBehavior="default" id="QvC-M9-y7g" customClass="MonitorWindow" customModule="Monitor_Shell" customModuleProvider="target">
-            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="335" y="390" width="480" height="360"/>
+            <rect key="contentRect" x="335" y="390" width="1920" height="1080"/>
             <rect key="screenRect" x="0.0" y="0.0" width="3440" height="1418"/>
             <view key="contentView" wantsLayer="YES" id="EiT-Mj-1SZ">
-                <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
+                <rect key="frame" x="0.0" y="0.0" width="1920" height="1080"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <openGLView colorSize="5bit_RGB_8bit_Alpha" useAuxiliaryDepthBufferStencil="NO" useDoubleBufferingEnabled="YES" allowOffline="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gEc-a8-YO4" userLabel="Flutter View" customClass="FLEView">
-                        <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
+                    <openGLView colorSize="5bit_RGB_8bit_Alpha" antiAliasingType="multisample" samplingRate="16" useAuxiliaryDepthBufferStencil="NO" useDoubleBufferingEnabled="YES" allowOffline="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gEc-a8-YO4" userLabel="Flutter View" customClass="FLEView">
+                        <rect key="frame" x="0.0" y="0.0" width="1920" height="1080"/>
                         <connections>
                             <outlet property="reshapeListener" destination="G1H-AI-kys" id="1cc-4d-RFE"/>
                         </connections>

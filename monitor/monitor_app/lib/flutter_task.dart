@@ -127,6 +127,10 @@ class FlutterTask
 		try 
     	{
 			final dynamic result = await platform.send({"method":"read", "args":{"filename":_path+filename}, "taskID":_id});
+			if(result == null)
+			{
+				return null;
+			}
 			return result["contents"];
 			//print("RESULT ${result["soundID"]}");
 		} 
