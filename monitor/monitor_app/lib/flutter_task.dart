@@ -9,6 +9,7 @@ class FlutterTask
 	static int _next_id = 0;
 	int _id = 0;
 	String _message = "";
+	String _path;
 	VoidCallback _readyHandler;
 	VoidCallback _reloadedHandler;
 	bool _ready = false;
@@ -16,9 +17,10 @@ class FlutterTask
 	static final platform = const BasicMessageChannel("flutter/flutterTask", const JSONMessageCodec())..setMessageHandler(onPlatformMessage);
 	static HashMap<int, FlutterTask> _lookup = new HashMap<int, FlutterTask>();
 
-	FlutterTask()
+	FlutterTask(String path)
 	{
 		_id = _next_id++;
+		_path = path;
 	}
 
 	void onReady(VoidCallback callback) 
@@ -78,11 +80,11 @@ class FlutterTask
 		}
 	}
 
-	Future<bool> load(String root, String device) async
+	Future<bool> load(String device) async
 	{
 		try 
 		{
-			final dynamic result = await platform.send({"method":"make", "args":{"root":root, "device":device}, "taskID":_id});
+			final dynamic result = await platform.send({"method":"make", "args":{"root":_path, "device":device}, "taskID":_id});
 		} 
 		on PlatformException catch (e) 
 		{
@@ -117,6 +119,34 @@ class FlutterTask
 			return false;
 		}
 		_lookup.remove(_id);
+		return true;
+	}
+
+	Future<String> read(String filename) async
+	{
+		try 
+    	{
+			final dynamic result = await platform.send({"method":"read", "args":{"filename":_path+filename}, "taskID":_id});
+			return result["contents"];
+			//print("RESULT ${result["soundID"]}");
+		} 
+		on PlatformException catch (e) 
+		{
+			return null;
+    	}
+	}
+
+	Future<bool> write(String filename, String contents) async
+	{
+		try 
+    	{
+			final dynamic result = await platform.send({"method":"write", "args":{"filename":_path+filename, "contents":contents}, "taskID":_id});
+			//print("RESULT ${result["soundID"]}");
+		} 
+		on PlatformException catch (e) 
+		{
+			return false;
+    	}
 		return true;
 	}
 }

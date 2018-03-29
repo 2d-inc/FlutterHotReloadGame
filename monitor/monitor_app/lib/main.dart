@@ -8,37 +8,6 @@ void main() => runApp(new MyApp());
 
 class MyApp extends StatelessWidget 
 {
-	handleWebSocketMessage(msg) 
-	{
-		print('Message received: $msg');
-	}
-
-	MyApp()
-	{
-		print("MyApp Constructor");	
-		HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080).then(
-			(server) async
-			{
-				print("Serving at ${server.address}:${server.port}");
-				await for (var request in server) 
-				{
-					 if (request.uri.path == '/ws') 
-					 {
-						// Upgrade a HttpRequest to a WebSocket connection.
-						var socket = await WebSocketTransformer.upgrade(request);
-						socket.listen(handleWebSocketMessage);
-					}
-					else
-					{
-						request.response
-						..headers.contentType = new ContentType("text", "plain", charset: "utf-8")
-						..write('Hello, world')
-						..close();
-					}
-				}
-			});
-	}
-
 	// This widget is the root of your application.
 	@override
 	Widget build(BuildContext context) {
@@ -81,20 +50,107 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 	int _counter = 0;
 	List<Sound> _sounds;
-	FlutterTask _flutterTask = new FlutterTask();
+	FlutterTask _flutterTask = new FlutterTask("~/Projects/BiggerLogo/logo_app");
 	Random _rng = new Random();
 	bool _ready = false;
+	String _contents;
+	bool _isReloading;
+
+	handleWebSocketMessage(msg) 
+	{
+		if(_isReloading || !_ready)
+		{
+			return;
+		}
+		_isReloading = true;
+		// _contents = _contents.replaceFirstMapped(new RegExp(r"(FeaturedRestaurantSimple)\('"), (Match m)
+		// {
+		// 	return "FeaturedRestaurantAligned('";
+		// });
+
+		if(_contents.indexOf("FeaturedRestaurantSimple") != -1)
+		{
+			_contents = _contents.replaceAll("FeaturedRestaurantSimple", "FeaturedRestaurantAligned");
+		}
+		else if(_contents.indexOf("CategorySimple") != -1)
+		{
+			_contents = _contents.replaceAll("CategorySimple", "CategoryAligned");
+		}
+		else if(_contents.indexOf("RestaurantsHeaderSimple") != -1)
+		{
+			_contents = _contents.replaceAll("RestaurantsHeaderSimple", "RestaurantsHeaderAligned");
+		}
+		else if(_contents.indexOf("RestaurantSimple") != -1)
+		{
+			_contents = _contents.replaceAll("RestaurantSimple", "RestaurantAligned");
+		}
+		_flutterTask.write("/lib/main.dart", _contents).then((ok)
+		{
+			// Start emulator.
+			_flutterTask.hotReload().then((ok)
+			{
+				_isReloading = false;
+			});
+		});
+	}
 
 	_MyHomePageState()
 	{
+		HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080).then(
+			(server) async
+			{
+				print("Serving at ${server.address}:${server.port}");
+				await for (var request in server) 
+				{
+					 if (request.uri.path == '/ws') 
+					 {
+						// Upgrade a HttpRequest to a WebSocket connection.
+						var socket = await WebSocketTransformer.upgrade(request);
+						socket.listen(handleWebSocketMessage);
+					}
+					else
+					{
+						request.response
+						..headers.contentType = new ContentType("text", "plain", charset: "utf-8")
+						..write('Hello, world')
+						..close();
+					}
+				}
+			});
+
 		_flutterTask.onReady(()
 		{
 			setState(() 
 			{
 				_ready = true;
+				// Show _contents in monitor.
 			});
 		});
-		_flutterTask.load("~/Projects/BiggerLogo/logo_app", "emulator-5554");
+
+		// Read contents.
+		_flutterTask.read("/lib/main.dart").then((contents)
+		{
+			// Reset all widgets.
+			// _contents = contents.replaceAllMapped(new RegExp(r"(FeaturedRestaurantAligned)\('"), (Match m)
+			// {
+			// 	return "FeaturedRestaurantSimple('";
+			// });
+			_contents = contents;
+			_contents = _contents.replaceAll("FeaturedRestaurantAligned", "FeaturedRestaurantSimple");
+			_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
+			_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
+			_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
+
+			_flutterTask.write("/lib/main.dart", _contents).then((ok)
+			{
+				// Start emulator.
+				_flutterTask.load("emulator-5554").then((success)
+				{
+					
+				});
+			});
+		});
+		
 		_sounds = new List<Sound>();
 		for(int i = 1; i <= 5; i++)
 		{
@@ -107,10 +163,10 @@ class _MyHomePageState extends State<MyHomePage> {
 		_flutterTask.hotReload();
 		int idx = _rng.nextInt(_sounds.length);
 		_sounds[idx].play();
-		WebSocket.connect('ws://127.0.0.1:8080/ws').then((socket)
-		{
-			socket.add('Hello, World! $idx');
-		});
+		// WebSocket.connect('ws://127.0.0.1:8080/ws').then((socket)
+		// {
+		// 	socket.add('Hello, World! $idx');
+		// });
   		
 		setState(() {
 			// This call to setState tells the Flutter framework that something has

@@ -12,14 +12,13 @@ static NSString *const kFlutterTaskChannelName = @"flutter/flutterTask";
 {
 	FLEViewController* viewController;
 	NSNumber* taskId;
-	NSString* path;
 	NSString* device;
 }
 @property(nonatomic, strong, nonnull) NSPipe *inPipe;
 @property(nonatomic, strong, nonnull) NSPipe *outPipe;
 @property(nonatomic, strong, nonnull) NSTask *task;
 @property(nonatomic, strong, nonnull) NSThread *thread;
-
+@property (nonatomic, retain) NSString *path;
 @end
 @implementation FlutterTask
 - (void)thereIsData:(NSNotification *)notification
@@ -49,7 +48,7 @@ static NSString *const kFlutterTaskChannelName = @"flutter/flutterTask";
 	
 		_task = [NSTask new];
 		[_task setLaunchPath:@"/bin/bash"];
-		[_task setCurrentDirectoryPath:path];
+		[_task setCurrentDirectoryPath:_path];
 		NSString* flutter = @"flutter run -d";
 		flutter = [flutter stringByAppendingString:device];
 		[_task setArguments:[NSArray arrayWithObjects:@"-l", @"-c", flutter, nil]];
@@ -70,7 +69,7 @@ static NSString *const kFlutterTaskChannelName = @"flutter/flutterTask";
 	viewController = theViewController;
 	taskId = theId;
 	device = deviceName;
-	path = thePath;
+	_path = thePath;
 	_thread = [[NSThread alloc] initWithTarget:self selector:@selector(launch) object:nil];
 	[_thread start];
 	return self;
@@ -138,6 +137,32 @@ typedef NSMutableDictionary*(^ ApiMethod)(NSNumber*, NSDictionary*);
 					return nil;
 				}
 				[task terminate];
+				return nil;
+			},
+			@"read":^NSMutableDictionary*(NSNumber* taskId, NSDictionary* args)
+			{
+				NSString* filename = args[@"filename"];
+				NSError *error;
+				NSString* filepath = [filename stringByReplacingOccurrencesOfString: @"~" withString:NSHomeDirectory()];
+				NSString *fileContents = [NSString stringWithContentsOfFile:filepath encoding:NSUTF8StringEncoding error:&error];
+
+				NSMutableDictionary *response = [NSMutableDictionary dictionaryWithObject:taskId forKey:kPlatformFlutterTaskIDKey];
+				response[@"contents"] = fileContents;
+				return response;
+			},
+			@"write":^NSMutableDictionary*(NSNumber* taskId, NSDictionary* args)
+			{
+				NSString* filename = args[@"filename"];
+				NSString* contents = args[@"contents"];
+				NSError *error;
+				NSString* filepath = [filename stringByReplacingOccurrencesOfString: @"~" withString:NSHomeDirectory()];
+				[contents writeToFile:filepath atomically:YES encoding:NSUTF8StringEncoding error:&error];
+				//filepath = [filepath stringByReplacingOccurrencesOfString: @"~" withString:NSHomeDirectory()];
+				//NSString *fileContents = [NSString stringWithContentsOfFile:filepath encoding:NSUTF8StringEncoding error:&error];
+				
+				//NSMutableDictionary *response = [NSMutableDictionary dictionaryWithObject:taskId forKey:kPlatformFlutterTaskIDKey];
+				//response[@"contents"] = fileContents;
+				//return response;
 				return nil;
 			}
 		};
