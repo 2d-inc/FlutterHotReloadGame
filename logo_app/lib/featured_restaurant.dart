@@ -205,7 +205,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel>  with SingleTickerP
 			}
 			FeaturedRestaurantData restaurant = data[visibleIdx+i];
 			visibleHeros.add(new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i));
-			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i));
+			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i, deliveryTime: restaurant.deliveryTime,));
 		}
 
 		if(visibleDetails.length == 0)
@@ -261,7 +261,12 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 const double Padding = 20.0;
 const double ItemPadding = 10.0;
 const double DetailHeight = 109.0;
-final MaskFilter ShadowMaskFilter = new MaskFilter.blur(BlurStyle.normal, BoxShadow.convertRadiusToSigma(24.0));
+const double DetailPaddingLeft = 18.0;
+const double DetailPaddingTop = 15.0;
+const double TimePaddingTop = 20.0;
+const double DescriptionPaddingTop = 49.0;
+
+final MaskFilter _kShadowMaskFilter = new MaskFilter.blur(BlurStyle.normal, BoxShadow.convertRadiusToSigma(24.0));
 
 class FeaturedRestaurantDetailRenderObject extends RenderBox
 {
@@ -270,16 +275,22 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 	int _deliveryTime;
 	double _scroll;
 
+	ui.Paragraph _nameParagraph;
+	ui.Paragraph _timeParagraph;
+	ui.Paragraph _descriptionParagraph;
+	double _actualTimeWidth;
+	String _deliveryTimeLabel;
+
 	FeaturedRestaurantDetailRenderObject(String name,
 		{
-			String description,
-			int deliveryTime,
+			String description = "",
+			int deliveryTime = 0,
 			double scroll = 0.0
 		})
 	{
-		_name = name;
-		_description = description;	
-		_deliveryTime = deliveryTime;
+		this.name = name;
+		this.description = description;	
+		this.deliveryTime = deliveryTime;
 		_scroll = scroll;
 	}
 
@@ -296,6 +307,25 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 	}
 
 	@override
+	void performLayout()
+	{
+		super.performLayout();
+
+		final double detailsTextMaxWidth = size.width - Padding*2 - DetailPaddingLeft*2.0;
+
+		_timeParagraph.layout(new ui.ParagraphConstraints(width: detailsTextMaxWidth/2.0));
+
+		// Calculate actual (to the glyph) width consumed by the delivery time label.
+		List<ui.TextBox> boxes = _timeParagraph.getBoxesForRange(0, _deliveryTimeLabel.length);
+		_actualTimeWidth = boxes.last.right-boxes.first.left;
+
+		// Use that to calculate available remaining space for the title.
+		_nameParagraph.layout(new ui.ParagraphConstraints(width: detailsTextMaxWidth - _actualTimeWidth));
+
+		_descriptionParagraph.layout(new ui.ParagraphConstraints(width: detailsTextMaxWidth));
+	}
+	
+	@override
 	void paint(PaintingContext context, Offset offset)
 	{
 		final double width = size.width - Padding*2;
@@ -304,6 +334,11 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		canvas.translate(_scroll * (width+ItemPadding), size.height-DetailHeight);
     	final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+Padding, offset.dy) & new Size(width, DetailHeight), const Radius.circular(10.0));
 		canvas.drawRRect(rrect, new ui.Paint()..color = Colors.white);
+		
+		canvas.drawParagraph(_nameParagraph, new Offset(offset.dx+Padding+DetailPaddingLeft, offset.dy + DetailPaddingTop));
+		canvas.drawParagraph(_timeParagraph, new Offset(offset.dx+Padding+width-DetailPaddingLeft - _actualTimeWidth, offset.dy + TimePaddingTop));
+		canvas.drawParagraph(_descriptionParagraph, new Offset(offset.dx+Padding+DetailPaddingLeft, offset.dy + DescriptionPaddingTop));
+		
 		canvas.restore();
 	}
 
@@ -318,7 +353,18 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		{
 			return;
 		}
-		_name = value;
+		_name = value ?? "";
+
+		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
+			textAlign:TextAlign.start,
+			fontFamily: "Roboto",
+			fontSize: 20.0,
+			fontWeight: FontWeight.w500
+		))..pushStyle(new ui.TextStyle(color:Colors.black));
+		builder.addText(_name);
+		_nameParagraph = builder.build();
+
+		markNeedsLayout();
 		markNeedsPaint();
 	}
 
@@ -333,7 +379,19 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		{
 			return;
 		}
-		_description = value;
+		_description = value ?? "";
+
+		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
+			textAlign:TextAlign.start,
+			fontFamily: "Roboto",
+			fontSize: 15.0,
+			maxLines: 2,
+			ellipsis: "..."
+		))..pushStyle(new ui.TextStyle(color:new Color.fromARGB(102, 48, 44, 72)));
+		builder.addText(_description);
+		_descriptionParagraph = builder.build();
+
+		markNeedsLayout();
 		markNeedsPaint();
 	}
 
@@ -348,7 +406,17 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		{
 			return;
 		}
-		_deliveryTime = value;
+		_deliveryTime = value ?? 0;
+
+		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
+			textAlign:TextAlign.left,
+			fontFamily: "Roboto",
+			fontSize: 15.0
+		))..pushStyle(new ui.TextStyle(color:new Color.fromARGB(102, 48, 44, 72)));
+		builder.addText((_deliveryTimeLabel=_deliveryTime.toString() + " min"));
+		_timeParagraph = builder.build();
+		
+		markNeedsLayout();
 		markNeedsPaint();
 	}
 	
@@ -448,8 +516,8 @@ class RestaurantHeroRenderObject extends RenderBox
 		canvas.translate(_scroll * (width+ItemPadding), size.height-DetailHeight);
     	final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+Padding, offset.dy) & new Size(width, DetailHeight), const Radius.circular(10.0));
 		canvas.drawRRect(rrect.shift(const Offset(0.0, 20.0)), new ui.Paint()
-			..color = new Color.fromARGB(100, 0, 35, 120)
-			..maskFilter = ShadowMaskFilter);
+			..color = new Color.fromARGB(22, 0, 35, 120)
+			..maskFilter = _kShadowMaskFilter);
 
 		canvas.restore();
 		
