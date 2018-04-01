@@ -27,6 +27,13 @@ class MyApp extends StatelessWidget {
 	}
 }
 
+
+List<FeaturedRestaurantData> featuredRestaurants = <FeaturedRestaurantData>[
+	const FeaturedRestaurantData("Pizzeria Delfina", description: "This energetic, farm-to-table restaurant serves up Neopolitan-inspired pizza with gelato.", deliveryTime: 15, color:const Color.fromARGB(255, 255, 223, 204)),
+	const FeaturedRestaurantData("Bushido Izakaya", description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime: 32, color:const Color.fromARGB(255, 237, 218, 229)),
+	const FeaturedRestaurantData("Umami Burger", description: "Serves gourmet burgers, truffle fries, salads, and craft beers for lunch and dinner.", deliveryTime: 27, color:const Color.fromARGB(255, 255, 234, 216)),
+];
+
 class MyHomePage extends StatefulWidget {
 	MyHomePage({Key key, this.title}) : super(key: key);
 
@@ -65,10 +72,14 @@ class _MyHomePageState extends State<MyHomePage> {
 			decoration:new BoxDecoration(color:Colors.white),
 			child:new ListView(
 				shrinkWrap: true,
-				padding: const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
+				padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
 				children: <Widget>[
 					new Container(
-						padding:const EdgeInsets.fromLTRB(0.0, 5.0, 0.0, 10.0),
+						height:305.0,
+						child:new FeaturedCarousel(data:featuredRestaurants),
+					),
+					new Container(
+						padding:const EdgeInsets.fromLTRB(20.0, 5.0, 0.0, 10.0),
 						child:new Text("Featured", 
 							style:const TextStyle(fontSize:13.0,color:Colors.black, decoration: TextDecoration.none)),
 					),
@@ -76,6 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
 						height:210.0,
 						child:new ListView(
 							shrinkWrap: true,
+							padding:const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
 							scrollDirection: Axis.horizontal,
 							children: <Widget> [
 								const FeaturedRestaurantSimple('Pizzeria Delfina', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15),
@@ -88,6 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
 						height:120.0,
 						child:new ListView(
 							shrinkWrap: true,
+							padding:const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
 							scrollDirection: Axis.horizontal,
 							children: <Widget> [
 								const CategorySimple('Pizza'),
@@ -106,52 +119,5 @@ class _MyHomePageState extends State<MyHomePage> {
 				],
 			)
 		);
-		// This method is rerun every time setState is called, for instance as done
-		// by the _incrementCounter method above.
-		//
-		// The Flutter framework has been optimized to make rerunning build methods
-		// fast, so that you can just rebuild anything that needs updating rather
-		// than having to individually change instances of widgets.
-		// return new Scaffold(
-		// 	appBar: new AppBar(
-		// 		// Here we take the value from the MyHomePage object that was created by
-		// 		// the App.build method, and use it to set our appbar title.
-		// 		title: new Text(widget.title),
-		// 	),
-		// 	body: new Center(
-		// 		// Center is a layout widget. It takes a single child and positions it
-		// 		// in the middle of the parent.
-		// 		child: new Column(
-		// 			// Column is also layout widget. It takes a list of children and
-		// 			// arranges them vertically. By default, it sizes itself to fit its
-		// 			// children horizontally, and tries to be as tall as its parent.
-		// 			//
-		// 			// Invoke "debug paint" (press "p" in the console where you ran
-		// 			// "flutter run", or select "Toggle Debug Paint" from the Flutter tool
-		// 			// window in IntelliJ) to see the wireframe for each widget.
-		// 			//
-		// 			// Column has various properties to control how it sizes itself and
-		// 			// how it positions its children. Here we use mainAxisAlignment to
-		// 			// center the children vertically; the main axis here is the vertical
-		// 			// axis because Columns are vertical (the cross axis would be
-		// 			// horizontal).
-		// 			mainAxisAlignment: MainAxisAlignment.center,
-		// 			children: <Widget>[
-		// 				new Text(
-		// 					'You have pushed the button this many times:',
-		// 				),
-		// 				new Text(
-		// 					'$_counter',
-		// 					style: Theme.of(context).textTheme.display1,
-		// 				),
-		// 			],
-		// 		),
-		// 	),
-		// 	floatingActionButton: new FloatingActionButton(
-		// 		onPressed: _incrementCounter,
-		// 		tooltip: 'Increment',
-		// 		child: new Icon(Icons.add),
-		// 	), // This trailing comma makes auto-formatting nicer for build methods.
-		// );
 	}
 }

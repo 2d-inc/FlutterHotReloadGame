@@ -6,7 +6,7 @@ class RestaurantsHeaderSimple extends StatelessWidget
 	Widget build(BuildContext context)
 	{
 		return new Container(
-			padding:const EdgeInsets.fromLTRB(0.0, 5.0, 0.0, 10.0),
+			padding:const EdgeInsets.fromLTRB(20.0, 5.0, 0.0, 10.0),
 			child:new Text("Nearby\n1600 Amphitheater Pkwy", 
 				style:const TextStyle(fontSize:12.0,color:Colors.black, decoration: TextDecoration.none)),
 		);
@@ -18,7 +18,7 @@ class RestaurantsHeaderAligned extends StatelessWidget
 	Widget build(BuildContext context)
 	{
 		return new Container(
-			padding:const EdgeInsets.fromLTRB(0.0, 5.0, 20.0, 10.0),
+			padding:const EdgeInsets.fromLTRB(20.0, 5.0, 20.0, 10.0),
 			child:new Row(
 				children: <Widget>[
 					new Expanded(child:new Text("NEARBY", style:const TextStyle(fontSize:12.0,color:Colors.grey, decoration: TextDecoration.none))),
@@ -50,7 +50,7 @@ class RestaurantSimple extends StatelessWidget
 	Widget build(BuildContext context) 
 	{
 		return new Container(
-			padding:const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 10.0),
+			padding:const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 10.0),
 			child: new Column(
 				crossAxisAlignment: CrossAxisAlignment.start,
 				children: <Widget>[
