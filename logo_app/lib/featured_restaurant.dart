@@ -1,6 +1,8 @@
 import "package:flutter/material.dart";
 import "dart:ui" as ui;
 import "dart:math";
+import "package:flare/flare.dart" as flr;
+import "dart:typed_data";
 
 class FeaturedRestaurantSimple extends StatelessWidget
 {
@@ -204,7 +206,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel>  with SingleTickerP
 				continue;
 			}
 			FeaturedRestaurantData restaurant = data[visibleIdx+i];
-			visibleHeros.add(new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i));
+			visibleHeros.add(new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare));
 			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i, deliveryTime: restaurant.deliveryTime,));
 		}
 
@@ -472,7 +474,9 @@ class RestaurantHeroRenderObject extends RenderBox
 {
 	Color _color;
 	String _flare;
+	Rect _flareRect = Rect.zero;
 	double _scroll;
+	flr.FlutterActor _actor;
 
 	RestaurantHeroRenderObject(
 		{
@@ -482,7 +486,7 @@ class RestaurantHeroRenderObject extends RenderBox
 		})
 	{
 		_color = color;	
-		_flare = flare;	
+		this.flare = flare;	
 		_scroll = scroll;
 	}
 
@@ -496,6 +500,19 @@ class RestaurantHeroRenderObject extends RenderBox
 	void performResize() 
 	{
 		size = constraints.biggest;
+	}
+
+	@override
+	void performLayout()
+	{
+		super.performLayout();
+		
+		if(_actor != null)
+		{
+			_actor.advance(0.0);
+			Float32List aabb = _actor.computeAABB();
+			_flareRect = new Rect.fromLTRB(aabb[0], aabb[1], aabb[2], aabb[3]);
+		}
 	}
 
 	@override
@@ -518,8 +535,17 @@ class RestaurantHeroRenderObject extends RenderBox
 		canvas.drawRRect(rrect.shift(const Offset(0.0, 20.0)), new ui.Paint()
 			..color = new Color.fromARGB(22, 0, 35, 120)
 			..maskFilter = _kShadowMaskFilter);
-
 		canvas.restore();
+		
+		if(_actor != null)
+		{
+			canvas.save();
+			canvas.translate(_scroll * (width+ItemPadding), 0.0);
+			canvas.translate(size.width/2.0-_flareRect.left-_flareRect.width/2.0, (size.height-DetailHeight/2.0)/2.0-_flareRect.top-_flareRect.height/2.0);
+			_actor.draw(canvas);
+			canvas.restore();
+		}
+		
 		
 	}
 
@@ -550,7 +576,23 @@ class RestaurantHeroRenderObject extends RenderBox
 			return;
 		}
 		_flare = value;
-		markNeedsPaint();
+
+		if(value == null)
+		{
+			markNeedsPaint();
+			return;
+		}
+		flr.FlutterActor actor = new flr.FlutterActor();
+		// actor = new FlutterActor();
+		actor.loadFromBundle(value).then(
+			(bool success)
+			{
+				_actor = actor;
+				markNeedsLayout();
+				markNeedsPaint();
+				//animation = actor.getAnimation("Run");
+			}
+		);
 	}
 
 	double get scroll
