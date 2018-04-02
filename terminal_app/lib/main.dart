@@ -23,7 +23,7 @@ class MyHomePage extends StatefulWidget
 {
 	MyHomePage({Key key, this.title}) : super(key: key)
 	{
-		WebSocket.connect("ws://10.0.2.2:8080/ws").then((ws)
+		WebSocket.connect("ws://192.168.1.156:8080/ws").then((ws)
 		{
 			print("CONNECTED");
 			socket = ws;
