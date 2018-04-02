@@ -104,6 +104,11 @@ class CodeBoxState extends State<CodeBox> with SingleTickerProviderStateMixin
 					});
 				}
 		);
+	@override
+	dispose()
+	{
+		_controller.dispose();
+		super.dispose();
 	}
 
 	handleWebSocketMessage(msg) 
