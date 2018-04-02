@@ -69,7 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
 	@override
 	Widget build(BuildContext context) {
 		return new Container(
-			decoration:new BoxDecoration(color:Colors.white),
+			decoration:new BoxDecoration(
+				color: true ? new Color.fromARGB(255, 242, 243, 246) : Colors.white),
 			child:new ListView(
 				shrinkWrap: true,
 				padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
@@ -112,10 +113,14 @@ class _MyHomePageState extends State<MyHomePage> {
 						)
 					),
 					new RestaurantsHeaderSimple(),
-					const RestaurantSimple('Curry Up Now', description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
+					/*const RestaurantSimple('Curry Up Now', description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
 					const RestaurantSimple('Sprout Cafe', description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2),
 					const RestaurantSimple('Asian Box', description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
-					const RestaurantSimple('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2),
+					const RestaurantSimple('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2),*/
+					const RestaurantDesigned('Curry Up Now', description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/samosa.jpg"),
+					const RestaurantDesigned('Sprout Cafe', description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/cafe.jpg"),
+					const RestaurantDesigned('Asian Box', description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg"),
+					const RestaurantDesigned('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg"),
 				],
 			)
 		);
