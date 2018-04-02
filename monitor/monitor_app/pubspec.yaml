@@ -29,6 +29,13 @@ flutter:
   - family: Terminus
     fonts:
       - asset: assets/fonts/Terminus.ttf
+  - family: RobotoMono
+    fonts:
+      - asset: assets/fonts/RobotoMono-Regular.ttf
+      - asset: assets/fonts/RobotoMono-Medium.ttf
+  - family: Inconsolata
+    fonts:
+      - asset: assets/fonts/Inconsolata-Regular.ttf
 
   assets:
     - assets/button1.mp3

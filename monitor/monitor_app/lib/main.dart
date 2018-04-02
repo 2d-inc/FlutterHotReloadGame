@@ -14,6 +14,11 @@ import "package:flutter/animation.dart";
 import "dart:ui" as ui;
 import "package:flutter/scheduler.dart";
 
+const double BACKGROUND_SCREEN_WIDTH = 1052.0;
+const double BACKGROUND_SCREEN_HEIGHT = 566.0;
+const double BACKGROUND_MARGIN_LEFT = 721.0;
+const double BACKGROUND_MARGIN_TOP = 200.0;
+
 Future<String> loadFileAssets(String filename) async
 {
 	return await rootBundle.loadString("assets/files/$filename");
@@ -23,19 +28,43 @@ class CodeBoxWidget extends LeafRenderObjectWidget
 {
 	final Offset _offset;
 	final String _contents;
+	// TODO: final int _colNumber;
+	final double _lineNumber;
+	final int _numLines;
 
-	CodeBoxWidget(this._offset, this._contents, {Key key}): super(key: key);
+	CodeBoxWidget(
+		this._offset, 
+		this._contents, 
+		this._lineNumber, 
+		this._numLines, 
+		{Key key}) : super(key: key);
 
 	@override
-	RenderObject createRenderObject(BuildContext context) => new TextRenderObject(screenOffset: this._offset,fontSize: 16.0);
+	RenderObject createRenderObject(BuildContext context)
+	{
+		var ro = new TextRenderObject();
+		// DEBUG on Emulators ONLY:
+		// loadFileAssets("main.dart").then(
+		// 	(String code)
+		// 	{
+		// 		print("Got ${code.split('\n').length} lines of code!");
+		// 		ro.text = code;
+		// 	}
+		// );
+
+		return ro;
+	}
 
 	@override
 	void updateRenderObject(BuildContext context, TextRenderObject renderObject) 
 	{
-		renderObject.text = this._contents;
-		renderObject.offset = this._offset;
+		// print("UPDATE $_lineNumber");
+		renderObject
+			..text = this._contents
+			..scrollValue = _lineNumber
+			// ..setHighlight(3, 4)
+			;
 	}
-
 }
 
 class CodeBox extends StatefulWidget
@@ -48,19 +77,34 @@ class CodeBox extends StatefulWidget
 	CodeBoxState createState() => new CodeBoxState();
 }
 
-class CodeBoxState extends State<CodeBox>
+class CodeBoxState extends State<CodeBox> with SingleTickerProviderStateMixin
 {
-	final Icon upArrowIcon;
-	final Icon downArrowIcon;
 	Offset _offset;
-	Icon arrowIcon;
-	bool upFacing = true;
+	bool _upFacing = true;
 	List<Sound> _sounds;
 	FlutterTask _flutterTask = new FlutterTask("~/Projects/BiggerLogo/logo_app");
 	Random _rng = new Random();
 	bool _ready = false;
 	String _contents;
 	bool _isReloading;
+
+	AnimationController _controller;
+	Animation<double> _scrollAnimation;
+
+	@override
+	initState()
+	{
+		super.initState();
+		_controller = new AnimationController(duration: const Duration(milliseconds: 1000), vsync: this)
+			..addListener(
+				() {
+					setState(() {
+						// print("Scroll Listener!");
+						_offset = new Offset(_offset.dx, _scrollAnimation.value);
+					});
+				}
+		);
+	}
 
 	handleWebSocketMessage(msg) 
 	{
@@ -107,10 +151,7 @@ class CodeBoxState extends State<CodeBox>
 	}
 
 	CodeBoxState() :
-		_offset = Offset.zero,
-		upArrowIcon = new Icon(Icons.arrow_upward), 
-		downArrowIcon = new Icon(Icons.arrow_downward), 
-		arrowIcon = new Icon(Icons.arrow_downward)
+		_offset = Offset.zero
 	{
 		HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080).then(
 			(server) async
@@ -163,7 +204,7 @@ class CodeBoxState extends State<CodeBox>
 			_flutterTask.write("/lib/main.dart", _contents).then((ok)
 			{
 				// Start emulator.
-				_flutterTask.load("iPhone").then((success)
+				_flutterTask.load("ipad").then((success)
 				{
 					
 				});
@@ -181,30 +222,24 @@ class CodeBoxState extends State<CodeBox>
 
 	void _scrollToPosition()
 	{
-		const double offset = 1000.0;
 		_flutterTask.hotReload();
 		int idx = _rng.nextInt(_sounds.length);
 		_sounds[idx].play();
 
 		setState(() 
 		{
-			upFacing = !upFacing;
-			if(upFacing)
-			{
-				arrowIcon = downArrowIcon;
-			}
-			else
-			{
-				arrowIcon = upArrowIcon;
-			}
-			if(upFacing)
-			{
-				this._offset = new Offset(0.0, 0.0);
-			}
-			else
-			{
-				this._offset = new Offset(0.0, offset);
-			}
+			_controller.stop();
+			
+			_upFacing = !_upFacing;
+			final double lineOffset = _upFacing ? 1000.0 : 0.0;
+			_scrollAnimation = new Tween<double>(
+				begin: this._offset.dy,
+				end: lineOffset
+			).animate(_controller);
+			_controller
+				..value = 0.0
+				..animateTo(1.0, curve: Curves.easeInOut);
+			this._offset = new Offset(0.0, lineOffset);
 		});
 	}
 
@@ -212,15 +247,11 @@ class CodeBoxState extends State<CodeBox>
 	Widget build(BuildContext context)
 	{
 		Size sz = MediaQuery.of(context).size;
-		// TODO: revisit sizes and alignments
-		double width = 1050.0;//sz.width / 2 + 55;
-		double height = 570.0;//sz.height / 3 + 51;
 
 		Stack stack = new Stack(
 					alignment: const Alignment(0.6575, -0.22),
 					children: [
 						new Container(
-							// padding: const EdgeInsets.only(top: 24.0, left: 12.0),
 							color: const Color.fromARGB(255, 0, 0, 0),
 							width: sz.width,
 							height: sz.height,
@@ -237,20 +268,23 @@ class CodeBoxState extends State<CodeBox>
 										]
 									)
 						),
-						new Container(
-							width: width,
-							height: height,
-							child: new CodeBoxWidget(this._offset, this._contents)
+						new Positioned(
+							left: BACKGROUND_MARGIN_LEFT,// - 500, /* TODO: remove extra margin only for simulator*/
+							top: BACKGROUND_MARGIN_TOP,
+							width: BACKGROUND_SCREEN_WIDTH,
+							height: BACKGROUND_SCREEN_HEIGHT,
+							child: new CodeBoxWidget(this._offset, this._contents, _offset.dy, 1)
 						)
 						],
 			);
 
 		return new Scaffold(
 			body: new Center(child: stack),
+			// TODO: remove this
 			floatingActionButton: new FloatingActionButton(
 				onPressed: _scrollToPosition,
 				tooltip: "Scroll To Another Position!",
-				child: arrowIcon
+				child: new Icon(Icons.move_to_inbox)
 			)
 		);
 	}
