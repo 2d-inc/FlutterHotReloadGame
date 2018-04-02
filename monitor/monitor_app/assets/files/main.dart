@@ -18,16 +18,14 @@ class CodeBox extends LeafRenderObjectWidget
 			codeSample += temp;
 		}
 		
-		child = new TextRenderObject(codeSample, fontSize: 18.0, );
+		child = new TextRenderObject(codeSample, fontSize: 18.0,);
 		return child;
 	}
-
 	@override
 	void updateRenderObject(BuildContext context, TextRenderObject renderObject) 
 	{
 		renderObject.offset = this.offset;
 	}
-
 	set offset(value)
 	{
 		if(child.offset != value)
@@ -35,7 +33,6 @@ class CodeBox extends LeafRenderObjectWidget
 			child.offset = value;
 		}
 	}
-
 	Offset get offset
 	{
 		return child.offset;

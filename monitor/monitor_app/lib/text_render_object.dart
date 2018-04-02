@@ -1,176 +1,182 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 class TextRenderObject extends RenderBox
 {
-	static const double DEFAULT_FONT_SIZE = 16.0;
-	static const double DEFAULT_LINE_HEIGHT = 1.25;
-	static const double LINE_NUM_WIDTH = 45.0;
-	Offset screenOffset;
-	String _text;
-	Paint _paint;
-	TextStyle style;
-	final double fontSize;
-	final double lineHeight;
+	static const double FONT_SIZE = 17.0;
+	static const String FONT_FAMILY = "RobotoMono";
+	static const double LINES_NUM_WIDTH = 60.0;
 
-	TextRenderObject({
-		this.screenOffset: Offset.zero,
-		this.fontSize: DEFAULT_FONT_SIZE,
-		this.lineHeight: DEFAULT_LINE_HEIGHT,
-		this.style: const TextStyle(
-			fontFamily: "Terminus", 
-			color: const Color(0xFFFFFFFF), 
-			fontSize: DEFAULT_FONT_SIZE,
-			height: DEFAULT_LINE_HEIGHT
-			)
-	}) : _paint = new Paint()..color = Colors.blueGrey, _text = "";
+	String _text;
+	TextStyle style;
+	int _highlightOffset;
+	int _highlightedRows;
+	int _maxLines;
+	double _lineScrollOffset;
+	double _lineHeight;
+
+	ui.Paragraph _codeParagraph;
+	ui.Paragraph _linesParagraph;
+
+	TextRenderObject() : 
+		this._lineScrollOffset = 0.0,
+		this._highlightOffset = 5,
+		this._highlightedRows = 3
+	{
+		// Initialize the Line Height for this style
+		ui.ParagraphStyle codeStyle = new ui.ParagraphStyle(
+				fontFamily: FONT_FAMILY,
+				fontSize: FONT_SIZE
+			);
+
+		ui.ParagraphBuilder pb = new ui.ParagraphBuilder(codeStyle);
+		pb.addText("Loading...");
+		ui.Paragraph singleLine = pb.build()..layout(new ui.ParagraphConstraints(width: double.maxFinite));
+		this._lineHeight = singleLine.height;
+	}
 
 	@override
 	bool get sizedByParent => true;
 	
 	@override
-	bool hitTestSelf(Offset screenOffset) => true;
+	bool hitTestSelf(Offset offset) => true;
 
 	@override
 	void performResize() 
 	{
 		size = constraints.biggest;
-		print("SIZE IS: $size");
+	}
+
+	@override
+	performLayout()
+	{
+		super.performLayout();
+			
+		ui.ParagraphStyle codeStyle = new ui.ParagraphStyle(
+					fontFamily: FONT_FAMILY,
+					fontSize: FONT_SIZE
+				);
+
+		ui.ParagraphBuilder codePB = new ui.ParagraphBuilder(codeStyle);
+		ui.ParagraphBuilder linesPB = new ui.ParagraphBuilder(
+				new ui.ParagraphStyle(
+					textAlign: TextAlign.right,
+					fontFamily: FONT_FAMILY,
+					fontSize: FONT_SIZE
+				)
+			);
+
+		ui.ParagraphConstraints codeConstraints = new ui.ParagraphConstraints(width: double.maxFinite);
+		ui.ParagraphConstraints lineConstraints = new ui.ParagraphConstraints(width: 50.0);
+		
+		String actualText = this._text ?? "Loading...";
+		List<String> lines = actualText.split('\n');
+
+		int currentLineNum = (_lineScrollOffset / _lineHeight).floor();
+		double maxHeight = size.height;
+		double currentHeight = 0.0;
+
+		String visibleText = lines[currentLineNum].replaceAll('\t', "  ");
+		String visibleLineNums = currentLineNum.toString();
+
+		for(int i = currentLineNum + 1;
+			i < lines.length && currentHeight < maxHeight; 
+			++i, ++currentLineNum)
+		{
+			visibleText += "\n" + lines[i].replaceAll('\t', "  ");
+			visibleLineNums += '\n$i';
+			
+			ui.ParagraphBuilder tempPB = new ui.ParagraphBuilder(codeStyle);
+			
+			tempPB.addText(visibleText);
+			ui.Paragraph _tempParagraph = tempPB.build()
+				..layout(codeConstraints);
+
+			// Adjust the scrolling to be continuous
+			currentHeight = _tempParagraph.height - (_lineScrollOffset % _lineHeight);
+		}
+
+		codePB.addText(visibleText);
+		_codeParagraph = codePB.build()..layout(codeConstraints);
+		linesPB.addText(visibleLineNums);
+		_linesParagraph = linesPB.build()..layout(lineConstraints);
 	}
 
 	@override
 	void paint(PaintingContext context, Offset offset)
 	{
-		String txt = this._text;
-		if(txt == null)
-		{
-			txt = "Loading...";
-		}
-		//print("Paint");
 		final Canvas canvas = context.canvas;
-
-		double lineHeight = this.style.height * this.fontSize;
-
-		double maxLines = size.height / lineHeight;
-		double baseOffset = max(this.offset.dy, 0.0) / lineHeight;
-		
-		List<String> lines = txt.split('\n');
-
-		int startLine = max(0, baseOffset.floor());
-		int endLine = min( lines.length, (startLine + maxLines).ceil() );
-
-		List<String> visibleLines = lines.sublist(startLine, endLine);
-
-		int lineNo = startLine;
-		String visibleLineNumbers = "${startLine}";
-		String visibleCodeLines = visibleLines[0];
-		for(int i = 1; i < visibleLines.length; i++)
-		{
-			visibleCodeLines += "\n" + visibleLines[i];
-			lineNo++;
-			visibleLineNumbers += "\n$lineNo";
-		}
-
 		canvas.save();
-		canvas.clipRect(offset & size);
+		canvas.clipRect(offset&size);
+		// TODO: remove
+		// Size codeBoxSize = new Size(size.width - LINES_NUM_WIDTH, size.height);
+		// Offset codeBoxOffset = new Offset(offset.dx + LINES_NUM_WIDTH, offset.dy);
+		// canvas.drawRect(codeBoxOffset&size, new Paint()..color = new Color.fromARGB(200, 70, 70, 70));
+		//
+		Size lineRectSize = new Size(LINES_NUM_WIDTH, size.height);
+		canvas.drawRect(offset&lineRectSize, new Paint()..color = new Color.fromARGB(200, 59, 60, 61));
 
-		Size lineNumSize = new Size(LINE_NUM_WIDTH, size.height);
-		Rect lineNumRect = offset & lineNumSize;
-		canvas.drawRect(lineNumRect, new Paint()..color = new Color.fromARGB(255, 70, 70, 70));
-		paintLines(canvas, offset, visibleLineNumbers);
-		
-		Offset textRectOffset = new Offset(offset.dx + LINE_NUM_WIDTH, offset.dy);
-		Size textSize = new Size(size.width - LINE_NUM_WIDTH, size.height);
-		canvas.drawRect(textRectOffset & textSize, new Paint()..color = Colors.transparent);
-		// TODO: compute the highlight offset based on the linenumber
-		Size highlightSize = new Size(textSize.width, lineHeight);
-		Offset highlightOffset = new Offset(textRectOffset.dx, offset.dy + lineHeight * 10);
-		canvas.drawRect(highlightOffset & highlightSize, new Paint()..color = const Color.fromARGB(100, 0, 180, 255));
-		paintText(canvas, textRectOffset, visibleCodeLines);
-		canvas.restore();	
+		double scrollAdjustment = (_lineScrollOffset % _lineHeight);
+		Size highlightSize = new Size(size.width - LINES_NUM_WIDTH, _lineHeight * _highlightedRows);
+		Offset highlightOffset = new Offset(offset.dx + LINES_NUM_WIDTH, offset.dy + _lineHeight*this._highlightOffset - scrollAdjustment);
+		RRect rounded = new RRect.fromRectXY(highlightOffset&highlightSize, 5.0, 5.0);
+		canvas.drawRRect(rounded, new Paint()..color = const Color.fromARGB(100, 0, 180, 255));
+
+		canvas.drawParagraph(_linesParagraph, new Offset(offset.dx, offset.dy - scrollAdjustment ));
+		const int CODE_PADDING = 10;
+		canvas.drawParagraph(_codeParagraph, new Offset(offset.dx + LINES_NUM_WIDTH + CODE_PADDING, offset.dy - scrollAdjustment));
+		canvas.restore();
 	}
 
-	
-
-	paintLines(Canvas canvas, Offset offset, String lines)
+	set scrollValue(double value)
 	{
-		TextSpan span = new TextSpan(
-			style: this.style,
-			text: lines
-		);
-
-		TextPainter tp = new TextPainter(
-			text: span, 
-			textAlign: TextAlign.right,
-			textDirection: TextDirection.ltr
-		);
-
-		tp.layout(minWidth: LINE_NUM_WIDTH - 8 /* padding? */, maxWidth: LINE_NUM_WIDTH);
-		tp.paint(canvas, offset);
-	}
-
-	void paintText(Canvas canvas, Offset offset, String lines)
-	{
-		TextSpan span = new TextSpan(
-			style: this.style,
-			text: lines
-		);
-
-		TextPainter tp = new TextPainter(
-			text: span, 
-			textAlign: TextAlign.left,
-			textDirection: TextDirection.ltr
-		);
-
-		tp.layout();
-		tp.paint(canvas, offset);
-	}
-
-	@override
-	markNeedsPaint()
-	{
-		bool changed = false;
-		double fontSizeFactor = 1.0;
-		double lineHeightDelta = 0.0;
-		if(this.fontSize != this.style.fontSize)
+		if(this._lineScrollOffset != value && value >= 0)
 		{
-			fontSizeFactor = this.fontSize / this.style.fontSize;
-			changed = true;
-		}
-		if(this.lineHeight != this.style.height)
-		{
-			lineHeightDelta = this.lineHeight - this.style.height;
-			changed = true;
-		}
-		if(changed)
-		{
-			this.style = this.style.apply(
-				fontSizeFactor: fontSizeFactor,
-				heightDelta: lineHeightDelta
-			);
-		}
-		super.markNeedsPaint();
-	}
+			double max = _maxLines * _lineHeight;
+			this._lineScrollOffset = min(max, value);
 
-	set offset(Offset value)
-	{
-		if(this.screenOffset != value)
-		{
-			this.screenOffset = value;
+			markNeedsLayout();
 			markNeedsPaint();
 		}
 	}
 
-	Offset get offset => this.screenOffset;
+	setHighlight(int lineNumber, int howMany)
+	{
+		bool changed = false;
+		if(this._highlightOffset != lineNumber)
+		{
+			this._highlightOffset = lineNumber;
+			changed = true;
+		}
+
+		if(this._highlightedRows != howMany)
+		{
+			this._highlightedRows = howMany;
+			changed = true;
+		}
+
+		if(changed)
+		{
+			markNeedsLayout();
+			markNeedsPaint();
+		}
+	}
 
 	set text(String value)
 	{
-		if(this._text != value)
+		if(value == null)
+		{
+			print("TRYING TO SET THE TEXT TO A NULL VALUE");
+			return;
+		}
+		else if(this._text != value)
 		{
 			this._text = value;
+			this._maxLines = this._text.split("\n").length;
+			markNeedsLayout();
 			markNeedsPaint();
 		}
 	}
-
 }
