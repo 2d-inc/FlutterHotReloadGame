@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import "flare_widget.dart";
 
 class CategorySimple extends StatelessWidget
 {
@@ -84,11 +85,13 @@ class CategoryDesigned extends StatelessWidget
 {
 	const CategoryDesigned(this.name, 
 	{
-		Key key
+		Key key,
+		this.flare
 	}) : assert(name != null),
 			super(key: key);
 
 	final String name;
+	final String flare;
 
 	Widget build(BuildContext context) 
 	{
@@ -103,7 +106,8 @@ class CategoryDesigned extends StatelessWidget
 						decoration:new BoxDecoration(
 							color: const Color.fromARGB(25, 158, 164, 184), 
 							borderRadius: const BorderRadius.all(const Radius.circular(32.0))
-						)
+						),
+						child:new Container( alignment: Alignment.center, child:flare != null ? new Flare(flare) : null)
 					),
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
