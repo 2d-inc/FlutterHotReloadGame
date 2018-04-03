@@ -30,6 +30,22 @@ class RestaurantsHeaderAligned extends StatelessWidget
 	}
 }
 
+class RestaurantsHeaderDesigned extends StatelessWidget
+{
+	Widget build(BuildContext context)
+	{
+		return new Container(
+			padding:const EdgeInsets.fromLTRB(20.0, 5.0, 20.0, 17.0),
+			child:new Row(
+				children: <Widget>[
+					new Expanded(child:new Text("NEARBY", style:const TextStyle(fontSize:14.0, fontWeight: FontWeight.w500, fontFamily: "Roboto", color:const Color.fromARGB(127, 48, 44, 72), decoration: TextDecoration.none))),
+					new Text("1600 Amphitheater Pkwy", style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(255, 107, 146, 242), decoration: TextDecoration.none)),
+				]
+			)
+		);
+	}
+}
+
 class RestaurantSimple extends StatelessWidget
 {
 	const RestaurantSimple(this.name, 
@@ -202,7 +218,7 @@ class RestaurantDesigned extends StatelessWidget
 								borderRadius: const BorderRadius.only(topLeft:const Radius.circular(10.0), bottomLeft:const Radius.circular(10.0)),
 								
 								image: new DecorationImage(
-									image: new ExactAssetImage("assets/images/cafe.jpg"),
+									image: new ExactAssetImage(img),
 									fit: BoxFit.cover,
 									alignment: Alignment.center
 									
@@ -225,16 +241,31 @@ class RestaurantDesigned extends StatelessWidget
 													decoration: TextDecoration.none)),
 										),
 										new Container(
-											padding:const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 12.0),
+											padding:const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 16.0),
 											child:new Text(description, 
-												style:const TextStyle(fontSize:12.0,color:Colors.grey, decoration: TextDecoration.none)),
+												maxLines: 1,
+												overflow: TextOverflow.ellipsis,
+												style:const TextStyle(
+													fontSize:15.0,
+													fontFamily:"Roboto",
+													color: const Color.fromARGB(102, 48, 44, 72),
+													decoration: TextDecoration.none)
+												),
 										),
 										new Row(
 											children:<Widget>[
-												new Expanded(child:new Text(rating.round().toString() + "/10", style:const TextStyle(fontSize:13.0,color:Colors.grey, decoration: TextDecoration.none))),
-												new Expanded(child:new Text("\$"*min(dollarSigns,5), style:const TextStyle(fontSize:13.0,color:Colors.black, decoration: TextDecoration.none))),
+												new Expanded(child:new Text(rating.round().toString() + "/10", style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none))),
+												new Expanded(
+													child:new Row(
+            											mainAxisSize: MainAxisSize.min,
+														children: [
+															new Text("\$"*min(dollarSigns,5), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(255, 48, 44, 72), decoration: TextDecoration.none)),
+															new Text("\$"*(5-min(dollarSigns,5)), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none))
+														]
+													)
+												),
 												new Text(deliveryTime.toString() + " min", 
-													style:const TextStyle(fontSize:13.0,color:Colors.grey, decoration: TextDecoration.none)),
+													style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none)),
 											]
 										)
 									]
