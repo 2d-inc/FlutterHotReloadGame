@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import "featured_restaurant.dart";
 import "category.dart";
 import "restaurant.dart";
+import "flare_widget.dart";
 
 void main() => runApp(new MyApp());
 
@@ -71,7 +72,10 @@ class _MyHomePageState extends State<MyHomePage> {
 		return new Container(
 			decoration:new BoxDecoration(
 				color: true ? new Color.fromARGB(255, 242, 243, 246) : Colors.white),
-			child:new ListView(
+			child:
+			new Stack(
+				children:<Widget>[
+				new ListView(
 				shrinkWrap: true,
 				padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
 				children: <Widget>[
@@ -104,8 +108,8 @@ class _MyHomePageState extends State<MyHomePage> {
 							padding:const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
 							scrollDirection: Axis.horizontal,
 							children: <Widget> [
-								const CategoryDesigned('Pizza'),
-								const CategoryDesigned('Burgers'),
+								const CategoryDesigned('Pizza', flare:"assets/flares/PizzaIcon"),
+								const CategoryDesigned('Burgers', flare:"assets/flares/BurgerIcon"),
 								const CategoryDesigned('Dessert'),
 								const CategoryDesigned('Sushi'),
 								const CategoryDesigned('Chinese'),
@@ -122,7 +126,10 @@ class _MyHomePageState extends State<MyHomePage> {
 					const RestaurantDesigned('Asian Box', description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg"),
 					const RestaurantDesigned('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg"),
 				],
-			)
+			),
+			new Container(padding:const EdgeInsets.fromLTRB(20.0, 30.0, 0.0, 0.0), alignment: Alignment.topLeft, child:new Flare("assets/flares/MenuIcon")),
+			new Container(padding:const EdgeInsets.fromLTRB(0.0, 30.0, 20.0, 0.0), alignment: Alignment.topRight, child:new Flare("assets/flares/SearchIcon"))
+			])
 		);
 	}
 }
