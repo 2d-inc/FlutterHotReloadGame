@@ -69,7 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
 	@override
 	Widget build(BuildContext context) {
 		return new Container(
-			decoration:new BoxDecoration(color:Colors.white),
+			decoration:new BoxDecoration(
+				color: true ? new Color.fromARGB(255, 242, 243, 246) : Colors.white),
 			child:new ListView(
 				shrinkWrap: true,
 				padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
@@ -78,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
 						height:305.0,
 						child:new FeaturedCarousel(data:featuredRestaurants),
 					),
-					new Container(
+					/*new Container(
 						padding:const EdgeInsets.fromLTRB(20.0, 5.0, 0.0, 10.0),
 						child:new Text("Featured", 
 							style:const TextStyle(fontSize:13.0,color:Colors.black, decoration: TextDecoration.none)),
@@ -95,27 +96,31 @@ class _MyHomePageState extends State<MyHomePage> {
 								const FeaturedRestaurantSimple('Umami Burgers', description: "Umami Burgers serves burgers, fries...", deliveryTime:45)
 							]
 						)
-					),
+					),*/
 					new Container(
-						height:120.0,
+						height:133.0,
 						child:new ListView(
 							shrinkWrap: true,
 							padding:const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
 							scrollDirection: Axis.horizontal,
 							children: <Widget> [
-								const CategorySimple('Pizza'),
-								const CategorySimple('Burgers'),
-								const CategorySimple('Dessert'),
-								const CategorySimple('Sushi'),
-								const CategorySimple('Chinese'),
+								const CategoryDesigned('Pizza'),
+								const CategoryDesigned('Burgers'),
+								const CategoryDesigned('Dessert'),
+								const CategoryDesigned('Sushi'),
+								const CategoryDesigned('Chinese'),
 							]
 						)
 					),
-					new RestaurantsHeaderSimple(),
-					const RestaurantSimple('Curry Up Now', description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
+					new RestaurantsHeaderDesigned(),
+					/*const RestaurantSimple('Curry Up Now', description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
 					const RestaurantSimple('Sprout Cafe', description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2),
 					const RestaurantSimple('Asian Box', description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
-					const RestaurantSimple('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2),
+					const RestaurantSimple('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2),*/
+					const RestaurantDesigned('Curry Up Now', description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/samosa.jpg"),
+					const RestaurantDesigned('Sprout Cafe', description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/cafe.jpg"),
+					const RestaurantDesigned('Asian Box', description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg"),
+					const RestaurantDesigned('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg"),
 				],
 			)
 		);

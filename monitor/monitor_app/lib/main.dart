@@ -158,7 +158,7 @@ class CodeBoxState extends State<CodeBox> with SingleTickerProviderStateMixin
 	CodeBoxState() :
 		_offset = Offset.zero
 	{
-		HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080).then(
+		HttpServer.bind("192.168.1.156"/*InternetAddress.LOOPBACK_IP_V4*/, 8080).then(
 			(server) async
 			{
 				print("Serving at ${server.address}:${server.port}");
