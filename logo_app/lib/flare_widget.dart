@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "dart:ui" as ui;
 import "dart:math";
 import "package:flare/flare.dart" as flr;
+import "package:flare/animation/actor_animation.dart";
 import "dart:typed_data";
 
 class Flare extends LeafRenderObjectWidget
@@ -65,7 +66,7 @@ class FlareRenderObject extends RenderBox
 		// 	_flareRect = new Rect.fromLTRB(aabb[0], aabb[1], aabb[2], aabb[3]);
 		// }
 	}
-
+	
 	@override
 	void paint(PaintingContext context, Offset offset)
 	{
@@ -106,6 +107,7 @@ class FlareRenderObject extends RenderBox
 			(bool success)
 			{
 				_actor = actor;
+				
 				markNeedsLayout();
 				markNeedsPaint();
 				//animation = actor.getAnimation("Run");

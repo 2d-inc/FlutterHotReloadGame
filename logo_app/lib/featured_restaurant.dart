@@ -477,6 +477,7 @@ class RestaurantHeroRenderObject extends RenderBox
 	Rect _flareRect = Rect.zero;
 	double _scroll;
 	flr.FlutterActor _actor;
+	flr.ActorAnimation _animation;
 
 	RestaurantHeroRenderObject(
 		{
@@ -515,6 +516,8 @@ class RestaurantHeroRenderObject extends RenderBox
 		}
 	}
 
+	double time = 0.0;
+
 	@override
 	void paint(PaintingContext context, Offset offset)
 	{
@@ -542,6 +545,13 @@ class RestaurantHeroRenderObject extends RenderBox
 			canvas.save();
 			canvas.translate(_scroll * (width+ItemPadding), 0.0);
 			canvas.translate(size.width/2.0-_flareRect.left-_flareRect.width/2.0, (size.height-DetailHeight/2.0)/2.0-_flareRect.top-_flareRect.height/2.0);
+
+			if(_animation != null)
+			{
+				time = (time + 0.016)%_animation.duration;
+				_animation.apply(time, _actor, 1.0);
+				_actor.advance(0.0);
+			}
 			_actor.draw(canvas);
 			canvas.restore();
 		}
@@ -588,6 +598,7 @@ class RestaurantHeroRenderObject extends RenderBox
 			(bool success)
 			{
 				_actor = actor;
+				_animation = actor.getAnimation("Untitled");
 				markNeedsLayout();
 				markNeedsPaint();
 				//animation = actor.getAnimation("Run");
