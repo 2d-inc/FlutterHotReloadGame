@@ -28,15 +28,16 @@ class CodeBoxWidget extends LeafRenderObjectWidget
 {
 	final Offset _offset;
 	final String _contents;
-	// TODO: final int _colNumber;
 	final double _lineNumber;
-	final int _numLines;
+	final Highlight _highlight;
+	final int _alpha;
 
 	CodeBoxWidget(
 		this._offset, 
 		this._contents, 
-		this._lineNumber, 
-		this._numLines, 
+		this._lineNumber,
+		this._highlight,
+		this._alpha,
 		{Key key}) : super(key: key);
 
 	@override
@@ -62,7 +63,8 @@ class CodeBoxWidget extends LeafRenderObjectWidget
 		renderObject
 			..text = this._contents
 			..scrollValue = _lineNumber
-			// ..setHighlight(3, 4)
+			..highlight = this._highlight
+			..highlightAlpha = this._alpha
 			;
 	}
 }
@@ -77,10 +79,14 @@ class CodeBox extends StatefulWidget
 	CodeBoxState createState() => new CodeBoxState();
 }
 
-class CodeBoxState extends State<CodeBox> with SingleTickerProviderStateMixin
+class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 {
+	static const int HIGHLIGHT_ALPHA_FULL = 150;
+	static const int MAX_FLICKER_COUNT = 6;
+
 	Offset _offset;
-	bool _upFacing = true;
+	Highlight _highlight;
+	bool _upFacing = false;
 	List<Sound> _sounds;
 	FlutterTask _flutterTask = new FlutterTask("~/Projects/BiggerLogo/logo_app");
 	Random _rng = new Random();
@@ -88,26 +94,82 @@ class CodeBoxState extends State<CodeBox> with SingleTickerProviderStateMixin
 	String _contents;
 	bool _isReloading;
 
-	AnimationController _controller;
+	AnimationController _scrollController;
+	AnimationController _highlightController;
+	int _flickerCounter = 0;
+	int _highlightAlpha = HIGHLIGHT_ALPHA_FULL;
 	Animation<double> _scrollAnimation;
+	Animation<double> _highlightAnimation;
+	AnimationStatusListener _scrollStatusListener;
 
 	@override
 	initState()
 	{
 		super.initState();
-		_controller = new AnimationController(duration: const Duration(milliseconds: 1000), vsync: this)
+		_scrollController = new AnimationController(duration: const Duration(seconds: 1), vsync: this)
 			..addListener(
 				() {
 					setState(() {
-						// print("Scroll Listener!");
 						_offset = new Offset(_offset.dx, _scrollAnimation.value);
 					});
-				}
+				}		
 		);
+
+		_highlightController = new AnimationController(vsync: this, duration: new Duration(milliseconds: 100))
+			..addListener(
+				()
+				{
+					setState(
+						()
+						{
+							this._highlightAlpha = _highlightAnimation.value.toInt();
+							// Stop the animation ELSE flicker
+							if(_flickerCounter == MAX_FLICKER_COUNT)
+							{
+								_flickerCounter = 0;
+								_highlightController.stop();
+							}
+							else if(_highlightAnimation.status == AnimationStatus.completed)
+							{
+								_highlightController.reverse();
+								_flickerCounter++;
+							}
+							else if(_highlightAnimation.status == AnimationStatus.dismissed)
+							{
+								_highlightController.forward();
+								_flickerCounter++;
+							}
+						}
+					);
+				}
+			);
+		_scrollStatusListener = 
+		(AnimationStatus state)
+		{
+			if(state == AnimationStatus.completed)
+			{
+				_scrollAnimation?.removeStatusListener(_scrollStatusListener);
+				setState(
+					()
+					{
+						int row = _upFacing ? 56 : 10;
+						this._highlight = new Highlight(row, 0, 1);
+						_highlightAnimation = new Tween<double>(
+							begin: HIGHLIGHT_ALPHA_FULL.toDouble(),
+							end: 0.0
+						).animate(_highlightController);
+						_highlightController..forward();
+					}
+				);
+			}
+		};
+	}
+
 	@override
 	dispose()
 	{
-		_controller.dispose();
+		_scrollController.dispose();
+		_highlightController.dispose();
 		super.dispose();
 	}
 
@@ -156,7 +218,8 @@ class CodeBoxState extends State<CodeBox> with SingleTickerProviderStateMixin
 	}
 
 	CodeBoxState() :
-		_offset = Offset.zero
+		_offset = Offset.zero,
+		_highlight = new Highlight(0, 0, 0)
 	{
 		HttpServer.bind("192.168.1.156"/*InternetAddress.LOOPBACK_IP_V4*/, 8080).then(
 			(server) async
@@ -233,15 +296,15 @@ class CodeBoxState extends State<CodeBox> with SingleTickerProviderStateMixin
 
 		setState(() 
 		{
-			_controller.stop();
-			
+			// TODO: debug/test only
 			_upFacing = !_upFacing;
 			final double lineOffset = _upFacing ? 1000.0 : 0.0;
 			_scrollAnimation = new Tween<double>(
 				begin: this._offset.dy,
 				end: lineOffset
-			).animate(_controller);
-			_controller
+			).animate(_scrollController)
+				..addStatusListener(_scrollStatusListener);
+			_scrollController
 				..value = 0.0
 				..animateTo(1.0, curve: Curves.easeInOut);
 			this._offset = new Offset(0.0, lineOffset);
@@ -254,7 +317,6 @@ class CodeBoxState extends State<CodeBox> with SingleTickerProviderStateMixin
 		Size sz = MediaQuery.of(context).size;
 
 		Stack stack = new Stack(
-					alignment: const Alignment(0.6575, -0.22),
 					children: [
 						new Container(
 							color: const Color.fromARGB(255, 0, 0, 0),
@@ -278,7 +340,13 @@ class CodeBoxState extends State<CodeBox> with SingleTickerProviderStateMixin
 							top: BACKGROUND_MARGIN_TOP,
 							width: BACKGROUND_SCREEN_WIDTH,
 							height: BACKGROUND_SCREEN_HEIGHT,
-							child: new CodeBoxWidget(this._offset, this._contents, _offset.dy, 1)
+							child: new CodeBoxWidget(
+									_offset, 
+									_contents, 
+									_offset.dy, 
+									_highlight, 
+									_highlightAlpha
+								)
 						)
 						],
 			);

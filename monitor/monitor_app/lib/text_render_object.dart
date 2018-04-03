@@ -3,6 +3,37 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
+class Highlight
+{
+	int row = 0;
+	int column = 0;
+	int howManyLines = 0;
+
+	Highlight(this.row, this.column, this.howManyLines);
+
+	Highlight.copyWithLines(Highlight other, int linesNumber) : 
+		row = other.row,
+		column = other.column,
+		howManyLines = linesNumber;
+
+	@override
+	bool operator ==(dynamic other)
+	{
+		if (identical(this, other))
+			return true;
+		if (other is! Highlight)
+			return false;
+		final Highlight typedOther = other;
+		return (typedOther.howManyLines == this.howManyLines) && (typedOther.row == this.row) && (typedOther.column == this.column);
+	}
+
+	@override
+	int get hashCode 
+	{
+		return hashValues(howManyLines, row, column);
+	}
+}
+
 class TextRenderObject extends RenderBox
 {
 	static const double FONT_SIZE = 17.0;
@@ -11,8 +42,8 @@ class TextRenderObject extends RenderBox
 
 	String _text;
 	TextStyle style;
-	int _highlightOffset;
-	int _highlightedRows;
+	Highlight _highlight;
+	int _highlightAlpha;
 	int _maxLines;
 	double _lineScrollOffset;
 	double _lineHeight;
@@ -22,8 +53,8 @@ class TextRenderObject extends RenderBox
 
 	TextRenderObject() : 
 		this._lineScrollOffset = 0.0,
-		this._highlightOffset = 5,
-		this._highlightedRows = 3
+		this._highlight = new Highlight(0, 0, 0),
+		this._highlightAlpha = 100
 	{
 		// Initialize the Line Height for this style
 		ui.ParagraphStyle codeStyle = new ui.ParagraphStyle(
@@ -71,10 +102,10 @@ class TextRenderObject extends RenderBox
 		ui.ParagraphConstraints codeConstraints = new ui.ParagraphConstraints(width: double.maxFinite);
 		ui.ParagraphConstraints lineConstraints = new ui.ParagraphConstraints(width: 50.0);
 		
-		String actualText = this._text ?? "Loading...";
+		String actualText = _text ?? "Loading...";
 		List<String> lines = actualText.split('\n');
 
-		int currentLineNum = (_lineScrollOffset / _lineHeight).floor();
+		int currentLineNum = this.topLineNumber;
 		double maxHeight = size.height;
 		double currentHeight = 0.0;
 
@@ -94,7 +125,7 @@ class TextRenderObject extends RenderBox
 			ui.Paragraph _tempParagraph = tempPB.build()
 				..layout(codeConstraints);
 
-			// Adjust the scrolling to be continuous
+			// Adjust the scrolling to be continuous rather than discrete
 			currentHeight = _tempParagraph.height - (_lineScrollOffset % _lineHeight);
 		}
 
@@ -110,7 +141,7 @@ class TextRenderObject extends RenderBox
 		final Canvas canvas = context.canvas;
 		canvas.save();
 		canvas.clipRect(offset&size);
-		// TODO: remove
+		// TODO: debug only
 		// Size codeBoxSize = new Size(size.width - LINES_NUM_WIDTH, size.height);
 		// Offset codeBoxOffset = new Offset(offset.dx + LINES_NUM_WIDTH, offset.dy);
 		// canvas.drawRect(codeBoxOffset&size, new Paint()..color = new Color.fromARGB(200, 70, 70, 70));
@@ -119,10 +150,11 @@ class TextRenderObject extends RenderBox
 		canvas.drawRect(offset&lineRectSize, new Paint()..color = new Color.fromARGB(200, 59, 60, 61));
 
 		double scrollAdjustment = (_lineScrollOffset % _lineHeight);
-		Size highlightSize = new Size(size.width - LINES_NUM_WIDTH, _lineHeight * _highlightedRows);
-		Offset highlightOffset = new Offset(offset.dx + LINES_NUM_WIDTH, offset.dy + _lineHeight*this._highlightOffset - scrollAdjustment);
+		double highlightYOffset = (_highlight.row - this.topLineNumber).toDouble();
+		Size highlightSize = new Size(size.width - LINES_NUM_WIDTH, _lineHeight * _highlight.howManyLines);
+		Offset highlightOffset = new Offset(offset.dx + LINES_NUM_WIDTH, offset.dy + _lineHeight*highlightYOffset - scrollAdjustment);
 		RRect rounded = new RRect.fromRectXY(highlightOffset&highlightSize, 5.0, 5.0);
-		canvas.drawRRect(rounded, new Paint()..color = const Color.fromARGB(100, 0, 180, 255));
+		canvas.drawRRect(rounded, new Paint()..color = new Color.fromARGB(_highlightAlpha, 212, 225, 87));
 
 		canvas.drawParagraph(_linesParagraph, new Offset(offset.dx, offset.dy - scrollAdjustment ));
 		const int CODE_PADDING = 10;
@@ -130,35 +162,28 @@ class TextRenderObject extends RenderBox
 		canvas.restore();
 	}
 
-	set scrollValue(double value)
+	set highlight(Highlight h)
 	{
-		if(this._lineScrollOffset != value && value >= 0)
+		if(h != this._highlight)
 		{
-			double max = _maxLines * _lineHeight;
-			this._lineScrollOffset = min(max, value);
-
+			this._highlight = h;
+			// Try to keep the highlight always in the center of the scroll area
+			// this.scrollValue = (h.row-10) * _lineHeight;
+			
 			markNeedsLayout();
 			markNeedsPaint();
 		}
 	}
 
-	setHighlight(int lineNumber, int howMany)
+	set scrollValue(double value)
 	{
-		bool changed = false;
-		if(this._highlightOffset != lineNumber)
-		{
-			this._highlightOffset = lineNumber;
-			changed = true;
-		}
+		value = max(value, 0.0);
 
-		if(this._highlightedRows != howMany)
+		if(this._lineScrollOffset != value)
 		{
-			this._highlightedRows = howMany;
-			changed = true;
-		}
+			double max = (_maxLines-1) * _lineHeight;
+			this._lineScrollOffset = min(max, value);
 
-		if(changed)
-		{
 			markNeedsLayout();
 			markNeedsPaint();
 		}
@@ -179,4 +204,16 @@ class TextRenderObject extends RenderBox
 			markNeedsPaint();
 		}
 	}
+	
+	get topLineNumber => (_lineScrollOffset / _lineHeight).floor();
+
+	set highlightAlpha(int value)
+	{
+		if(this._highlightAlpha != value)
+		{
+			this._highlightAlpha = value;
+			markNeedsPaint();
+		}
+	}
+
 }
