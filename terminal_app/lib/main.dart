@@ -105,6 +105,7 @@ class _MyHomePageState extends State<MyHomePage>
 												new PanelButton("SET TO READY", 59.0, 18.0, 1.3, null, _handleReady),
 												new PanelButton("START", 59.0, 18.0, 1.3, const EdgeInsets.only(top:10.0),_handleStart, isEnabled: false),
 												new PanelButton("START", 59.0, 18.0, 1.3, const EdgeInsets.only(top:10.0),_handleStart, isAccented: true)
+												// TODO: remove extra start button
 											],
 										),
 										new Container(

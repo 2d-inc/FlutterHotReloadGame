@@ -71,14 +71,13 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
     initState()
     {
         super.initState();
-        _pressedColorController = new AnimationController(duration: const Duration(milliseconds: 125), vsync: this)
+        _pressedColorController = new AnimationController(vsync: this)
                 ..addListener(()
                     {
                         setState(()
                         {
                             _currentBgColor = _buttonBackgroundAnimation.value;
                             _currentTxtColor = _buttonTextAnimation.value;
-                            print("${_pressedColorController.status}");
                         });
                     }
                 );
@@ -108,7 +107,7 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                 ).animate(_pressedColorController);
                 _pressedColorController
                     ..value = 0.0
-                    ..animateTo(1.0, curve: Curves.decelerate);
+                    ..animateTo(1.0, curve: Curves.elasticOut, duration: const Duration(milliseconds: 50));
             });
         this._onTap();
     }
@@ -118,7 +117,6 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
         setState(
             ()
             {
-                print("RELEASE");
                 _buttonBackgroundAnimation = new ColorTween(
                     begin: _currentBgColor,
                     end: _backgroundColor,
@@ -129,7 +127,7 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                 ).animate(_pressedColorController);
                 _pressedColorController
                     ..value = 0.0
-                    ..animateTo(1.0, curve: Curves.decelerate);
+                    ..animateTo(1.0, curve: Curves.easeOut, duration: const Duration(milliseconds: 150));
             });
         this._onTap();
     }
