@@ -4,9 +4,7 @@ import "package:flutter/rendering.dart";
 import "package:web_socket_channel/web_socket_channel.dart";
 import "package:web_socket_channel/io.dart";
 import "dart:io";
-import "command_panel.dart";
-import "panel_button.dart";
-import "players_widget.dart";
+import "lobby.dart";
 
 void main() => runApp(new MyApp());
 
@@ -45,9 +43,90 @@ class MyHomePage extends StatefulWidget
 	_MyHomePageState createState() => new _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> 
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin
 {	
+	static const double gamePanelRatio = 0.33;
+	static const double lobbyPanelRatio = 0.66;
+
 	List<Widget> _buttonList;
+
+	bool _isPlaying = false;
+	double _panelRatio = 0.66;
+	double _lobbyOpacity = 1.0;
+
+	AnimationController _panelController;
+	AnimationStatusListener _slideListener;
+	AnimationStatusListener _fadeListener;
+	VoidCallback _fadeCallback;
+	VoidCallback _slideCallback;
+	Animation<double> _slideAnimation;
+	Animation<double> _fadeAnimation;
+
+	@override
+	initState()
+	{
+		super.initState();
+
+		_panelController = new AnimationController(vsync: this);
+		
+		_fadeCallback = () 
+		{
+			setState(
+				()
+				{
+					_lobbyOpacity = _fadeAnimation.value;
+				}
+			);
+		};
+		_slideCallback = ()
+		{
+			setState(
+				()
+				{
+					_panelRatio = _slideAnimation.value;
+				}
+			);
+		};
+
+		_fadeListener = (AnimationStatus s){
+			if(s == AnimationStatus.completed)
+			{
+				_panelController.removeListener(_fadeCallback);
+				_panelController.removeStatusListener(_fadeListener);
+				double end = _isPlaying ? lobbyPanelRatio : gamePanelRatio;
+				_slideAnimation = new Tween<double>(
+					begin: _panelRatio,
+					end: end
+				).animate(_panelController);
+				_panelController
+					..value = 0.0
+					..animateTo(1.0, curve: Curves.easeInOut, duration: const Duration(milliseconds: 250))
+					..addStatusListener(_slideListener)
+					..addListener(_slideCallback);
+				print("FADE COMPLETE!");
+			}
+		};
+
+		_slideListener = (AnimationStatus s)
+		{
+			if(s == AnimationStatus.completed)
+			{
+				_panelController.removeListener(_slideCallback);
+				_panelController.removeStatusListener(_slideListener);
+				_panelController
+					..stop()
+					..addListener(_fadeCallback)
+					..addStatusListener(_fadeListener);
+				print("SLIDE COMPLETE!");
+				_isPlaying = !_isPlaying;		
+			}
+		};
+
+		_panelController
+			..addListener(_fadeCallback)
+			..addStatusListener(_fadeListener);
+
+	}
 
 	void _handleTap()
 	{
@@ -61,7 +140,22 @@ class _MyHomePageState extends State<MyHomePage>
 
 	void _handleStart()
 	{
-		// TODO:
+		// TODO: Server logic
+		double begin = _isPlaying ? 0.0 : 1.0;
+		double end = _isPlaying ? 1.0 : 0.0;
+
+		_fadeAnimation = new Tween<double>(
+			begin: begin,
+			end: end
+		).animate(_panelController);
+		_panelController
+			..value = 0.0
+			..animateTo(1.0, curve: Curves.easeInOut, duration: const Duration(milliseconds: 250));
+	}
+
+	expand()
+	{
+
 	}
 
 	@override
@@ -72,7 +166,7 @@ class _MyHomePageState extends State<MyHomePage>
 			child:new Row(
 				children: <Widget>[
 					new Container(
-						width: MediaQuery.of(context).size.width * 0.66
+						width: MediaQuery.of(context).size.width * _panelRatio
 					),
 					new Expanded(
 						child:new Container(
@@ -82,7 +176,6 @@ class _MyHomePageState extends State<MyHomePage>
 								decoration: new BoxDecoration(border: new Border.all(color: const Color.fromARGB(127, 72, 196, 206)), borderRadius: new BorderRadius.circular(3.0)),
 								padding: new EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 6.0),
 								child: new Column(
-									crossAxisAlignment: CrossAxisAlignment.start,
 									children: 
 									[
 										// Title Row
@@ -92,22 +185,10 @@ class _MyHomePageState extends State<MyHomePage>
 												new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5))
 											]
 										),
+										// Two decoration lines underneath the title
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										// Players Row
-										new CommandPanel(new PlayerListWidget()),
-										// Fill the middle space
-										new Expanded(child: new Container()),
-										// Buttons
-										new Column(
-											children:
-											[
-												new PanelButton("SET TO READY", 59.0, 18.0, 1.3, null, _handleReady),
-												new PanelButton("START", 59.0, 18.0, 1.3, const EdgeInsets.only(top:10.0),_handleStart, isEnabled: false),
-												new PanelButton("START", 59.0, 18.0, 1.3, const EdgeInsets.only(top:10.0),_handleStart, isAccented: true)
-												// TODO: remove extra start button
-											],
-										),
+										new LobbyWidget(_lobbyOpacity, _handleReady, _handleStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,

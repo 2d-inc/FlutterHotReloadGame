@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
 
 class PanelButton extends StatefulWidget
@@ -129,7 +127,6 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                     ..value = 0.0
                     ..animateTo(1.0, curve: Curves.easeOut, duration: const Duration(milliseconds: 150));
             });
-        this._onTap();
     }
 
     @override
