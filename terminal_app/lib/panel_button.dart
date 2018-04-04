@@ -31,7 +31,7 @@ class PanelButton extends StatefulWidget
     State<StatefulWidget> createState() => new PanelButtonState(_text, _height, _fontSize, _letterSpacing, _margin, _onTap, isEnabled, isAccented);
 }
 
-class PanelButtonState extends State<PanelButton>
+class PanelButtonState extends State<PanelButton> with SingleTickerProviderStateMixin
 {
     static const Color enabledBackground = const Color.fromARGB(255, 22, 75, 81);
     static const Color enabledText = const Color.fromARGB(255, 167, 230, 237);
@@ -39,7 +39,9 @@ class PanelButtonState extends State<PanelButton>
     static const Color disabledText = const Color.fromARGB(51, 167, 230, 237);
     static const Color accentedBackground = const Color.fromARGB(255, 86, 234, 246);
     static const Color accentedText = const Color.fromARGB(255, 3, 28, 32);
-    static const Color pressedColor = const Color.fromARGB(255, 144, 8, 62);
+    // TODO: should check these colors
+    static const Color pressedBackground = const Color.fromARGB(255, 144, 8, 62);
+    static const Color pressedText = const Color.fromARGB(255, 242, 220, 253);
 
     final String _text;
     final double _height;
@@ -47,12 +49,47 @@ class PanelButtonState extends State<PanelButton>
     final double _letterSpacing;
     final EdgeInsets _margin;
     final VoidCallback _onTap;
-    final bool _isEnabled;
-    final bool _isAccented;
-    
-    bool _isPressed;
+    final Color _backgroundColor;
+    final Color _textColor;
 
-    PanelButtonState(this._text, this._height, this._fontSize, this._letterSpacing, this._margin, this._onTap, this._isEnabled, this._isAccented);
+    AnimationController _pressedColorController;
+    Animation<Color> _buttonBackgroundAnimation;
+    Animation<Color> _buttonTextAnimation;
+    bool _isPressed = false;
+    Color _currentBgColor;
+    Color _currentTxtColor;
+
+    PanelButtonState(this._text, this._height, this._fontSize, this._letterSpacing, this._margin, this._onTap, bool isEnabled, bool isAccented) :
+        _backgroundColor = (isAccented ? accentedBackground : (isEnabled ? enabledBackground : disabledBackground)),
+        _textColor = (isAccented ? accentedText : (isEnabled ? enabledText : disabledText))
+        {
+            _currentBgColor = _backgroundColor;
+            _currentTxtColor = _textColor;
+        }
+
+    @override
+    initState()
+    {
+        super.initState();
+        _pressedColorController = new AnimationController(duration: const Duration(milliseconds: 125), vsync: this)
+                ..addListener(()
+                    {
+                        setState(()
+                        {
+                            _currentBgColor = _buttonBackgroundAnimation.value;
+                            _currentTxtColor = _buttonTextAnimation.value;
+                            print("${_pressedColorController.status}");
+                        });
+                    }
+                );
+    }
+
+    @override
+    dispose()
+    {
+        _pressedColorController.dispose();
+        super.dispose();
+    }
 
     void _onButtonPressed(TapDownDetails details)
     {
@@ -60,6 +97,18 @@ class PanelButtonState extends State<PanelButton>
             ()
             {
                 this._isPressed = true;
+
+                _buttonBackgroundAnimation = new ColorTween(
+                    begin: _backgroundColor,
+                    end: pressedBackground,
+                ).animate(_pressedColorController);
+                _buttonTextAnimation = new ColorTween(
+                    begin: _textColor,
+                    end: pressedText,
+                ).animate(_pressedColorController);
+                _pressedColorController
+                    ..value = 0.0
+                    ..animateTo(1.0, curve: Curves.decelerate);
             });
         this._onTap();
     }
@@ -69,7 +118,18 @@ class PanelButtonState extends State<PanelButton>
         setState(
             ()
             {
-                this._isPressed = false;
+                print("RELEASE");
+                _buttonBackgroundAnimation = new ColorTween(
+                    begin: _currentBgColor,
+                    end: _backgroundColor,
+                ).animate(_pressedColorController);
+                _buttonTextAnimation = new ColorTween(
+                    begin: _currentTxtColor,
+                    end: _textColor,
+                ).animate(_pressedColorController);
+                _pressedColorController
+                    ..value = 0.0
+                    ..animateTo(1.0, curve: Curves.decelerate);
             });
         this._onTap();
     }
@@ -84,7 +144,7 @@ class PanelButtonState extends State<PanelButton>
                         margin: _margin,
                         decoration: new BoxDecoration(
                             borderRadius: new BorderRadius.circular(3.0), 
-                            color: _isPressed ? pressedColor : _isAccented ? accentedBackground : (_isEnabled ? enabledBackground : disabledBackground)
+                            color: _currentBgColor
                         ),
                         child: new Container(
                             height: _height,
@@ -93,7 +153,7 @@ class PanelButtonState extends State<PanelButton>
                                 _text, 
                                 style: 
                                     new TextStyle(
-                                        color: _isAccented ? accentedText : (_isEnabled ? enabledText : disabledText),
+                                        color: _currentTxtColor,
                                         fontFamily: "Inconsolata", 
                                         fontWeight: FontWeight.w700, 
                                         fontSize: _fontSize, 
