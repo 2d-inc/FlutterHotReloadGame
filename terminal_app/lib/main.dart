@@ -103,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage>
 													margin: new EdgeInsets.only(top: 24.0),
 													decoration: new BoxDecoration(border: new Border.all(width: 2.0 , color: const Color.fromARGB(255, 62, 196, 206)), borderRadius: new BorderRadius.circular(3.0), color: const Color.fromARGB(255, 3, 28, 32)),
 													padding: new EdgeInsets.symmetric(vertical: 14.0, horizontal: 18.0),
-													child: new PlayersWidget()
+													child: new PlayerListWidget()
 												),
 											]
 										),
