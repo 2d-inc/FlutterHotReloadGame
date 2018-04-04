@@ -3,6 +3,7 @@ import "dart:ui" as ui;
 import "dart:math";
 import "package:flare/flare.dart" as flr;
 import "dart:typed_data";
+import "package:flutter/scheduler.dart";
 
 class FeaturedRestaurantSimple extends StatelessWidget
 {
@@ -206,6 +207,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel>  with SingleTickerP
 				continue;
 			}
 			FeaturedRestaurantData restaurant = data[visibleIdx+i];
+			//visibleHeros.add(new RepaintBoundary(child:new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare)));
 			visibleHeros.add(new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare));
 			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i, deliveryTime: restaurant.deliveryTime,));
 		}
@@ -468,6 +470,12 @@ class RestaurantHero extends LeafRenderObjectWidget
 					..flare = flare
 					..scroll = scroll;
 	}
+
+	@override
+	void didUnmountRenderObject(RestaurantHeroRenderObject renderObject)
+	{
+		renderObject.cleanup();
+	}
 }
 
 class RestaurantHeroRenderObject extends RenderBox
@@ -475,9 +483,64 @@ class RestaurantHeroRenderObject extends RenderBox
 	Color _color;
 	String _flare;
 	Rect _flareRect = Rect.zero;
-	double _scroll;
+	double _scroll = 0.0;
 	flr.FlutterActor _actor;
 	flr.ActorAnimation _animation;
+
+	double _animationTime = 0.0;
+	double _lastFrameTime = 0.0;
+	bool _isPlaying = false;
+
+	set isPlaying(bool play)
+	{
+		if(_isPlaying == play)
+		{
+			return;
+		}
+		_isPlaying = play;
+		if(play)
+		{
+			_lastFrameTime = new DateTime.now().microsecondsSinceEpoch / Duration.microsecondsPerMillisecond / 1000.0;
+			SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
+		}
+
+		//print("PLAYING CHANGED $play $_flare");
+	}
+
+	cleanup()
+	{
+		isPlaying = false;
+	}
+
+	bool get isPlaying
+	{
+		return _isPlaying;
+	}
+
+	void beginFrame(Duration timeStamp) 
+	{
+		//final double t = timeStamp.inMicroseconds / Duration.microsecondsPerMillisecond / 1000.0;
+		final double t = new DateTime.now().microsecondsSinceEpoch / Duration.microsecondsPerMillisecond / 1000.0;
+
+		double elapsed = t - _lastFrameTime;
+		_lastFrameTime = t;
+		
+		if(_actor != null)
+		{
+			_animationTime += elapsed;
+			if(_animation != null)
+			{
+				_animation.apply(_animationTime%_animation.duration, _actor, 1.0);
+			}
+			_actor.advance(elapsed);
+		}
+
+		markNeedsPaint();
+		if(_isPlaying)
+		{
+			SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
+		}
+	}
 
 	RestaurantHeroRenderObject(
 		{
@@ -503,20 +566,15 @@ class RestaurantHeroRenderObject extends RenderBox
 		size = constraints.biggest;
 	}
 
-	@override
-	void performLayout()
-	{
-		super.performLayout();
+	// @override
+	// void performLayout()
+	// {
+	// 	super.performLayout();
 		
-		if(_actor != null)
-		{
-			_actor.advance(0.0);
-			Float32List aabb = _actor.computeAABB();
-			_flareRect = new Rect.fromLTRB(aabb[0], aabb[1], aabb[2], aabb[3]);
-		}
-	}
-
-	double time = 0.0;
+	// 	if(_actor != null)
+	// 	{
+	// 	}
+	// }
 
 	@override
 	void paint(PaintingContext context, Offset offset)
@@ -539,24 +597,17 @@ class RestaurantHeroRenderObject extends RenderBox
 			..color = new Color.fromARGB(22, 0, 35, 120)
 			..maskFilter = _kShadowMaskFilter);
 		canvas.restore();
+
+		const double verticalOffset = -75.0;
 		
 		if(_actor != null)
 		{
 			canvas.save();
 			canvas.translate(_scroll * (width+ItemPadding), 0.0);
-			canvas.translate(size.width/2.0-_flareRect.left-_flareRect.width/2.0, (size.height-DetailHeight/2.0)/2.0-_flareRect.top-_flareRect.height/2.0);
-
-			if(_animation != null)
-			{
-				time = (time + 0.016)%_animation.duration;
-				_animation.apply(time, _actor, 1.0);
-				_actor.advance(0.0);
-			}
+			canvas.translate(size.width/2.0-_flareRect.left-_flareRect.width/2.0, (size.height-DetailHeight/2.0)/2.0-_flareRect.top-_flareRect.height/2.0+verticalOffset);
 			_actor.draw(canvas);
 			canvas.restore();
 		}
-		
-		
 	}
 
 	Color get color
@@ -586,6 +637,8 @@ class RestaurantHeroRenderObject extends RenderBox
 			return;
 		}
 		_flare = value;
+		_animation = null;
+		updateShouldPlay();
 
 		if(value == null)
 		{
@@ -598,12 +651,38 @@ class RestaurantHeroRenderObject extends RenderBox
 			(bool success)
 			{
 				_actor = actor;
-				_animation = actor.getAnimation("Untitled");
-				markNeedsLayout();
+				_animation = actor.getAnimation("Feature");
+				// if(_animation != null)
+				// {
+				// 	_animation.apply(0.0, _actor, 1.0);
+				// }
+				_actor.advance(0.0);
+				Float32List aabb = _actor.computeAABB();
+				if(value == "assets/flares/Sushi")
+				{
+					_flareRect = new Rect.fromLTRB(aabb[0]+300.0, aabb[1]-100, aabb[2], aabb[3]);
+				}
+				else
+				{
+					_flareRect = new Rect.fromLTRB(aabb[0], aabb[1], aabb[2], aabb[3]);
+				}
+
+				if(_animation != null)
+				{
+					_animation.apply(0.0, _actor, 1.0);
+					_actor.advance(0.0);
+				}
+				
 				markNeedsPaint();
+				updateShouldPlay();
 				//animation = actor.getAnimation("Run");
 			}
 		);
+	}
+
+	void updateShouldPlay()
+	{
+		isPlaying = _animation != null && _scroll == 0.0;//> -1.0 && _scroll < 1.0;
 	}
 
 	double get scroll
@@ -618,6 +697,7 @@ class RestaurantHeroRenderObject extends RenderBox
 			return;
 		}
 		_scroll = value;
+		updateShouldPlay();
 		markNeedsPaint();
 	}
 }

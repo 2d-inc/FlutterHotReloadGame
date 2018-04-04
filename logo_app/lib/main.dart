@@ -30,9 +30,9 @@ class MyApp extends StatelessWidget {
 
 
 List<FeaturedRestaurantData> featuredRestaurants = <FeaturedRestaurantData>[
-	const FeaturedRestaurantData("Pizzeria Delfina", description: "This energetic, farm-to-table restaurant serves up Neopolitan-inspired pizza with gelato.", deliveryTime: 15, color:const Color.fromARGB(255, 255, 223, 204), flare:"assets/flares/PizzaDrip"),
-	const FeaturedRestaurantData("Bushido Izakaya", description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime: 32, color:const Color.fromARGB(255, 237, 218, 229)),
-	const FeaturedRestaurantData("Umami Burger", description: "Serves gourmet burgers, truffle fries, salads, and craft beers for lunch and dinner.", deliveryTime: 27, color:const Color.fromARGB(255, 255, 234, 216)),
+	const FeaturedRestaurantData("Pizzeria Delfina", description: "This energetic, farm-to-table restaurant serves up Neopolitan-inspired pizza with gelato.", deliveryTime: 15, color:const Color.fromARGB(255, 255, 223, 204), flare:"assets/flares/Pizzeria"),
+	const FeaturedRestaurantData("Bushido Izakaya", description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime: 32, color:const Color.fromARGB(255, 237, 218, 229), flare:"assets/flares/Sushi"),
+	const FeaturedRestaurantData("Umami Burger", description: "Serves gourmet burgers, truffle fries, salads, and craft beers for lunch and dinner.", deliveryTime: 27, color:const Color.fromARGB(255, 255, 234, 216), flare:"assets/flares/Pizzeria"),
 ];
 
 class MyHomePage extends StatefulWidget {

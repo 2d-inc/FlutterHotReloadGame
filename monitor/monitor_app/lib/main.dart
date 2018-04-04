@@ -412,7 +412,7 @@ class NimaRenderObject extends RenderBox
 
 	void beginFrame(Duration timeStamp) 
 	{
-		final double t = timeStamp.inMicroseconds / Duration.MICROSECONDS_PER_MILLISECOND / 1000.0;
+		final double t = timeStamp.inMicroseconds / Duration.microsecondsPerMillisecond / 1000.0;
 		
 		if(_lastFrameTime == 0)
 		{

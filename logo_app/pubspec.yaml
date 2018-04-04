@@ -33,7 +33,8 @@ flutter:
    - assets/flares/SearchIcon.flr
    - assets/flares/PizzaIcon.flr
    - assets/flares/BurgerIcon.flr
-   - assets/flares/PizzaDrip.flr
+   - assets/flares/Pizzeria.flr
+   - assets/flares/Sushi.flr
    - assets/images/cafe.jpg
    - assets/images/pizza.jpg
    - assets/images/poke.jpg
