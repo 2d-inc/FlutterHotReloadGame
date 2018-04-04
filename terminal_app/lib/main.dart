@@ -103,7 +103,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 					..animateTo(1.0, curve: Curves.easeInOut, duration: const Duration(milliseconds: 250))
 					..addStatusListener(_slideListener)
 					..addListener(_slideCallback);
-				print("FADE COMPLETE!");
 			}
 		};
 
@@ -117,7 +116,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 					..stop()
 					..addListener(_fadeCallback)
 					..addStatusListener(_fadeListener);
-				print("SLIDE COMPLETE!");
 				_isPlaying = !_isPlaying;		
 			}
 		};
@@ -166,7 +164,13 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 			child:new Row(
 				children: <Widget>[
 					new Container(
-						width: MediaQuery.of(context).size.width * _panelRatio
+						width: MediaQuery.of(context).size.width * _panelRatio,
+						decoration: new BoxDecoration(
+							image: new DecorationImage(
+								image: new AssetImage("assets/images/lobby_background.png"),
+								fit: BoxFit.fitHeight
+						),
+						)
 					),
 					new Expanded(
 						child:new Container(
