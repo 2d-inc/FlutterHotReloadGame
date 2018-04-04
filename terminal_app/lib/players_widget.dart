@@ -22,6 +22,7 @@ class PlayerListState extends State<PlayerListWidget>
 
         for(int i = 0; i < _players.length; i++)
         {
+            // TODO: remove
             PlayerStatus st = i % 2 == 0 ? PlayerStatus.NOT_READY : PlayerStatus.READY;
             c[i] = (new PlayerRow("Player ${i+1}", st));
         }
