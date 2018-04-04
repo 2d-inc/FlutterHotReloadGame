@@ -5,10 +5,10 @@ import "package:web_socket_channel/web_socket_channel.dart";
 import "package:web_socket_channel/io.dart";
 import "dart:io";
 import "command_panel.dart";
+import "panel_button.dart";
 import "players_widget.dart";
 
 void main() => runApp(new MyApp());
-
 
 class MyApp extends StatelessWidget {
 	// This widget is the root of your application.
@@ -67,8 +67,6 @@ class _MyHomePageState extends State<MyHomePage>
 	@override
 	Widget build(BuildContext context) 
 	{
-		final double DPR = MediaQuery.of(context).devicePixelRatio;
-
 		return new Container(
 			decoration:new BoxDecoration(color:Colors.white),
 			child:new Row(
@@ -78,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage>
 					),
 					new Expanded(
 						child:new Container(
-							padding: new EdgeInsets.all(12.0 * DPR),
+							padding: new EdgeInsets.all(12.0),
 							decoration:new BoxDecoration(color:Colors.black),
 							child: new Container(
 								decoration: new BoxDecoration(border: new Border.all(color: const Color.fromARGB(127, 72, 196, 206)), borderRadius: new BorderRadius.circular(3.0)),
@@ -104,29 +102,9 @@ class _MyHomePageState extends State<MyHomePage>
 										new Column(
 											children:
 											[
-												new GestureDetector(
-													onTap: _handleReady,
-													child: new Container(
-														decoration: new BoxDecoration(borderRadius: new BorderRadius.circular(3.0), color: const Color.fromARGB(255, 22, 75, 81)),
-														child: new Container(
-															height: 59.0,
-															alignment: Alignment.center,
-															child: new Text("SET TO READY", style: const TextStyle(color: const Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 18.0, decoration: TextDecoration.none, letterSpacing: 1.3))
-														)
-													)
-												),
-												new GestureDetector(
-													onTap: _handleStart,
-													child: new Container(
-														margin: const EdgeInsets.only(top: 10.0),
-														decoration: new BoxDecoration(borderRadius: new BorderRadius.circular(3.0), color: const Color.fromARGB(204, 9, 45, 51)),
-														child: new Container(
-															height: 59.0,
-															alignment: Alignment.center,
-															child: new Text("START", style: const TextStyle(color: const Color.fromARGB(51, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 18.0, decoration: TextDecoration.none, letterSpacing: 1.3))
-														)
-													)
-												)
+												new PanelButton("SET TO READY", 59.0, 18.0, 1.3, null, _handleReady),
+												new PanelButton("START", 59.0, 18.0, 1.3, const EdgeInsets.only(top:10.0),_handleStart, isEnabled: false),
+												new PanelButton("START", 59.0, 18.0, 1.3, const EdgeInsets.only(top:10.0),_handleStart, isAccented: true)
 											],
 										),
 										new Container(
@@ -144,20 +122,7 @@ class _MyHomePageState extends State<MyHomePage>
 			)
 		);
 	}
-											// child:new ControlGrid(
-											// 	children:<Widget>[
-											// 		new GestureDetector(onTap: _handleTap, child:new Container(decoration:new BoxDecoration(color:Colors.red))),
-											// 		new GestureDetector(onTap: _handleTap, child:new Container(decoration:new BoxDecoration(color:Colors.green))),
-											// 		new GestureDetector(onTap: _handleTap, child:new Container(decoration:new BoxDecoration(color:Colors.blue))),
-											// 		new Container(
-											// 			decoration: new BoxDecoration(borderRadius: new BorderRadius.circular(3.0), color: const Color.fromARGB(255, 22, 75, 81)),
-											// 			child: new Container(
-											// 				alignment: Alignment.center,
-											// 				child: new Text("SET TO READY", style: const TextStyle(color: const Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 28.0, decoration: TextDecoration.none, letterSpacing: 1.3))
-											// 			)
-											// 		)
-											// 	]
-											// )
+
 	addButton(Widget w)
 	{
 		_buttonList.add(w);
