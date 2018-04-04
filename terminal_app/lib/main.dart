@@ -6,6 +6,9 @@ import "package:web_socket_channel/io.dart";
 import "dart:io";
 import "command_panel.dart";
 import "players_widget.dart";
+import "decorations/dotted_grid.dart";
+import "game_controls/game_slider.dart";
+import "game_controls/game_radial.dart";
 
 void main() => runApp(new MyApp());
 
@@ -74,12 +77,12 @@ class _MyHomePageState extends State<MyHomePage>
 			child:new Row(
 				children: <Widget>[
 					new Container(
-						width: MediaQuery.of(context).size.width * 0.66
+						width: MediaQuery.of(context).size.width * 0.33
 					),
 					new Expanded(
 						child:new Container(
 							padding: new EdgeInsets.all(12.0 * DPR),
-							decoration:new BoxDecoration(color:Colors.black),
+							decoration:new DottedGrid(),//new BoxDecoration(color:Colors.black),
 							child: new Container(
 								decoration: new BoxDecoration(border: new Border.all(color: const Color.fromARGB(127, 72, 196, 206)), borderRadius: new BorderRadius.circular(3.0)),
 								padding: new EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 6.0),
@@ -97,10 +100,9 @@ class _MyHomePageState extends State<MyHomePage>
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
 										// Players Row
-										new CommandPanel(new PlayerListWidget()),
+										/*new CommandPanel(new PlayerListWidget(), margin:new EdgeInsets.only(top: 24.0)),
 										// Fill the middle space
 										new Expanded(child: new Container()),
-										// Buttons
 										new Column(
 											children:
 											[
@@ -128,7 +130,15 @@ class _MyHomePageState extends State<MyHomePage>
 													)
 												)
 											],
-										),
+										),*/
+										new Expanded(child:new Container(margin:new EdgeInsets.only(top:43.0), child:new ControlGrid(
+												children:<Widget>[
+													new CommandPanel(new GameSlider(), isExpanded: true),
+													new CommandPanel(new GameRadial(), isExpanded: true),
+													new CommandPanel(new Container(), isExpanded: true),
+												]
+											))),
+										// Buttons
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,
@@ -223,7 +233,7 @@ class RenderControlGrid extends RenderBox with ContainerRenderObjectMixin<Render
 		const double padding = 50.0;
 		const double numColumns = 2.0;
 		final double childWidth = (size.width - (padding*(numColumns-1)))/numColumns;
-		final double rowHeight = childWidth/2.0;
+		final double rowHeight = childWidth;
 
 		int idx = 0;
     	while (child != null) 

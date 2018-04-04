@@ -503,8 +503,6 @@ class RestaurantHeroRenderObject extends RenderBox
 			_lastFrameTime = new DateTime.now().microsecondsSinceEpoch / Duration.microsecondsPerMillisecond / 1000.0;
 			SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 		}
-
-		//print("PLAYING CHANGED $play $_flare");
 	}
 
 	cleanup()
