@@ -4,9 +4,10 @@ import "package:flutter/rendering.dart";
 import "package:web_socket_channel/web_socket_channel.dart";
 import "package:web_socket_channel/io.dart";
 import "dart:io";
+import "players_widget.dart";
+
 void main() => runApp(new MyApp());
 
-enum PlayerStatus { READY, NOT_READY }
 
 class MyApp extends StatelessWidget {
 	// This widget is the root of your application.
@@ -44,16 +45,8 @@ class MyHomePage extends StatefulWidget
 }
 
 class _MyHomePageState extends State<MyHomePage> 
-{
-	static const Color START_BUTTON_FADED = const Color.fromARGB(204, 9, 45, 51);
-	static const Color START_BUTTON_LIT = const Color.fromARGB(255, 86, 234, 246);
-	
+{	
 	List<Widget> _buttonList;
-	final List<PlayerStatus> _players = new List.filled(4, PlayerStatus.NOT_READY);
-	PlayerStatus _status;
-	Container _readyButton;
-	Container _startButton;
-
 
 	void _handleTap()
 	{
@@ -110,48 +103,7 @@ class _MyHomePageState extends State<MyHomePage>
 													margin: new EdgeInsets.only(top: 24.0),
 													decoration: new BoxDecoration(border: new Border.all(width: 2.0 , color: const Color.fromARGB(255, 62, 196, 206)), borderRadius: new BorderRadius.circular(3.0), color: const Color.fromARGB(255, 3, 28, 32)),
 													padding: new EdgeInsets.symmetric(vertical: 14.0, horizontal: 18.0),
-													child: new Column(
-														children: 
-														[
-															// TODO: make this into its own component
-															new Row(
-																crossAxisAlignment: CrossAxisAlignment.end,
-																children:
-																[ 
-																	new Text("Player 1", style: new TextStyle(color: new Color.fromARGB(255, 45, 207, 220), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none)),
-																	new Expanded(child: new Container(color: new Color.fromARGB(255, 43, 196, 209), height: 1.0, margin: new EdgeInsets.only(left: 10.0, right: 10.0, bottom: 4.0))),
-																	new Text("READY", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 236), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 18.0, decoration: TextDecoration.none)),
-																]
-															),
-															new Row(
-																crossAxisAlignment: CrossAxisAlignment.end,
-																children:
-																[ 
-																	new Text("Player 2", style: new TextStyle(color: new Color.fromARGB(255, 45, 207, 220), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none)),
-																	new Expanded(child: new Container(color: new Color.fromARGB(255, 43, 196, 209), height: 1.0, margin: new EdgeInsets.only(left: 10.0, right: 10.0, bottom: 4.0))),
-																	new Text("READY", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 236), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 18.0, decoration: TextDecoration.none)),
-																]
-															),
-															new Row(
-																crossAxisAlignment: CrossAxisAlignment.end,
-																children:
-																[ 
-																	new Text("Player 3", style: new TextStyle(color: new Color.fromARGB(255, 45, 207, 220), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none)),
-																	new Expanded(child: new Container(color: new Color.fromARGB(255, 43, 196, 209), height: 1.0, margin: new EdgeInsets.only(left: 10.0, right: 10.0, bottom: 4.0))),
-																	new Text("NOT READY", style: new TextStyle(color: new Color.fromARGB(255, 22, 75, 81), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none)),
-																]
-															),
-															new Row(
-																crossAxisAlignment: CrossAxisAlignment.end,
-																children:
-																[ 
-																	new Text("Player 4", style: new TextStyle(color: new Color.fromARGB(255, 45, 207, 220), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none)),
-																	new Expanded(child: new Container(color: new Color.fromARGB(255, 43, 196, 209), height: 1.0, margin: new EdgeInsets.only(left: 10.0, right: 10.0, bottom: 4.0))),
-																	new Text("NOT READY", style: new TextStyle(color: new Color.fromARGB(255, 22, 75, 81), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none)),
-																]
-															),
-														],
-													)
+													child: new PlayersWidget()
 												),
 											]
 										),
@@ -167,13 +119,20 @@ class _MyHomePageState extends State<MyHomePage>
 											),
 											// Fill the middle space
 											new Expanded(child: new Container()),
-											// Buttons TODO: make this into its own component
+											// Buttons
 											new Column(
 												children:
 												[
 													new GestureDetector(
 														onTap: _handleReady,
-														child: _readyButton
+														child: new Container(
+															decoration: new BoxDecoration(borderRadius: new BorderRadius.circular(3.0), color: const Color.fromARGB(255, 22, 75, 81)),
+															child: new Container(
+																height: 59.0,
+																alignment: Alignment.center,
+																child: new Text("SET TO READY", style: const TextStyle(color: const Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 18.0, decoration: TextDecoration.none, letterSpacing: 1.3))
+															)
+														)
 													),
 													new GestureDetector(
 														onTap: _handleStart,
@@ -204,6 +163,26 @@ class _MyHomePageState extends State<MyHomePage>
 			)
 		);
 	}
+											// child:new ControlGrid(
+											// 	children:<Widget>[
+											// 		new GestureDetector(onTap: _handleTap, child:new Container(decoration:new BoxDecoration(color:Colors.red))),
+											// 		new GestureDetector(onTap: _handleTap, child:new Container(decoration:new BoxDecoration(color:Colors.green))),
+											// 		new GestureDetector(onTap: _handleTap, child:new Container(decoration:new BoxDecoration(color:Colors.blue))),
+											// 		new Container(
+											// 			decoration: new BoxDecoration(borderRadius: new BorderRadius.circular(3.0), color: const Color.fromARGB(255, 22, 75, 81)),
+											// 			child: new Container(
+											// 				alignment: Alignment.center,
+											// 				child: new Text("SET TO READY", style: const TextStyle(color: const Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 28.0, decoration: TextDecoration.none, letterSpacing: 1.3))
+											// 			)
+											// 		)
+											// 	]
+											// )
+	addButton(Widget w)
+	{
+		_buttonList.add(w);
+	}
+
+	get children => _buttonList;
 }
 
 class ControlGrid extends MultiChildRenderObjectWidget
