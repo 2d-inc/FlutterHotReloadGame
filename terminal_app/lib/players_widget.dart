@@ -1,3 +1,6 @@
+import 'dart:math';
+import 'dart:ui' show PointMode;
+
 import "package:flutter/material.dart";
 
 enum PlayerStatus { READY, NOT_READY }
@@ -15,30 +18,62 @@ class PlayerListState extends State<PlayerListWidget>
     @override
     Widget build(BuildContext context)
     {
-        List<Widget> c = new List<Widget>(_players.length);
+        List<TableRow> c = new List<TableRow>(_players.length);
 
         for(int i = 0; i < _players.length; i++)
         {
             PlayerStatus st = i % 2 == 0 ? PlayerStatus.NOT_READY : PlayerStatus.READY;
-            c[i] = (new PlayerWidget("Player $i", st));
+            c[i] = (new PlayerRow("Player ${i+1}", st));
         }
 
-        return new Column(children: c);
+        return new Table(
+            children: c, 
+            defaultVerticalAlignment: TableCellVerticalAlignment.bottom,
+            columnWidths: 
+            {
+                0: const MinColumnWidth(const IntrinsicColumnWidth(), const FractionColumnWidth(0.5)),
+                1: const FlexColumnWidth(),
+                2: const IntrinsicColumnWidth()
+            },
+        );
     }
 }
 
-class PlayerWidget extends StatefulWidget
+class DottedDecoration extends Decoration
 {
-    String _name;
-    PlayerStatus _status;
-
-    PlayerWidget(this._name, this._status, { Key key }) : super(key: key);
-
     @override
-    PlayerState createState() => new PlayerState(_name, _status);
+    BoxPainter createBoxPainter([VoidCallback onChanged])
+    {
+        return new DottedPainter();
+    }
 }
 
-class PlayerState extends State<PlayerWidget>
+class DottedPainter extends BoxPainter
+{
+    static const int MAX_NUM_POINTS = 10;
+    static const int POINTS_OFFSET = 7;
+
+    @override
+    void paint(Canvas canvas, Offset offset, ImageConfiguration configuration)
+    {
+        double availableWidth = min(configuration.size.width, (MAX_NUM_POINTS * POINTS_OFFSET).toDouble());
+        int numPoints = (availableWidth/POINTS_OFFSET).floor();
+
+        Paint dotsPaint = new Paint()
+            ..strokeWidth = 1.0
+            ..color = Colors.cyan;
+
+        List<Offset> dots = new List(numPoints);
+        for(int i = 0; i < numPoints; i++)
+        {
+            double dx = offset.dx + i * POINTS_OFFSET;
+            dots[i] = new Offset(dx, offset.dy);
+        }
+        canvas.drawPoints(PointMode.points, dots, dotsPaint);
+    }
+}
+
+class PlayerRow extends TableRow
 {
     static const Map<PlayerStatus, Map> READY_MAP = const 
     {
@@ -56,28 +91,27 @@ class PlayerState extends State<PlayerWidget>
         }
     };
 
-    String _name;
-    PlayerStatus _status;
-
-    PlayerState(this._name, this._status) : super();
-
-    @override
-    Widget build(BuildContext context)
-    {
-        Map current = READY_MAP[_status];
-        String readyText = current["text"];
-        Color textColor = current["color"];
-        FontWeight weight = current["weight"];
-
-        return new Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children:
-                        [ 
-                            new Text(_name, style: new TextStyle(color: new Color.fromARGB(255, 45, 207, 220), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none)),
-                            new Expanded(child: new Container(color: new Color.fromARGB(255, 43, 196, 209), height: 1.0, margin: new EdgeInsets.only(left: 10.0, right: 10.0, bottom: 4.0))),
-                            new Text(readyText, style: new TextStyle(color: textColor, fontFamily: "Inconsolata", fontWeight: weight, fontSize: 18.0, decoration: TextDecoration.none)),
-                        ]
-                    );
-    }
-
+    PlayerRow(String name, PlayerStatus status, { Key k, Decoration dec })
+        : super(
+            key: k,
+            decoration: dec,
+            children:
+            [
+                new Container(child: new Text(name, style: new TextStyle(color: new Color.fromARGB(255, 45, 207, 220), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none))),
+                new Container(
+                    alignment: Alignment.bottomLeft,
+                    decoration: new DottedDecoration(),
+                    height: 1.0, 
+                    margin: new EdgeInsets.only(left: 10.0, right: 10.0, bottom: 4.0),
+                    ),
+                new Container(
+                    alignment: Alignment.centerRight,
+                    child:
+                    new Text(
+                        READY_MAP[status]["text"], // Text string
+                        style: new TextStyle(color: READY_MAP[status]["color"], fontFamily: "Inconsolata", fontWeight: READY_MAP[status]["weight"], fontSize: 18.0, decoration: TextDecoration.none)
+                    )
+                ),
+            ]
+        );
 }
