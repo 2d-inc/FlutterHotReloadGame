@@ -10,6 +10,7 @@ import "decorations/dotted_grid.dart";
 import "game_controls/game_slider.dart";
 import "game_controls/game_radial.dart";
 import "lobby.dart";
+import "in_game.dart";
 
 void main() => runApp(new MyApp());
 
@@ -180,7 +181,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 					new Expanded(
 						child:new Container(
 							padding: new EdgeInsets.all(12.0),
-							decoration:new BoxDecoration(color:Colors.black),
+							decoration:new DottedGrid(),
 							child: new Container(
 								decoration: new BoxDecoration(border: new Border.all(color: const Color.fromARGB(127, 72, 196, 206)), borderRadius: new BorderRadius.circular(3.0)),
 								padding: new EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 6.0),
@@ -197,7 +198,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 										// Two decoration lines underneath the title
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										new LobbyWidget(_lobbyOpacity, _handleReady, _handleStart),
+										_panelRatio == gamePanelRatio ? new InGame(1.0-_lobbyOpacity, _handleReady, _handleStart) : new LobbyWidget(_lobbyOpacity, _handleReady, _handleStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,
@@ -220,89 +221,4 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	}
 
 	get children => _buttonList;
-}
-
-class ControlGrid extends MultiChildRenderObjectWidget
-{
-	ControlGrid({
-    	Key key,
-		List<Widget> children: const <Widget>[],
-	}) : super(key: key, children: children);
-
-	@override
-	RenderControlGrid createRenderObject(BuildContext context) 
-	{
-		return new RenderControlGrid();
-	}
-
-	@override
-	void updateRenderObject(BuildContext context, covariant RenderControlGrid renderObject) 
-	{
-	}
-
-	@override
-	void debugFillProperties(DiagnosticPropertiesBuilder description) 
-	{
-		super.debugFillProperties(description);
-	}
-}
-
-class ControlGridParentData extends ContainerBoxParentData<RenderBox> 
-{
-
-}
-/*class Flexible extends ParentDataWidget<Flex> {*/
-class RenderControlGrid extends RenderBox with ContainerRenderObjectMixin<RenderBox, ControlGridParentData>, RenderBoxContainerDefaultsMixin<RenderBox, ControlGridParentData> 
-{
-	 @override
-	bool get sizedByParent => true;
-
-	@override
-	void performResize() 
-	{
-		size = constraints.biggest;
-	}
-
-	@override
-	void setupParentData(RenderBox child) 
-	{
-    	if (child.parentData is! ControlGridParentData)
-		{
-			child.parentData = new ControlGridParentData();
-		}
-	}
-	@override
-  	void performLayout() 
-	{
-		// For now, just place them in a grid. Later we need to use MaxRects to figure out the best layout as some cells will be double height.
-		RenderBox child = firstChild;
-		const double padding = 50.0;
-		const double numColumns = 2.0;
-		final double childWidth = (size.width - (padding*(numColumns-1)))/numColumns;
-		final double rowHeight = childWidth;
-
-		int idx = 0;
-    	while (child != null) 
-		{
-			Constraints constraints = new BoxConstraints(minWidth: childWidth, maxWidth: childWidth, minHeight:rowHeight, maxHeight:rowHeight);
-			child.layout(constraints, parentUsesSize: true);
-			final ControlGridParentData childParentData = child.parentData;
-			childParentData.offset = new Offset((idx%numColumns) * (childWidth+padding), (idx/numColumns).floor()*(rowHeight+padding));
-        	child = childParentData.nextSibling;
-			idx++;
-		}
-	}
-
-	 @override
-	bool hitTestChildren(HitTestResult result, { Offset position }) 
-	{
-		return defaultHitTestChildren(result, position: position);
-	}
-
-	@override
-	void paint(PaintingContext context, Offset offset)
-	{
-		//context.canvas.drawRect(offset & size, new Paint()..color = new Color.fromARGB(255, 125, 152, 165));
-		defaultPaint(context, offset);
-	}
 }
