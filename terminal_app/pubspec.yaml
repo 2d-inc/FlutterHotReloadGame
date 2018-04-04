@@ -19,7 +19,16 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
-
+  fonts:
+  - family: RobotoMono
+    fonts:
+      - asset: assets/fonts/RobotoMono-Regular.ttf
+      - asset: assets/fonts/RobotoMono-Medium.ttf
+  - family: Inconsolata
+    fonts:
+      - asset: assets/fonts/Inconsolata-Regular.ttf
+      - asset: assets/fonts/Inconsolata-Bold.ttf
+        weight: 700
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
