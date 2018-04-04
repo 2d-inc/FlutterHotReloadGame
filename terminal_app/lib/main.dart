@@ -9,9 +9,9 @@ import "players_widget.dart";
 import "decorations/dotted_grid.dart";
 import "game_controls/game_slider.dart";
 import "game_controls/game_radial.dart";
+import "lobby.dart";
 
 void main() => runApp(new MyApp());
-
 
 class MyApp extends StatelessWidget {
 	// This widget is the root of your application.
@@ -48,9 +48,88 @@ class MyHomePage extends StatefulWidget
 	_MyHomePageState createState() => new _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> 
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin
 {	
+	static const double gamePanelRatio = 0.33;
+	static const double lobbyPanelRatio = 0.66;
+
 	List<Widget> _buttonList;
+
+	bool _isPlaying = false;
+	double _panelRatio = 0.66;
+	double _lobbyOpacity = 1.0;
+
+	AnimationController _panelController;
+	AnimationStatusListener _slideListener;
+	AnimationStatusListener _fadeListener;
+	VoidCallback _fadeCallback;
+	VoidCallback _slideCallback;
+	Animation<double> _slideAnimation;
+	Animation<double> _fadeAnimation;
+
+	@override
+	initState()
+	{
+		super.initState();
+
+		_panelController = new AnimationController(vsync: this);
+		
+		_fadeCallback = () 
+		{
+			setState(
+				()
+				{
+					_lobbyOpacity = _fadeAnimation.value;
+				}
+			);
+		};
+		_slideCallback = ()
+		{
+			setState(
+				()
+				{
+					_panelRatio = _slideAnimation.value;
+				}
+			);
+		};
+
+		_fadeListener = (AnimationStatus s){
+			if(s == AnimationStatus.completed)
+			{
+				_panelController.removeListener(_fadeCallback);
+				_panelController.removeStatusListener(_fadeListener);
+				double end = _isPlaying ? lobbyPanelRatio : gamePanelRatio;
+				_slideAnimation = new Tween<double>(
+					begin: _panelRatio,
+					end: end
+				).animate(_panelController);
+				_panelController
+					..value = 0.0
+					..animateTo(1.0, curve: Curves.easeInOut, duration: const Duration(milliseconds: 250))
+					..addStatusListener(_slideListener)
+					..addListener(_slideCallback);
+			}
+		};
+
+		_slideListener = (AnimationStatus s)
+		{
+			if(s == AnimationStatus.completed)
+			{
+				_panelController.removeListener(_slideCallback);
+				_panelController.removeStatusListener(_slideListener);
+				_panelController
+					..stop()
+					..addListener(_fadeCallback)
+					..addStatusListener(_fadeListener);
+				_isPlaying = !_isPlaying;		
+			}
+		};
+
+		_panelController
+			..addListener(_fadeCallback)
+			..addStatusListener(_fadeListener);
+
+	}
 
 	void _handleTap()
 	{
@@ -64,30 +143,48 @@ class _MyHomePageState extends State<MyHomePage>
 
 	void _handleStart()
 	{
-		// TODO:
+		// TODO: Server logic
+		double begin = _isPlaying ? 0.0 : 1.0;
+		double end = _isPlaying ? 1.0 : 0.0;
+
+		_fadeAnimation = new Tween<double>(
+			begin: begin,
+			end: end
+		).animate(_panelController);
+		_panelController
+			..value = 0.0
+			..animateTo(1.0, curve: Curves.easeInOut, duration: const Duration(milliseconds: 250));
+	}
+
+	expand()
+	{
+
 	}
 
 	@override
 	Widget build(BuildContext context) 
 	{
-		final double DPR = MediaQuery.of(context).devicePixelRatio;
-
 		return new Container(
 			decoration:new BoxDecoration(color:Colors.white),
 			child:new Row(
 				children: <Widget>[
 					new Container(
-						width: MediaQuery.of(context).size.width * 0.33
+						width: MediaQuery.of(context).size.width * _panelRatio,
+						decoration: new BoxDecoration(
+							image: new DecorationImage(
+								image: new AssetImage("assets/images/lobby_background.png"),
+								fit: BoxFit.fitHeight
+						),
+						)
 					),
 					new Expanded(
 						child:new Container(
-							padding: new EdgeInsets.all(12.0 * DPR),
-							decoration:new DottedGrid(),//new BoxDecoration(color:Colors.black),
+							padding: new EdgeInsets.all(12.0),
+							decoration:new BoxDecoration(color:Colors.black),
 							child: new Container(
 								decoration: new BoxDecoration(border: new Border.all(color: const Color.fromARGB(127, 72, 196, 206)), borderRadius: new BorderRadius.circular(3.0)),
 								padding: new EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 6.0),
 								child: new Column(
-									crossAxisAlignment: CrossAxisAlignment.start,
 									children: 
 									[
 										// Title Row
@@ -97,48 +194,10 @@ class _MyHomePageState extends State<MyHomePage>
 												new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5))
 											]
 										),
+										// Two decoration lines underneath the title
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										// Players Row
-										/*new CommandPanel(new PlayerListWidget(), margin:new EdgeInsets.only(top: 24.0)),
-										// Fill the middle space
-										new Expanded(child: new Container()),
-										new Column(
-											children:
-											[
-												new GestureDetector(
-													onTap: _handleReady,
-													child: new Container(
-														decoration: new BoxDecoration(borderRadius: new BorderRadius.circular(3.0), color: const Color.fromARGB(255, 22, 75, 81)),
-														child: new Container(
-															height: 59.0,
-															alignment: Alignment.center,
-															child: new Text("SET TO READY", style: const TextStyle(color: const Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 18.0, decoration: TextDecoration.none, letterSpacing: 1.3))
-														)
-													)
-												),
-												new GestureDetector(
-													onTap: _handleStart,
-													child: new Container(
-														margin: const EdgeInsets.only(top: 10.0),
-														decoration: new BoxDecoration(borderRadius: new BorderRadius.circular(3.0), color: const Color.fromARGB(204, 9, 45, 51)),
-														child: new Container(
-															height: 59.0,
-															alignment: Alignment.center,
-															child: new Text("START", style: const TextStyle(color: const Color.fromARGB(51, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 18.0, decoration: TextDecoration.none, letterSpacing: 1.3))
-														)
-													)
-												)
-											],
-										),*/
-										new Expanded(child:new Container(margin:new EdgeInsets.only(top:43.0), child:new ControlGrid(
-												children:<Widget>[
-													new CommandPanel(new GameSlider(), isExpanded: true),
-													new CommandPanel(new GameRadial(), isExpanded: true),
-													new CommandPanel(new Container(), isExpanded: true),
-												]
-											))),
-										// Buttons
+										new LobbyWidget(_lobbyOpacity, _handleReady, _handleStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,
@@ -154,20 +213,7 @@ class _MyHomePageState extends State<MyHomePage>
 			)
 		);
 	}
-											// child:new ControlGrid(
-											// 	children:<Widget>[
-											// 		new GestureDetector(onTap: _handleTap, child:new Container(decoration:new BoxDecoration(color:Colors.red))),
-											// 		new GestureDetector(onTap: _handleTap, child:new Container(decoration:new BoxDecoration(color:Colors.green))),
-											// 		new GestureDetector(onTap: _handleTap, child:new Container(decoration:new BoxDecoration(color:Colors.blue))),
-											// 		new Container(
-											// 			decoration: new BoxDecoration(borderRadius: new BorderRadius.circular(3.0), color: const Color.fromARGB(255, 22, 75, 81)),
-											// 			child: new Container(
-											// 				alignment: Alignment.center,
-											// 				child: new Text("SET TO READY", style: const TextStyle(color: const Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 28.0, decoration: TextDecoration.none, letterSpacing: 1.3))
-											// 			)
-											// 		)
-											// 	]
-											// )
+
 	addButton(Widget w)
 	{
 		_buttonList.add(w);
