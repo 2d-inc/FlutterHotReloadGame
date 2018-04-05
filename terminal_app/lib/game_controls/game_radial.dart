@@ -248,7 +248,6 @@ class GameRadialNotchesRenderObject extends RenderBox
 			if(_tickParagraphs != null)
 			{
 				RadialTickParagraph tickParagraph = _tickParagraphs[i];
-				print("HERE2 $i");
 				Offset tickTextPosition = new Offset(center.dx+c * radiusTickText, center.dy+s * radiusTickText);
 				canvas.drawParagraph(tickParagraph.paragraph, new Offset(tickTextPosition.dx - tickParagraph.size.width/2.0, tickTextPosition.dy - tickParagraph.size.height/2.0));
 			}

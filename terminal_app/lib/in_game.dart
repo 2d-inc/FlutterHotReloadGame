@@ -26,9 +26,9 @@ class InGame extends StatelessWidget
 							margin:new EdgeInsets.only(top:43.0), 
 							child:new ControlGrid(
 								children:<Widget>[
-									new CommandPanel(new GameSlider(), isExpanded: true),
-									new CommandPanel(new GameRadial(), isExpanded: true),
-									new CommandPanel(new Container(), isExpanded: true),
+									new TitledCommandPanel("HEIGHT", new GameSlider(), isExpanded: true),
+									new TitledCommandPanel("MARGIN", new GameRadial(), isExpanded: true),
+									new TitledCommandPanel("TEST", new Container(), isExpanded: true),
 								]
 							)
 						)
