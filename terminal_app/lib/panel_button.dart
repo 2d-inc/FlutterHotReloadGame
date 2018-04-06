@@ -107,7 +107,6 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                     ..value = 0.0
                     ..animateTo(1.0, curve: Curves.elasticOut, duration: const Duration(milliseconds: 50));
             });
-        this._onTap();
     }
 
     void _onButtonReleased(TapUpDetails details)
@@ -126,7 +125,10 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                 _pressedColorController
                     ..value = 0.0
                     ..animateTo(1.0, curve: Curves.easeOut, duration: const Duration(milliseconds: 150));
-            });
+            }
+        );
+
+        this._onTap();
     }
 
     @override

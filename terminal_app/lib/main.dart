@@ -4,8 +4,6 @@ import "package:flutter/rendering.dart";
 import "package:web_socket_channel/web_socket_channel.dart";
 import "package:web_socket_channel/io.dart";
 import "dart:io";
-import "command_panel.dart";
-import "players_widget.dart";
 import "decorations/dotted_grid.dart";
 import "game_controls/game_slider.dart";
 import "game_controls/game_radial.dart";
@@ -54,8 +52,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	static const double gamePanelRatio = 0.33;
 	static const double lobbyPanelRatio = 0.66;
 
-	List<Widget> _buttonList;
-
 	bool _isPlaying = false;
 	double _panelRatio = 0.66;
 	double _lobbyOpacity = 1.0;
@@ -73,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	{
 		super.initState();
 
-		_panelController = new AnimationController(vsync: this);
+		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
 		
 		_fadeCallback = () 
 		{
@@ -93,43 +89,16 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 				}
 			);
 		};
-
-		_fadeListener = (AnimationStatus s){
-			if(s == AnimationStatus.completed)
-			{
-				_panelController.removeListener(_fadeCallback);
-				_panelController.removeStatusListener(_fadeListener);
-				double end = _isPlaying ? lobbyPanelRatio : gamePanelRatio;
-				_slideAnimation = new Tween<double>(
-					begin: _panelRatio,
-					end: end
-				).animate(_panelController);
-				_panelController
-					..value = 0.0
-					..animateTo(1.0, curve: Curves.easeInOut, duration: const Duration(milliseconds: 250))
-					..addStatusListener(_slideListener)
-					..addListener(_slideCallback);
-			}
-		};
-
-		_slideListener = (AnimationStatus s)
-		{
-			if(s == AnimationStatus.completed)
-			{
-				_panelController.removeListener(_slideCallback);
-				_panelController.removeStatusListener(_slideListener);
-				_panelController
-					..stop()
-					..addListener(_fadeCallback)
-					..addStatusListener(_fadeListener);
-				_isPlaying = !_isPlaying;		
-			}
-		};
-
 		_panelController
 			..addListener(_fadeCallback)
-			..addStatusListener(_fadeListener);
+			..addListener(_slideCallback);
+	}
 
+	@override
+	void dispose()
+	{
+		_panelController.dispose();
+		super.dispose();
 	}
 
 	void _handleTap()
@@ -145,22 +114,40 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	void _handleStart()
 	{
 		// TODO: Server logic
-		double begin = _isPlaying ? 0.0 : 1.0;
-		double end = _isPlaying ? 1.0 : 0.0;
+		double endOpacity = _isPlaying ? 1.0 : 0.0;
 
 		_fadeAnimation = new Tween<double>(
-			begin: begin,
-			end: end
-		).animate(_panelController);
-		_panelController
-			..value = 0.0
-			..animateTo(1.0, curve: Curves.easeInOut, duration: const Duration(milliseconds: 250));
+			begin: _lobbyOpacity,
+			end: endOpacity,
+		).animate(new CurvedAnimation(
+				parent: _panelController,
+				curve: new Interval(0.0, 0.5, curve: Curves.easeInOut)
+			)
+		);
+
+		double endPanelRatio = _isPlaying ? lobbyPanelRatio : gamePanelRatio;
+		_slideAnimation = new Tween<double>(
+			begin: _panelRatio,
+			end: endPanelRatio
+		).animate(new CurvedAnimation(
+				parent: _panelController,
+				curve: new Interval(0.5, 1.0, curve: Curves.easeInOut)
+			)
+		);
+		// _panelController.reset();
+		_isPlaying = !_isPlaying;
+		_panelController.forward();
 	}
 
-	expand()
+	void _backToLobby(TapUpDetails details)
 	{
-
+		if(_isPlaying)
+		{
+			_panelController.reverse();
+			_isPlaying = !_isPlaying;
+		}
 	}
+
 
 	@override
 	Widget build(BuildContext context) 
@@ -169,13 +156,16 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 			decoration:new BoxDecoration(color:Colors.white),
 			child:new Row(
 				children: <Widget>[
-					new Container(
-						width: MediaQuery.of(context).size.width * _panelRatio,
-						decoration: new BoxDecoration(
-							image: new DecorationImage(
-								image: new AssetImage("assets/images/lobby_background.png"),
-								fit: BoxFit.fitHeight
-						),
+					new GestureDetector(
+						onTapUp: _backToLobby,
+						child:	new Container(
+							width: MediaQuery.of(context).size.width * _panelRatio,
+							decoration: new BoxDecoration(
+								image: new DecorationImage(
+									image: new AssetImage("assets/images/lobby_background.png"),
+									fit: BoxFit.fitHeight
+							),
+							)
 						)
 					),
 					new Expanded(
@@ -214,11 +204,4 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 			)
 		);
 	}
-
-	addButton(Widget w)
-	{
-		_buttonList.add(w);
-	}
-
-	get children => _buttonList;
 }
