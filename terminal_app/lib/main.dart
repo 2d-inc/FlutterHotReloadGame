@@ -55,14 +55,13 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	bool _isPlaying = false;
 	double _panelRatio = 0.66;
 	double _lobbyOpacity = 1.0;
+	double _gameOpacity = 0.0;
 
 	AnimationController _panelController;
-	AnimationStatusListener _slideListener;
-	AnimationStatusListener _fadeListener;
 	VoidCallback _fadeCallback;
-	VoidCallback _slideCallback;
 	Animation<double> _slideAnimation;
-	Animation<double> _fadeAnimation;
+	Animation<double> _fadeLobbyAnimation;
+	Animation<double> _fadeGameAnimation;
 
 	@override
 	initState()
@@ -76,22 +75,15 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 			setState(
 				()
 				{
-					_lobbyOpacity = _fadeAnimation.value;
+					_lobbyOpacity = _fadeLobbyAnimation?.value ?? _lobbyOpacity;
+					_panelRatio = _slideAnimation?.value ?? _panelRatio;
+					_gameOpacity = _fadeGameAnimation?.value ?? _gameOpacity;
 				}
 			);
 		};
-		_slideCallback = ()
-		{
-			setState(
-				()
-				{
-					_panelRatio = _slideAnimation.value;
-				}
-			);
-		};
+
 		_panelController
-			..addListener(_fadeCallback)
-			..addListener(_slideCallback);
+			..addListener(_fadeCallback);
 	}
 
 	@override
@@ -116,12 +108,12 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 		// TODO: Server logic
 		double endOpacity = _isPlaying ? 1.0 : 0.0;
 
-		_fadeAnimation = new Tween<double>(
+		_fadeLobbyAnimation = new Tween<double>(
 			begin: _lobbyOpacity,
 			end: endOpacity,
 		).animate(new CurvedAnimation(
 				parent: _panelController,
-				curve: new Interval(0.0, 0.5, curve: Curves.easeInOut)
+				curve: new Interval(0.0, 0.33, curve: Curves.easeInOut)
 			)
 		);
 
@@ -131,10 +123,18 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 			end: endPanelRatio
 		).animate(new CurvedAnimation(
 				parent: _panelController,
-				curve: new Interval(0.5, 1.0, curve: Curves.easeInOut)
+				curve: new Interval(0.34, 0.66, curve: Curves.easeInOut)
 			)
 		);
-		// _panelController.reset();
+
+		_fadeGameAnimation = new Tween<double>(
+			begin: _gameOpacity,
+			end: 1.0
+		).animate(new CurvedAnimation(
+			parent: _panelController,
+			curve: new Interval(0.33, 1.0, curve: Curves.decelerate)
+		));
+
 		_isPlaying = !_isPlaying;
 		_panelController.forward();
 	}
@@ -188,7 +188,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 										// Two decoration lines underneath the title
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										_panelRatio == gamePanelRatio ? new InGame(1.0-_lobbyOpacity, _handleReady, _handleStart) : new LobbyWidget(_lobbyOpacity, _handleReady, _handleStart),
+										_isPlaying ? new InGame(_gameOpacity, _handleReady, _handleStart) : new LobbyWidget(_lobbyOpacity, _handleReady, _handleStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,
