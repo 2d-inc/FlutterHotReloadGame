@@ -30,9 +30,7 @@ class LobbyWidget extends StatelessWidget
                                 children:
                                 [
                                     new PanelButton("SET TO READY", 59.0, 18.0, 1.3, null, _onReady),
-                                    // new PanelButton("START", 59.0, 18.0, 1.3, const EdgeInsets.only(top:10.0), _onStart, isEnabled: false),
                                     new PanelButton("START", 59.0, 18.0, 1.3, const EdgeInsets.only(top:10.0), _onStart, isAccented: true)
-                                    // TODO: remove extra start button
                                 ],
                             )
 

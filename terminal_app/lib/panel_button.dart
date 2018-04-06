@@ -53,7 +53,6 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
     AnimationController _pressedColorController;
     Animation<Color> _buttonBackgroundAnimation;
     Animation<Color> _buttonTextAnimation;
-    bool _isPressed = false;
     Color _currentBgColor;
     Color _currentTxtColor;
 
@@ -93,8 +92,6 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
         setState(
             ()
             {
-                this._isPressed = true;
-
                 _buttonBackgroundAnimation = new ColorTween(
                     begin: _backgroundColor,
                     end: pressedBackground,
@@ -105,7 +102,7 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                 ).animate(_pressedColorController);
                 _pressedColorController
                     ..value = 0.0
-                    ..animateTo(1.0, curve: Curves.elasticOut, duration: const Duration(milliseconds: 50));
+                    ..animateTo(1.0, curve: Curves.decelerate, duration: const Duration(milliseconds: 50));
             });
     }
 

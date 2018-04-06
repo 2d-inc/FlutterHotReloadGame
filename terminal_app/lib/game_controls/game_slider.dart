@@ -1,8 +1,6 @@
 import "package:flutter/material.dart";
 import "dart:ui" as ui;
 import "dart:math";
-import "dart:typed_data";
-import "package:flutter/scheduler.dart";
 import "game_colors.dart";
 
 class GameSlider extends StatefulWidget 
@@ -44,15 +42,45 @@ class _GameSliderState extends State<GameSlider>
 	{
 		return new Container(
 			child:new Column(
-				crossAxisAlignment: CrossAxisAlignment.center,
 				mainAxisAlignment: MainAxisAlignment.center,
 				children: <Widget>[
-					new Row(children:<Widget>[
-						new Container(margin: new EdgeInsets.only(right: 10.0), child:new Text(minValue.toString(), style: const TextStyle(color: const Color.fromARGB(69, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 14.0, decoration: TextDecoration.none))),
-						new Expanded(child:new NotchedSlider((value-minValue)/(maxValue-minValue), valueChanged)),
-						new Container(margin: new EdgeInsets.only(left: 10.0), child:new Text(maxValue.toString(), style: const TextStyle(color: const Color.fromARGB(69, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 14.0, decoration: TextDecoration.none))),
-					]),
-					new Container(margin: new EdgeInsets.only(top: 17.0), child:new Text(value.toString(), style: const TextStyle(color: const Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 18.0, decoration: TextDecoration.none)))
+					new Container(
+						// margin:
+						child:new Text(value.toString(), 
+							style: const TextStyle(color: const Color.fromARGB(255, 167, 230, 237), 
+							fontFamily: "Inconsolata", 
+							fontWeight: FontWeight.bold, 
+							fontSize: 18.0, 
+							decoration: TextDecoration.none)
+						)
+					),
+					new Container(
+						margin: const EdgeInsets.symmetric(vertical: 32.0),
+						child: new Row(children:<Widget>[
+							new Container(
+								margin: new EdgeInsets.only(right: 10.0), 
+								child: new Text(
+									minValue.toString(), 
+									style: const TextStyle(color: const Color.fromARGB(69, 167, 230, 237), 
+									fontFamily: "Inconsolata", 
+									fontWeight: FontWeight.bold, 
+									fontSize: 14.0, 
+									decoration: TextDecoration.none)
+								)
+							),
+							new Expanded(child: new NotchedSlider((value-minValue)/(maxValue-minValue), valueChanged)),
+							new Container(
+								margin: new EdgeInsets.only(left: 10.0), 
+								child:new Text(maxValue.toString(), 
+									style: const TextStyle(color: const Color.fromARGB(69, 167, 230, 237), 
+									fontFamily: "Inconsolata", 
+									fontWeight: FontWeight.bold, 
+									fontSize: 14.0, 
+									decoration: TextDecoration.none)
+								)
+							),
+						])
+					)
 				]
 			)
 		);
@@ -60,7 +88,6 @@ class _GameSliderState extends State<GameSlider>
 }
 
 typedef void ValueChangeCallback(double value);
-
 
 class NotchedSlider extends StatefulWidget 
 {
@@ -159,7 +186,7 @@ class GameSliderNotchesRenderObject extends RenderBox
 	{
 		size = new Size(constraints.constrainWidth(), 30.0);
 	}
-
+/* 
 	@override
 	void performLayout()
 	{
@@ -177,7 +204,7 @@ class GameSliderNotchesRenderObject extends RenderBox
 
 		// _descriptionParagraph.layout(new ui.ParagraphConstraints(width: detailsTextMaxWidth));
 	}
-	
+*/
 	@override
 	void paint(PaintingContext context, Offset offset)
 	{
