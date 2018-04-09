@@ -5,6 +5,7 @@ import 'flutter_task.dart';
 import 'dart:async';
 import 'dart:math';
 import "dart:io";
+import "dart:convert";
 import 'sound.dart';
 import 'flutter_task.dart';
 import "text_render_object.dart";
@@ -13,6 +14,7 @@ import "package:nima/animation/actor_animation.dart";
 import "package:flutter/animation.dart";
 import "dart:ui" as ui;
 import "package:flutter/scheduler.dart";
+import "server.dart";
 
 const double BACKGROUND_SCREEN_WIDTH = 1052.0;
 const double BACKGROUND_SCREEN_HEIGHT = 566.0;
@@ -102,6 +104,8 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	Animation<double> _highlightAnimation;
 	AnimationStatusListener _scrollStatusListener;
 
+	int _readyCount = 0;
+
 	@override
 	initState()
 	{
@@ -180,6 +184,23 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 			return;
 		}
 		_isReloading = true;
+		print("JUST RECEIVED: $msg");
+		if(msg is String)
+		{
+			var json = JSON.decode(msg);
+			print("I got this message ${json['message']} for this player ${json['player']}");
+			String message = json['message'];
+			switch(message)
+			{
+				case "ready":
+					{
+						_readyCount++;
+						break;
+					}
+				default:
+					break;
+			}
+		}
 		setState(() 
 		{
 			if(_contents.indexOf("FeaturedRestaurantSimple") != -1)
@@ -221,27 +242,28 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		_offset = Offset.zero,
 		_highlight = new Highlight(0, 0, 0)
 	{
-		HttpServer.bind("192.168.1.156"/*InternetAddress.LOOPBACK_IP_V4*/, 8080).then(
-			(server) async
-			{
-				print("Serving at ${server.address}:${server.port}");
-				await for (var request in server) 
-				{
-					 if (request.uri.path == '/ws') 
-					 {
-						// Upgrade a HttpRequest to a WebSocket connection.
-						var socket = await WebSocketTransformer.upgrade(request);
-						socket.listen(handleWebSocketMessage);
-					}
-					else
-					{
-						request.response
-						..headers.contentType = new ContentType("text", "plain", charset: "utf-8")
-						..write('Hello, world')
-						..close();
-					}
-				}
-			});
+		// HttpServer.bind(/* "192.168.1.156" */InternetAddress.LOOPBACK_IP_V4, 8080).then(
+		// 	(server) async
+		// 	{
+		// 		await for (var request in server) 
+		// 		{
+		// 			 if (WebSocketTransformer.isUpgradeRequest(request)) 
+		// 			 {
+		// 				// Upgrade a HttpRequest to a WebSocket connection.
+		// 				WebSocketTransformer.upgrade(request).then(_handleWebSocket);
+
+		// 			}
+		// 			else
+		// 			{
+		// 				request.response
+		// 				..headers.contentType = new ContentType("text", "plain", charset: "utf-8")
+		// 				..write('Hello, world')
+		// 				..close();
+		// 			}
+		// 		}
+		// 	});
+
+		new GameServer();
 
 		_flutterTask.onReady(()
 		{
@@ -272,7 +294,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 			_flutterTask.write("/lib/main.dart", _contents).then((ok)
 			{
 				// Start emulator.
-				_flutterTask.load("ipad").then((success)
+				_flutterTask.load("iphone").then((success)
 				{
 					
 				});
@@ -331,7 +353,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 												width: sz.width,
 												height: sz.height
 											),
-											new NimaWidget("/assets/nima/NPC1/NPC1")
+											// new NimaWidget("/assets/nima/NPC1/NPC1")
 										]
 									)
 						),

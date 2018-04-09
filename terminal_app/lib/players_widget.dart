@@ -7,24 +7,27 @@ enum PlayerStatus { READY, NOT_READY }
 
 class PlayerListWidget extends StatefulWidget 
 {
+    final bool _ready;
+    final int _readyCount;
+
+    PlayerListWidget(this._ready, this._readyCount, {Key key}) : super(key: key);
+
 	@override
 	PlayerListState createState() => new PlayerListState();
 }
 
 class PlayerListState extends State<PlayerListWidget> 
 {
-    final List<PlayerStatus> _players = new List.filled(4, PlayerStatus.NOT_READY);
+    final List<bool> _players = new List.filled(4, false);
 
     @override
     Widget build(BuildContext context)
     {
         List<TableRow> c = new List<TableRow>(_players.length);
-
-        for(int i = 0; i < _players.length; i++)
+        c[0] = new PlayerRow("Player 1", widget._ready);
+        for(int i = 1; i < c.length; i++)
         {
-            // TODO: remove
-            PlayerStatus st = i % 2 == 0 ? PlayerStatus.NOT_READY : PlayerStatus.READY;
-            c[i] = (new PlayerRow("Player ${i+1}", st));
+            c[i] = (new PlayerRow("Player ${i+1}", i <= widget._readyCount));
         }
 
         return new Table(
@@ -76,15 +79,15 @@ class DottedPainter extends BoxPainter
 
 class PlayerRow extends TableRow
 {
-    static const Map<PlayerStatus, Map> READY_MAP = const 
+    static const Map<bool, Map> READY_MAP = const 
     {
-        PlayerStatus.READY: const 
+        true: const 
         {
             "color": const Color.fromARGB(255, 86, 234, 246),
             "text": "READY",
             "weight": FontWeight.w700
         },
-        PlayerStatus.NOT_READY: const 
+        false: const 
         {
             "color": const Color.fromARGB(204, 22, 75, 81),
             "text": "NOT READY",
@@ -92,7 +95,7 @@ class PlayerRow extends TableRow
         }
     };
 
-    PlayerRow(String name, PlayerStatus status, { Key k, Decoration dec })
+    PlayerRow(String name, bool readyStatus, { Key k, Decoration dec })
         : super(
             key: k,
             decoration: dec,
@@ -109,8 +112,8 @@ class PlayerRow extends TableRow
                     alignment: Alignment.centerRight,
                     child:
                     new Text(
-                        READY_MAP[status]["text"], // Text string
-                        style: new TextStyle(color: READY_MAP[status]["color"], fontFamily: "Inconsolata", fontWeight: READY_MAP[status]["weight"], fontSize: 18.0, decoration: TextDecoration.none)
+                        READY_MAP[readyStatus]["text"], // Text string
+                        style: new TextStyle(color: READY_MAP[readyStatus]["color"], fontFamily: "Inconsolata", fontWeight: READY_MAP[readyStatus]["weight"], fontSize: 18.0, decoration: TextDecoration.none)
                     )
                 ),
             ]

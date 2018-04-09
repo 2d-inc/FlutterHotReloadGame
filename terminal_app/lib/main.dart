@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import "package:flutter/material.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/rendering.dart";
@@ -27,21 +29,9 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget 
 {
-	MyHomePage({Key key, this.title}) : super(key: key)
-	{
-		WebSocket.connect("ws://192.168.1.156:8080/ws").then((ws)
-		{
-			print("CONNECTED");
-			socket = ws;
-			ws.listen((message)
-			{
-				print("GOT MESSAGE $message");
-			});
-		});
-		
-	}
+	MyHomePage({Key key, this.title}) : super(key: key);
+
 	final String title;
-	WebSocket socket;
 
 	@override
 	_MyHomePageState createState() => new _MyHomePageState();
@@ -63,13 +53,86 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	Animation<double> _fadeLobbyAnimation;
 	Animation<double> _fadeGameAnimation;
 
+	WebSocket _socket;
+
+	bool _isReady = false;
+	int _readyCount = 0;
+
+	_connect()
+	{
+		String address;
+		if(Platform.isAndroid)
+		{
+			address = "10.0.2.2";
+		}
+		else
+		{
+			address = InternetAddress.LOOPBACK_IP_V4.address;
+		}
+		WebSocket.connect("ws://"+ address + ":8080/ws").then(
+			(WebSocket ws)
+			{
+				print("CONNECTED");
+				_socket = ws;
+				_socket.pingInterval = const Duration(seconds: 5);
+				ws.listen((message)
+				{
+					var jsonMsg = JSON.decode(message);
+					print("GOT MESSAGE $jsonMsg");
+
+					try
+					{
+						var jsonMsg = JSON.decode(message);
+						String msg = jsonMsg['message'];
+						
+						switch(msg)
+						{
+							case "readyRemoved":
+								setState(() => _isReady = false);
+								break;
+							case "readyReceived":
+								setState(() => _isReady = true);
+								break;
+							default:
+								print("MESSAGE: $jsonMsg");
+								break;
+						}
+					}
+					on FormatException catch(e)
+					{
+						print("Wrong Message Formatting, not JSON: ${message}");
+						print(e);
+					}
+
+				}, 
+				onDone: _connect); // Try to reconnect when server drops
+			}
+		)
+		.catchError(
+			(e)
+			{
+				if(e is SocketException)
+				{
+					// Try to reconnect if server is unreachable
+					print("RETRY $e");
+					new Timer(const Duration(seconds: 5), _connect);
+				}
+				else
+				{
+					print("WEBSOCKET ERROR: $e");
+				}
+			}
+		)
+		.timeout(const Duration(seconds: 5), onTimeout: _connect);
+	}
+
 	@override
 	initState()
 	{
-		super.initState();
+		super.initState(); 
+		_connect();
 
-		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
-		
+		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 10000));
 		_fadeCallback = () 
 		{
 			setState(
@@ -81,7 +144,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 				}
 			);
 		};
-
 		_panelController
 			..addListener(_fadeCallback);
 	}
@@ -89,18 +151,16 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	@override
 	void dispose()
 	{
+		print("DISPOSING");
+		_socket?.close(99, "DISPOSING");
 		_panelController.dispose();
 		super.dispose();
 	}
 
-	void _handleTap()
-	{
-		widget.socket.add("hi");
-	}
-
 	void _handleReady()
 	{
-		// TODO:
+		String readyMsg = JSON.encode({"message": _isReady ? "notReady" : "ready"});
+		_socket?.add(readyMsg);
 	}
 
 	void _handleStart()
@@ -148,10 +208,10 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 		}
 	}
 
-
 	@override
 	Widget build(BuildContext context) 
 	{
+		// List<bool> ready = [true, false, false, true];
 		return new Container(
 			decoration:new BoxDecoration(color:Colors.white),
 			child:new Row(
@@ -188,7 +248,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 										// Two decoration lines underneath the title
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										_isPlaying ? new InGame(_gameOpacity, _handleReady, _handleStart) : new LobbyWidget(_lobbyOpacity, _handleReady, _handleStart),
+										_isPlaying ? new InGame(_gameOpacity, _handleReady, _handleStart) : new LobbyWidget(_isReady, _readyCount, _lobbyOpacity, _handleReady, _handleStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,

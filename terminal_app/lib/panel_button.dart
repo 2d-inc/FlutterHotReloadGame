@@ -26,7 +26,7 @@ class PanelButton extends StatefulWidget
     ) : super(key: key);
 
     @override
-    State<StatefulWidget> createState() => new PanelButtonState(_text, _height, _fontSize, _letterSpacing, _margin, _onTap, isEnabled, isAccented);
+    State<StatefulWidget> createState() => new PanelButtonState();
 }
 
 class PanelButtonState extends State<PanelButton> with SingleTickerProviderStateMixin
@@ -41,14 +41,8 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
     static const Color pressedBackground = const Color.fromARGB(255, 144, 8, 62);
     static const Color pressedText = const Color.fromARGB(255, 242, 220, 253);
 
-    final String _text;
-    final double _height;
-    final double _fontSize;
-    final double _letterSpacing;
-    final EdgeInsets _margin;
-    final VoidCallback _onTap;
-    final Color _backgroundColor;
-    final Color _textColor;
+    Color _backgroundColor;
+    Color _textColor;
 
     AnimationController _pressedColorController;
     Animation<Color> _buttonBackgroundAnimation;
@@ -56,18 +50,16 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
     Color _currentBgColor;
     Color _currentTxtColor;
 
-    PanelButtonState(this._text, this._height, this._fontSize, this._letterSpacing, this._margin, this._onTap, bool isEnabled, bool isAccented) :
-        _backgroundColor = (isAccented ? accentedBackground : (isEnabled ? enabledBackground : disabledBackground)),
-        _textColor = (isAccented ? accentedText : (isEnabled ? enabledText : disabledText))
-        {
-            _currentBgColor = _backgroundColor;
-            _currentTxtColor = _textColor;
-        }
-
     @override
     initState()
     {
         super.initState();
+        
+        _backgroundColor = (widget.isAccented ? accentedBackground : (widget.isEnabled ? enabledBackground : disabledBackground));
+        _textColor = (widget.isAccented ? accentedText : (widget.isEnabled ? enabledText : disabledText));
+        _currentBgColor = _backgroundColor;
+        _currentTxtColor = _textColor;
+
         _pressedColorController = new AnimationController(vsync: this)
                 ..addListener(()
                     {
@@ -125,34 +117,35 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
             }
         );
 
-        this._onTap();
+        widget._onTap();
     }
 
     @override
     Widget build(BuildContext context)
     {
+        // print("LABEL: $_text");
         return new GestureDetector(
                     onTapDown: _onButtonPressed,
                     onTapUp: _onButtonReleased,
                     child: new Container(
-                        margin: _margin,
+                        margin: widget._margin,
                         decoration: new BoxDecoration(
                             borderRadius: new BorderRadius.circular(3.0), 
                             color: _currentBgColor
                         ),
                         child: new Container(
-                            height: _height,
+                            height: widget._height,
                             alignment: Alignment.center,
                             child: new Text(
-                                _text, 
+                                widget._text, 
                                 style: 
                                     new TextStyle(
                                         color: _currentTxtColor,
                                         fontFamily: "Inconsolata", 
                                         fontWeight: FontWeight.w700, 
-                                        fontSize: _fontSize, 
+                                        fontSize: widget._fontSize, 
                                         decoration: TextDecoration.none, 
-                                        letterSpacing: this._letterSpacing
+                                        letterSpacing: widget._letterSpacing
                                 )
                             )
                         )
