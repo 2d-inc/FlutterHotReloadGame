@@ -5,7 +5,7 @@ class GameClient
 {
     WebSocket _socket;
     GameServer _server;
-    bool _isReady;
+    bool _isReady = false;
     bool _isReadyToStart;
 
     GameClient(GameServer server, WebSocket socket)
@@ -18,13 +18,8 @@ class GameClient
 
     _onDisconnected()
     {
-        print("I got disconnected! ${_socket.closeCode}");
+        print("${this.runtimeType} disconnected! ${_socket.closeCode}");
         _server.onClientDisconnected(this);
-    }
-
-    String formatJSONMessage(String msg)
-    {
-        return JSON.encode({"message": msg});
     }
 
     void _dataReceived(message)
@@ -38,14 +33,9 @@ class GameClient
             switch(msg)
             {
                 case "ready":
-                    _isReady = true;
-                    _server.onClientReadyChanged(this);
-                    _socket.add(formatJSONMessage("readyReceived"));
-                    break;
-                case "notReady":
-                    _isReady = false;
-                    _server.onClientReadyChanged(this);
-                    _socket.add(formatJSONMessage("readyRemoved"));
+                    _isReady = jsonMsg['payload'];
+                    print("PLAYER READY? ${_isReady}");
+                    _server.onClientReadyChanged();
                     break;
                 case "startGame":
                     // TODO:
@@ -68,9 +58,15 @@ class GameClient
     {
         if(_isReady)
         {
-            _socket.add(formatJSONMessage("canStart"));
+            _socket.add(GameServer.formatJSONMessage("canStart"));
         }
     }
+
+    set readyList(List<bool> readyPlayers)
+    {
+        _socket.add(GameServer.formatJSONPayload("playerList", readyPlayers));
+    }
+
 }
 
 class GameServer
@@ -80,8 +76,20 @@ class GameServer
 
     GameServer()
     {
-        print("Trying to create the server");
         connect();
+    }
+
+    static String formatJSONMessage(String msg)
+    {
+        return JSON.encode({"message": msg});
+    }
+
+    static String formatJSONPayload(String msg, List payload)
+    {
+        return JSON.encode({
+            "message": msg,
+            "payload": payload
+        });
     }
 
     void connect()
@@ -110,29 +118,28 @@ class GameServer
 
     onClientDisconnected(GameClient client)
     {
-        this._clients.remove(client); // Could be optimized with a HashSet? Maybe too much overhead
+        this._clients.remove(client);
+        onClientReadyChanged();
     }
 
-    onClientReadyChanged(GameClient client)
+    onClientReadyChanged()
     {
-        if(client.isReady)
+        int l = _clients.length;
+        List<bool> readyList = new List(l);
+        for(int i = 0; i < l; i++)
         {
-            _readyCount++;
+            readyList[i] = _clients[i].isReady;
         }
 
-        if(_readyCount >= 2)
+        for(var gc in _clients)
         {
-            for(var gc in _clients)
-            {
-                gc.isReadyToStart = true;
-            }
+            gc.readyList = readyList;
         }
     }
 
     onClientStartChanged(GameClient client)
     {
     }
-
 
     onGameStart()
     {
@@ -143,5 +150,6 @@ class GameServer
         print("ADD WEBCLIENT! ${this._clients.length}");
         GameClient client = new GameClient(this, socket);
         _clients.add(client);
+        onClientReadyChanged();
     }
 }

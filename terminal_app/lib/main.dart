@@ -56,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	WebSocket _socket;
 
 	bool _isReady = false;
-	int _readyCount = 0;
+	List<bool> _arePlayersReady;
 
 	_connect()
 	{
@@ -87,14 +87,12 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 						
 						switch(msg)
 						{
-							case "readyRemoved":
-								setState(() => _isReady = false);
-								break;
-							case "readyReceived":
-								setState(() => _isReady = true);
+							case "playerList":
+								List<bool> statusList = jsonMsg['payload'];
+								setState(() => _arePlayersReady = statusList);
 								break;
 							default:
-								print("MESSAGE: $jsonMsg");
+								print("UNKNOWN MESSAGE: $jsonMsg");
 								break;
 						}
 					}
@@ -130,6 +128,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	initState()
 	{
 		super.initState(); 
+		_arePlayersReady = [_isReady];
 		_connect();
 
 		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 10000));
@@ -159,8 +158,19 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
 	void _handleReady()
 	{
-		String readyMsg = JSON.encode({"message": _isReady ? "notReady" : "ready"});
-		_socket?.add(readyMsg);
+		setState(
+			()
+			{
+				_isReady = !_isReady;
+				String readyMsg = JSON.encode(
+					{
+						"message": "ready", 
+						"payload": _isReady
+					}	
+				);
+				_socket?.add(readyMsg);
+			}
+		);
 	}
 
 	void _handleStart()
@@ -248,7 +258,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 										// Two decoration lines underneath the title
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										_isPlaying ? new InGame(_gameOpacity, _handleReady, _handleStart) : new LobbyWidget(_isReady, _readyCount, _lobbyOpacity, _handleReady, _handleStart),
+										_isPlaying ? new InGame(_gameOpacity, _handleReady, _handleStart) : new LobbyWidget(_isReady, _arePlayersReady, _lobbyOpacity, _handleReady, _handleStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,

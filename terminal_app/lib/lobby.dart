@@ -9,9 +9,9 @@ class LobbyWidget extends StatelessWidget
     final VoidCallback _onStart;
     final double _opacity;
     final bool _ready;
-    final int _readyCount;
+    final List<bool> _arePlayersReady;
 
-    const LobbyWidget(this._ready, this._readyCount, this._opacity, this._onReady, this._onStart, { Key key  } ) : super(key: key);
+    const LobbyWidget(this._ready, this._arePlayersReady, this._opacity, this._onReady, this._onStart, { Key key  } ) : super(key: key);
 
     @override
     Widget build(BuildContext context)
@@ -24,7 +24,7 @@ class LobbyWidget extends StatelessWidget
                         children: 
                         [
                             // Players Row
-                            new CommandPanel(new PlayerListWidget(this._ready, this._readyCount)),
+                            new CommandPanel(new PlayerListWidget(this._ready, this._arePlayersReady)),
                             // Filler
                             new Expanded(child: new Container()),
                             // Buttons
