@@ -57,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
 	bool _isReady = false;
 	bool _isReadyToStart = false;
+	bool _gameOver = false;
 	List<bool> _arePlayersReady;
 
 	_connect()
@@ -210,6 +211,13 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 		));
 
 		_isPlaying = !_isPlaying;
+		_gameOver = false;
+		new Timer(const Duration(seconds: 2), () {
+			setState( () {
+				print("GAME OVER");
+				_gameOver = true;
+			} );
+		});
 		_panelController.forward();
 	}
 
@@ -222,9 +230,15 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 		}
 	}
 
+	void _onRetry()
+	{
+		_backToLobby(null);
+	}
+
 	@override
 	Widget build(BuildContext context) 
 	{
+		
 		return new Container(
 			decoration:new BoxDecoration(color:Colors.white),
 			child:new Row(
@@ -261,7 +275,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 										// Two decoration lines underneath the title
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										_isPlaying ? new InGame(_gameOpacity, _handleReady, _handleStart) : new LobbyWidget(_isReady, _arePlayersReady, _lobbyOpacity, _handleReady, _handleStart),
+										_isPlaying ? new InGame(_gameOpacity, _handleReady, _handleStart, _onRetry, isOver: _gameOver) : new LobbyWidget(_isReady, _arePlayersReady, _lobbyOpacity, _handleReady, _handleStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,

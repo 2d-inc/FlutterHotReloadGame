@@ -12,19 +12,25 @@ class InGame extends StatelessWidget
 {
     final VoidCallback _onReady;
     final VoidCallback _onStart;
+    final VoidCallback _onRetry;
     final double _opacity;
+	final bool isOver;
 
-    const InGame(this._opacity, this._onReady, this._onStart, { Key key  } ) : super(key: key);
+    const InGame(this._opacity, this._onReady, this._onStart, this._onRetry, {  this.isOver: false , Key key } ) : super(key: key);
 
     @override
     Widget build(BuildContext context)
     {
+		print("BUILD: $isOver");
 		return new Expanded(
 					child:new Opacity(
                     	opacity: _opacity,
 						child:new Container(
 							margin:new EdgeInsets.only(top:43.0), 
-							child:new ControlGrid(
+							child:
+							this.isOver ? 
+							new GameOver(_onRetry) :
+							new ControlGrid(
 								children:<Widget>[
 									new TitledCommandPanel("HEIGHT", new GameSlider(), isExpanded: true),
 									new TitledCommandPanel("MARGIN", new GameRadial(), isExpanded: true),
@@ -91,6 +97,7 @@ class RenderControlGrid extends RenderBox with ContainerRenderObjectMixin<Render
   	void performLayout() 
 	{
 		// For now, just place them in a grid. Later we need to use MaxRects to figure out the best layout as some cells will be double height.
+		// FIXME: overflows for smaller layouts
 		RenderBox child = firstChild;
 		const double padding = 50.0;
 		const double numColumns = 2.0;
@@ -121,4 +128,38 @@ class RenderControlGrid extends RenderBox with ContainerRenderObjectMixin<Render
 		//context.canvas.drawRect(offset & size, new Paint()..color = new Color.fromARGB(255, 125, 152, 165));
 		defaultPaint(context, offset);
 	}
+}
+
+class GameOver extends StatelessWidget
+{
+	final VoidCallback _onRetry;
+
+	GameOver(this._onRetry, {Key key}) : super(key: key);
+
+	@override
+	Widget build(BuildContext context) 
+	{
+		return new Center(
+				child: new Column(
+					children: 
+					[
+						new Expanded(child: new Container()),
+						new Text("GAME\nOVER", 
+							textAlign: TextAlign.center,
+							style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), 
+								fontFamily: "RalewayDots",
+								fontWeight: FontWeight.w100,
+								fontSize: 144.0, 
+								decoration: TextDecoration.none
+							)
+						),
+						new Container(
+							width: 274.0,
+							child: new PanelButton("Try Again", 59.0, 18.0, 1.3, const EdgeInsets.only(top:95.0, bottom: 90.0), _onRetry)
+						)
+					],
+				)
+		);
+	}
+	
 }
