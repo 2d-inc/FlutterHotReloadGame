@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import "package:terminal_app/game_controls/game_colors.dart";
 
 class PanelButton extends StatefulWidget
 {
@@ -31,16 +32,6 @@ class PanelButton extends StatefulWidget
 
 class PanelButtonState extends State<PanelButton> with SingleTickerProviderStateMixin
 {
-    static const Color enabledBackground = const Color.fromARGB(255, 22, 75, 81);
-    static const Color enabledText = const Color.fromARGB(255, 167, 230, 237);
-    static const Color disabledBackground = const Color.fromARGB(204, 9, 45, 51);
-    static const Color disabledText = const Color.fromARGB(51, 167, 230, 237);
-    static const Color accentedBackground = const Color.fromARGB(255, 86, 234, 246);
-    static const Color accentedText = const Color.fromARGB(255, 3, 28, 32);
-    // TODO: should check these colors
-    static const Color pressedBackground = const Color.fromARGB(255, 144, 8, 62);
-    static const Color pressedText = const Color.fromARGB(255, 242, 220, 253);
-
     Color _backgroundColor;
     Color _textColor;
 
@@ -54,12 +45,6 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
     initState()
     {
         super.initState();
-        
-        _backgroundColor = (widget.isAccented ? accentedBackground : (widget.isEnabled ? enabledBackground : disabledBackground));
-        _textColor = (widget.isAccented ? accentedText : (widget.isEnabled ? enabledText : disabledText));
-        _currentBgColor = _backgroundColor;
-        _currentTxtColor = _textColor;
-
         _pressedColorController = new AnimationController(vsync: this)
                 ..addListener(()
                     {
@@ -86,11 +71,11 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
             {
                 _buttonBackgroundAnimation = new ColorTween(
                     begin: _backgroundColor,
-                    end: pressedBackground,
+                    end: GameColors.buttonPressedBackground,
                 ).animate(_pressedColorController);
                 _buttonTextAnimation = new ColorTween(
                     begin: _textColor,
-                    end: pressedText,
+                    end: GameColors.buttonPressedText,
                 ).animate(_pressedColorController);
                 _pressedColorController
                     ..value = 0.0
@@ -123,10 +108,14 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
     @override
     Widget build(BuildContext context)
     {
-        // print("LABEL: $_text");
+        _backgroundColor = (widget.isAccented ? GameColors.buttonAccentedBackground : (widget.isEnabled ? GameColors.buttonEnabledBackground : GameColors.buttonDisabledBackground));
+        _textColor = (widget.isAccented ? GameColors.buttonAccentedText : (widget.isEnabled ? GameColors.buttonEnabledText : GameColors.buttonDisabledText));
+        _currentBgColor = _backgroundColor;
+        _currentTxtColor = _textColor;
+
         return new GestureDetector(
-                    onTapDown: _onButtonPressed,
-                    onTapUp: _onButtonReleased,
+                    onTapDown: widget.isEnabled ? _onButtonPressed : null,
+                    onTapUp: widget.isEnabled ? _onButtonReleased : null,
                     child: new Container(
                         margin: widget._margin,
                         decoration: new BoxDecoration(

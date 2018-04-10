@@ -56,6 +56,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	WebSocket _socket;
 
 	bool _isReady = false;
+	bool _isReadyToStart = false;
 	List<bool> _arePlayersReady;
 
 	_connect()
@@ -77,19 +78,22 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 				_socket.pingInterval = const Duration(seconds: 5);
 				ws.listen((message)
 				{
-					var jsonMsg = JSON.decode(message);
-					print("GOT MESSAGE $jsonMsg");
-
 					try
 					{
 						var jsonMsg = JSON.decode(message);
 						String msg = jsonMsg['message'];
+						// print("GOT MESSAGE $jsonMsg");
 						
 						switch(msg)
 						{
 							case "playerList":
-								List<bool> statusList = jsonMsg['payload'];
-								setState(() => _arePlayersReady = statusList);
+								var statusList = jsonMsg['payload'];
+								List<bool> boolList = [];
+								for(var b in statusList) // Workaround for Dart throw
+								{
+									if(b is bool) boolList.add(b);
+								}
+								setState(() => _arePlayersReady = boolList);
 								break;
 							default:
 								print("UNKNOWN MESSAGE: $jsonMsg");
@@ -131,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 		_arePlayersReady = [_isReady];
 		_connect();
 
-		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 10000));
+		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 		_fadeCallback = () 
 		{
 			setState(
@@ -221,7 +225,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	@override
 	Widget build(BuildContext context) 
 	{
-		// List<bool> ready = [true, false, false, true];
 		return new Container(
 			decoration:new BoxDecoration(color:Colors.white),
 			child:new Row(
