@@ -45,6 +45,7 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
     initState()
     {
         super.initState();
+        setColors();
         _pressedColorController = new AnimationController(vsync: this)
                 ..addListener(()
                     {
@@ -105,14 +106,24 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
         widget._onTap();
     }
 
-    @override
-    Widget build(BuildContext context)
+    setColors()
     {
         _backgroundColor = (widget.isAccented ? GameColors.buttonAccentedBackground : (widget.isEnabled ? GameColors.buttonEnabledBackground : GameColors.buttonDisabledBackground));
         _textColor = (widget.isAccented ? GameColors.buttonAccentedText : (widget.isEnabled ? GameColors.buttonEnabledText : GameColors.buttonDisabledText));
         _currentBgColor = _backgroundColor;
         _currentTxtColor = _textColor;
+    }
 
+    @override
+    void didUpdateWidget(PanelButton oldWidget) 
+    {
+        setColors();
+        super.didUpdateWidget(oldWidget);
+    }
+
+    @override
+    Widget build(BuildContext context)
+    {
         return new GestureDetector(
                     onTapDown: widget.isEnabled ? _onButtonPressed : null,
                     onTapUp: widget.isEnabled ? _onButtonReleased : null,
