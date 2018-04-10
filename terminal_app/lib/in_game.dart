@@ -10,18 +10,16 @@ import "game_controls/game_radial.dart";
 
 class InGame extends StatelessWidget
 {
-    final VoidCallback _onReady;
     final VoidCallback _onStart;
     final VoidCallback _onRetry;
     final double _opacity;
 	final bool isOver;
 
-    const InGame(this._opacity, this._onReady, this._onStart, this._onRetry, {  this.isOver: false , Key key } ) : super(key: key);
+    const InGame(this._opacity, this._onStart, this._onRetry, {  this.isOver: false , Key key } ) : super(key: key);
 
     @override
     Widget build(BuildContext context)
     {
-		print("BUILD: $isOver");
 		return new Expanded(
 					child:new Opacity(
                     	opacity: _opacity,
