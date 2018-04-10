@@ -38,7 +38,8 @@ class GameClient
                     _server.onClientReadyChanged();
                     break;
                 case "startGame":
-                    // TODO:
+                    print("READY TO START");
+                    _server.onClientStartChanged(this);
                     break;
                 default:
                     print("MESSAGE: $jsonMsg");
@@ -130,10 +131,20 @@ class GameServer
 
     onClientStartChanged(GameClient client)
     {
+        /*
+            iterate all the clients. 
+            If everyone is ready, call game start
+        */
     }
 
     onGameStart()
     {
+        // tell every client the game has started and what their commands are...
+        // build list of command id to possible values
+        /* foreach(client)
+        {
+            client.assignCommands(commands.randomSelection());
+        } */
     }
 
     onGameOver()

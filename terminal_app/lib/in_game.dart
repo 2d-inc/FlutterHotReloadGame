@@ -31,7 +31,7 @@ class InGame extends StatelessWidget
 								children:<Widget>[
 									new TitledCommandPanel("HEIGHT", new GameSlider(), isExpanded: true),
 									new TitledCommandPanel("MARGIN", new GameRadial(), isExpanded: true),
-									new TitledCommandPanel("TEST", new Container(), isExpanded: true),
+									new TitledCommandPanel("SELECT OPTION", new GameBinaryButton("OPTION0", "OPTION1"), isExpanded: true)
 								]
 							)
 						)
@@ -40,6 +40,30 @@ class InGame extends StatelessWidget
     }   
 }
 
+class GameBinaryButton extends StatelessWidget
+{
+	final String _title0;
+	final String _title1;
+
+	GameBinaryButton(this._title0, this._title1, {Key key}) : super(key: key);
+
+	@override
+	Widget build(BuildContext context)
+	{
+		return new Row(
+			children:
+			[
+				new Expanded(
+					child: new PanelButton(_title0, null, 12.0, 0.9, const EdgeInsets.only(right: 10.0, bottom: 26.0), (){/* TODO: */}),
+
+				),
+				new Expanded(
+					child: new PanelButton(_title1, null, 12.0, 0.9, const EdgeInsets.only(right: 10.0, bottom: 26.0), (){/* TODO: */} ),
+				)
+			],
+		)	;
+	}
+}
 
 class ControlGrid extends MultiChildRenderObjectWidget
 {
@@ -98,7 +122,7 @@ class RenderControlGrid extends RenderBox with ContainerRenderObjectMixin<Render
 		RenderBox child = firstChild;
 		const double padding = 50.0;
 		const double numColumns = 2.0;
-		final double childWidth = (size.width - (padding*(numColumns-1)))/numColumns;
+		final double childWidth = (size.height - (padding*(numColumns-1)))/numColumns;
 		final double rowHeight = childWidth;
 
 		int idx = 0;

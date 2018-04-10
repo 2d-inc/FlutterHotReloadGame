@@ -96,6 +96,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	void _handleStart()
 	{
 		// TODO: Server logic
+		_client.onStart();
 		double endOpacity = _isPlaying ? 1.0 : 0.0;
 
 		_fadeLobbyAnimation = new Tween<double>(
@@ -128,13 +129,14 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		_isPlaying = !_isPlaying;
 		_panelController.forward();
 
-		/* TODO: [debug] remove */
+		/* TODO: [debug] remove 
 		_gameOver = false;
 		new Timer(const Duration(seconds: 2), () {
 			setState( () {
 				_gameOver = true;
 			} );
 		});
+		*/
 	}
 
 	void _backToLobby()
@@ -249,6 +251,11 @@ class WebSocketClient
 		_socket?.add(formatJSONMessage("ready", state));
 	}
 
+	onStart()
+	{
+		_socket?.add(formatJSONMessage("startGame", true));
+	}
+
 	connect()
 	{
 		String address;
@@ -273,13 +280,13 @@ class WebSocketClient
 						var jsonMsg = json.decode(message);
 						String msg = jsonMsg['message'];
 						// print("GOT MESSAGE $jsonMsg");
+						var payload = jsonMsg['payload'];
 						
 						switch(msg)
 						{
 							case "playerList":
-								var statusList = jsonMsg['payload'];
 								List<bool> boolList = [];
-								for(var b in statusList) // Workaround for Dart throw
+								for(var b in payload) // Workaround for Dart throw
 								{
 									if(b is bool) boolList.add(b);
 								}
@@ -289,6 +296,8 @@ class WebSocketClient
 								// Reset state
 								_terminal.gameOver();
 								break;
+							case "gameStart":
+								// _terminal.onGameStart();
 							default:
 								print("UNKNOWN MESSAGE: $jsonMsg");
 								break;
