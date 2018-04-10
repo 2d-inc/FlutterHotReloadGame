@@ -3,12 +3,8 @@ import 'dart:convert';
 import "package:flutter/material.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/rendering.dart";
-import "package:web_socket_channel/web_socket_channel.dart";
-import "package:web_socket_channel/io.dart";
 import "dart:io";
 import "decorations/dotted_grid.dart";
-import "game_controls/game_slider.dart";
-import "game_controls/game_radial.dart";
 import "lobby.dart";
 import "in_game.dart";
 
@@ -56,7 +52,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	WebSocketClient _client;
 
 	bool _isReady = false;
-	bool _isReadyToStart = false;
 	bool _gameOver = false;
 	List<bool> _arePlayersReady;
 
@@ -131,14 +126,15 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		));
 
 		_isPlaying = !_isPlaying;
+		_panelController.forward();
+
+		/* TODO: [debug] remove */
 		_gameOver = false;
 		new Timer(const Duration(seconds: 2), () {
 			setState( () {
-				print("GAME OVER");
 				_gameOver = true;
 			} );
 		});
-		_panelController.forward();
 	}
 
 	void _backToLobby()
@@ -147,7 +143,26 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		{
 			_panelController.reverse();
 			_isPlaying = !_isPlaying;
+			gameOver(); /* TODO: [debug] remove */
 		}
+	}
+
+	void gameOver()
+	{
+		List<bool> resetList = new List.filled(_arePlayersReady.length, false);
+		// Use setters
+		arePlayersReady = resetList;
+		isReady = false;
+	}
+
+	set arePlayersReady(List<bool> readyList)
+	{
+		setState(() => _arePlayersReady = readyList);
+	}
+
+	set isReady(bool isIt)
+	{
+		setState(() => _isReady = isIt);
 	}
 
 	@override
@@ -217,7 +232,7 @@ class WebSocketClient
 
     static String formatJSONMessage<T>(String msg, T payload)
     {
-        return JSON.encode({
+        return json.encode({
             "message": msg,
             "payload": payload
         });
@@ -255,7 +270,7 @@ class WebSocketClient
 				{
 					try
 					{
-						var jsonMsg = JSON.decode(message);
+						var jsonMsg = json.decode(message);
 						String msg = jsonMsg['message'];
 						// print("GOT MESSAGE $jsonMsg");
 						
@@ -268,17 +283,11 @@ class WebSocketClient
 								{
 									if(b is bool) boolList.add(b);
 								}
-								_terminal.setState(() => _terminal._arePlayersReady = boolList);
+								_terminal.arePlayersReady = boolList;
 								break;
 							case "gameOver":
 								// Reset state
-								_terminal.setState((){
-									for(int i = 0; i < _terminal._arePlayersReady.length; ++i)
-									{
-										_terminal._arePlayersReady[i] = false;
-									}
-									_terminal._isReady = false;
-								});
+								_terminal.gameOver();
 								break;
 							default:
 								print("UNKNOWN MESSAGE: $jsonMsg");

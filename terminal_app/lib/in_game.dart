@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import "command_panel.dart";
-import "players_widget.dart";
 import "panel_button.dart";
 import "package:flutter/material.dart";
 import "package:flutter/foundation.dart";

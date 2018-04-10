@@ -27,7 +27,7 @@ class GameClient
         print("Just received ====:\n $message");
         try
         {
-            var jsonMsg = JSON.decode(message);
+            var jsonMsg = json.decode(message);
             String msg = jsonMsg['message'];
             
             switch(msg)
@@ -52,26 +52,22 @@ class GameClient
         }
     }
 
-    get isReady => _isReady;
-
-    set isReadyToStart(bool isIt)
+    gameOver()
     {
-        if(_isReady)
-        {
-            _socket.add(GameServer.formatJSONMessage("canStart"));
-        }
+        _socket.add(GameServer.formatJSONMessage("gameOver", true));
     }
+
+    get isReady => _isReady;
 
     set readyList(List<bool> readyPlayers)
     {
-        _socket.add(GameServer.formatJSONPayload("playerList", readyPlayers));
+        _socket.add(GameServer.formatJSONMessage("playerList", readyPlayers));
     }
 
 }
 
 class GameServer
 {
-    int _readyCount = 0;
     List<GameClient> _clients = new List<GameClient>();
 
     GameServer()
@@ -79,14 +75,9 @@ class GameServer
         connect();
     }
 
-    static String formatJSONMessage(String msg)
+    static String formatJSONMessage<T>(String msg, T payload)
     {
-        return JSON.encode({"message": msg});
-    }
-
-    static String formatJSONPayload(String msg, List payload)
-    {
-        return JSON.encode({
+        return json.encode({
             "message": msg,
             "payload": payload
         });
@@ -143,6 +134,14 @@ class GameServer
 
     onGameStart()
     {
+    }
+
+    onGameOver()
+    {
+        for(var gc in _clients)
+        {
+            gc.gameOver();
+        }
     }
 
     _handleWebSocket(WebSocket socket)
