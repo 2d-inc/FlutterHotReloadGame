@@ -105,14 +105,14 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	void _backToLobby()
 	{
-		if(_isPlaying)
-		{
-			_panelController.reverse();
-			_isPlaying = !_isPlaying;
-			gameOver(); /* TODO: [debug] remove */
-		}
 		setState(() 
 		{
+			if(_isPlaying)
+			{
+				_panelController.reverse();
+				_isPlaying = !_isPlaying;
+				gameOver(); /* TODO: [debug] remove */
+			}
 			_sceneState = TerminalSceneState.All;
 			_sceneMessage = "Come on, we've got a deadline to make!";
 		});
@@ -150,11 +150,11 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			curve: new Interval(0.33, 1.0, curve: Curves.decelerate)
 		));
 
-		_isPlaying = !_isPlaying;
 		_panelController.forward();
 
 		setState(() 
 		{
+			_isPlaying = !_isPlaying;
 			_sceneState = TerminalSceneState.Upset;
 			_sceneCharacterIndex = new Random().nextInt(4);//rand()%4;
 			
