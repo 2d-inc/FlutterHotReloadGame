@@ -4,7 +4,6 @@ import "game_controls/game_colors.dart";
 class PanelButton extends StatefulWidget
 {
     final String _text;
-    final double _height;
     final double _fontSize;
     final double _letterSpacing;
     final EdgeInsets _margin;
@@ -14,7 +13,6 @@ class PanelButton extends StatefulWidget
 
     PanelButton(
         this._text, 
-        this._height,
         this._fontSize,
         this._letterSpacing,
         this._margin,
@@ -128,14 +126,13 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                     onTapDown: widget.isEnabled ? _onButtonPressed : null,
                     onTapUp: widget.isEnabled ? _onButtonReleased : null,
                     child: new Container(
-                        padding: const EdgeInsets.all(25.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
                         margin: widget._margin,
                         decoration: new BoxDecoration(
                             borderRadius: new BorderRadius.circular(3.0), 
                             color: _currentBgColor
                         ),
                         child: new Container(
-                            height: widget._height,
                             alignment: Alignment.center,
                             child: new Text(
                                 widget._text, 

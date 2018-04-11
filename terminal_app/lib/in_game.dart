@@ -31,7 +31,7 @@ class InGame extends StatelessWidget
 								children:<Widget>[
 									new TitledCommandPanel("HEIGHT", new GameSlider(), isExpanded: true),
 									new TitledCommandPanel("MARGIN", new GameRadial(), isExpanded: true),
-									new TitledCommandPanel("SELECT OPTION", new GameBinaryButton("OPTION0", "OPTION1"), isExpanded: true)
+									new TitledCommandPanel("SELECT OPTION", new GameBinaryButton(["OPTION0", "OPTION1"]), isExpanded: true)
 								]
 							)
 						)
@@ -42,26 +42,21 @@ class InGame extends StatelessWidget
 
 class GameBinaryButton extends StatelessWidget
 {
-	final String _title0;
-	final String _title1;
+	// TODO: final List<VoidCallback> _callbacks;
+	final List<String> _labels;
 
-	GameBinaryButton(this._title0, this._title1, {Key key}) : super(key: key);
+	GameBinaryButton(this._labels, {Key key}) : super(key: key);
 
 	@override
 	Widget build(BuildContext context)
 	{
-		return new Row(
-			children:
-			[
-				new Expanded(
-					child: new PanelButton(_title0, null, 12.0, 0.9, const EdgeInsets.only(right: 10.0, bottom: 26.0), (){/* TODO: */}),
+		List<Widget> buttons = [];
+		for(int i = 0; i < _labels.length; i++)
+		{
+			buttons.add(new Expanded(child:new PanelButton(_labels[i], 12.0, 0.9, const EdgeInsets.only(right:10.0, bottom: 26.0), () {/* TODO: */})));
+		}
 
-				),
-				new Expanded(
-					child: new PanelButton(_title1, null, 12.0, 0.9, const EdgeInsets.only(right: 10.0, bottom: 26.0), (){/* TODO: */} ),
-				)
-			],
-		)	;
+		return new Row(children: buttons);
 	}
 }
 
@@ -176,7 +171,7 @@ class GameOver extends StatelessWidget
 						),
 						new Container(
 							width: 274.0,
-							child: new PanelButton("Try Again", 59.0, 18.0, 1.3, const EdgeInsets.only(top:95.0, bottom: 90.0), _onRetry)
+							child: new PanelButton("Try Again", 18.0, 1.3, const EdgeInsets.only(top:95.0, bottom: 90.0), _onRetry)
 						)
 					],
 				)
