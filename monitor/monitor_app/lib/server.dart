@@ -1,12 +1,16 @@
 import "dart:io";
 import "dart:convert";
 
+import 'dart:math';
+
+enum CommandTypes { SLIDER, RADIAL, BINARY, TOGGLE }
+
 class GameClient
 {
     WebSocket _socket;
     GameServer _server;
     bool _isReady = false;
-    bool _isReadyToStart;
+    List<Map> _commands = [];
 
     GameClient(GameServer server, WebSocket socket)
     {
@@ -59,6 +63,12 @@ class GameClient
     }
 
     get isReady => _isReady;
+
+    set commands(List<Map> commandsList)
+    {
+        _commands = commandsList;
+        _socket.add(GameServer.formatJSONMessage("commandsList", _commands));
+    }
 
     set readyList(List<bool> readyPlayers)
     {
@@ -131,20 +141,31 @@ class GameServer
 
     onClientStartChanged(GameClient client)
     {
-        /*
+        /* 
+            TODO:
             iterate all the clients. 
             If everyone is ready, call game start
         */
+        bool readyToStart = true;
+        for(var gc in _clients)
+        {
+            readyToStart == readyToStart && gc.isReady;
+        }
+        
+        if(readyToStart)
+        {
+            onGameStart();
+        }
     }
 
     onGameStart()
     {
         // tell every client the game has started and what their commands are...
         // build list of command id to possible values
-        /* foreach(client)
+        for(var gc in _clients)
         {
-            client.assignCommands(commands.randomSelection());
-        } */
+            gc.commands = generateCommands();
+        }
     }
 
     onGameOver()
@@ -161,5 +182,78 @@ class GameServer
         GameClient client = new GameClient(this, socket);
         _clients.add(client);
         onClientReadyChanged();
+    }
+
+    List<Map> generateCommands()
+    {
+        List<Map> clientCommands = [];
+        var random = new Random();
+        List<CommandTypes> allCommands = CommandTypes.values;
+        // TODO: compute the best fit for the commands
+        for(int i = 0; i < 4; i++)
+        {
+            int index = random.nextInt(allCommands.length);
+            Map currentCommand;
+            CommandTypes ct = allCommands[index];
+            switch(ct)
+            {
+                // TODO: randomize parameters values
+                case CommandTypes.BINARY:
+                    currentCommand = _makeBinary("DATA CONNECTION", [ "BODY TEXT", "HEADLINE" ]);
+                    break;
+                case CommandTypes.RADIAL:
+                    currentCommand = _makeRadial("MARGIN", 0, 40);
+                    break;
+                case CommandTypes.SLIDER:
+                    currentCommand = _makeSlider("HEIGHT", 0, 200);
+                    break;
+                case CommandTypes.TOGGLE:
+                    currentCommand = _makeToggle("DATA CONNECTION");
+                    break;
+                default:
+                    print("UNKOWN COMMAND ${ct}");
+                    break;
+            }
+            clientCommands.add(currentCommand);
+        }
+
+        return clientCommands;
+    }
+
+    static Map _makeSlider(String title, int min, int max)
+    {
+        return {
+            "type": "GameSlider",
+            "title": title,
+            "min": min,
+            "max": max
+        };
+    }
+
+    static Map _makeRadial(String title, int min, int max)
+    {
+        return {
+            "type": "GameRadial",
+            "title": title,
+            "min": min,
+            "max": max
+        };
+    }
+
+    static Map _makeBinary(String title, List<String> options)
+    {
+        return {
+            "type": "GameBinaryButton",
+            "title": title,
+            "buttons": options
+        };
+    }
+
+    static Map _makeToggle(String title)
+    {
+        return {
+            "type": "GameToggle",
+            "title": title
+        };
     }
 }

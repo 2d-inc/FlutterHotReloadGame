@@ -149,6 +149,11 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		}
 	}
 
+	void onGameStart(List commands)
+	{
+		print("I GOT THESE COMMANDS: $commands");
+	}
+
 	void gameOver()
 	{
 		List<bool> resetList = new List.filled(_arePlayersReady.length, false);
@@ -171,11 +176,12 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	Widget build(BuildContext context) 
 	{
 		
-		return new Container(
+		return 
+		new Container(
 			decoration:new BoxDecoration(color:Colors.white),
 			child:new Row(
 				children: <Widget>[
-						new Container(
+						new GestureDetector( onTap: _backToLobby, child: new Container(
 							width: MediaQuery.of(context).size.width * _panelRatio,
 							decoration: new BoxDecoration(
 								image: new DecorationImage(
@@ -183,7 +189,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 									fit: BoxFit.fitHeight
 								),
 							)
-					),
+					)),
 					new Expanded(
 						child:new Container(
 							padding: new EdgeInsets.all(12.0),
@@ -279,7 +285,7 @@ class WebSocketClient
 					{
 						var jsonMsg = json.decode(message);
 						String msg = jsonMsg['message'];
-						// print("GOT MESSAGE $jsonMsg");
+						print("GOT MESSAGE $jsonMsg");
 						var payload = jsonMsg['payload'];
 						
 						switch(msg)
@@ -296,8 +302,9 @@ class WebSocketClient
 								// Reset state
 								_terminal.gameOver();
 								break;
-							case "gameStart":
-								// _terminal.onGameStart();
+							case "commandsList":
+								_terminal.onGameStart(payload as List);
+								break;
 							default:
 								print("UNKNOWN MESSAGE: $jsonMsg");
 								break;
