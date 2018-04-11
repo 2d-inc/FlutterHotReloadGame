@@ -97,7 +97,8 @@ class PlayerRow extends TableRow
             decoration: dec,
             children:
             [
-                new Container(child: new Text(name, style: new TextStyle(color: new Color.fromARGB(255, 45, 207, 220), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none))),
+                new Container(
+                    child: new Text(name, style: new TextStyle(color: new Color.fromARGB(255, 45, 207, 220), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none))),
                 new Container(
                     alignment: Alignment.bottomLeft,
                     decoration: new DottedDecoration(),
