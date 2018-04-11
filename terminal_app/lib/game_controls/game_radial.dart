@@ -8,6 +8,7 @@ import "game_colors.dart";
 class GameRadial extends StatefulWidget 
 {
 	GameRadial({Key key, this.value = 40, this.min = 0, this.max = 200}) : super(key: key);
+	GameRadial.make(Map params) : value = params['min'], min = params['min'], max = params['max'];
 
 	final int value;
 	final int min;

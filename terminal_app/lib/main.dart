@@ -55,6 +55,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	bool _gameOver = false;
 	List<bool> _arePlayersReady;
 
+	List _gameCommands = [];
+
 	@override
 	initState()
 	{
@@ -93,10 +95,19 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		return readyState;
 	}
 
-	void _handleStart()
+	void _backToLobby()
 	{
-		// TODO: Server logic
-		_client.onStart();
+		if(_isPlaying)
+		{
+			_panelController.reverse();
+			_isPlaying = !_isPlaying;
+			gameOver(); /* TODO: [debug] remove */
+		}
+	}
+
+	void onGameStart(List commands)
+	{
+		setState(() => _gameCommands = commands);
 		double endOpacity = _isPlaying ? 1.0 : 0.0;
 
 		_fadeLobbyAnimation = new Tween<double>(
@@ -139,27 +150,17 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		*/
 	}
 
-	void _backToLobby()
-	{
-		if(_isPlaying)
-		{
-			_panelController.reverse();
-			_isPlaying = !_isPlaying;
-			gameOver(); /* TODO: [debug] remove */
-		}
-	}
-
-	void onGameStart(List commands)
-	{
-		print("I GOT THESE COMMANDS: $commands");
-	}
-
 	void gameOver()
 	{
 		List<bool> resetList = new List.filled(_arePlayersReady.length, false);
-		// Use setters
-		arePlayersReady = resetList;
-		isReady = false;
+		setState(
+			()
+			{
+				_gameCommands = [];
+				_arePlayersReady = resetList;
+				_isReady = false;
+			}
+		);
 	}
 
 	set arePlayersReady(List<bool> readyList)
@@ -210,7 +211,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 										// Two decoration lines underneath the title
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										_isPlaying ? new InGame(_gameOpacity, _handleStart, _backToLobby, isOver: _gameOver) : new LobbyWidget(_isReady, _arePlayersReady, _lobbyOpacity, _client.onReady, _handleStart),
+										_isPlaying ? new InGame(_gameOpacity, _backToLobby, _gameCommands, isOver: _gameOver) : new LobbyWidget(_isReady, _arePlayersReady, _lobbyOpacity, _client.onReady, _client?.onStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,

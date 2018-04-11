@@ -9,16 +9,57 @@ import "game_controls/game_radial.dart";
 
 class InGame extends StatelessWidget
 {
-    final VoidCallback _onStart;
     final VoidCallback _onRetry;
     final double _opacity;
 	final bool isOver;
+	final List _gridDescription;
 
-    const InGame(this._opacity, this._onStart, this._onRetry, {  this.isOver: false , Key key } ) : super(key: key);
+	static const Map gameWidgetsMap = const {
+		"GameBinaryButton" : GameBinaryButton,
+		"GameSlider": GameSlider,
+		"GameRadial": GameRadial,
+	};
+
+    const InGame(this._opacity, this._onRetry, this._gridDescription, {  this.isOver: false , Key key } ) : super(key: key);
+
+	List<Widget> buildGrid()
+	{
+		print("READY TO BUILD: $_gridDescription");
+		List<Widget> grid = [];
+
+		for(var description in _gridDescription)
+		{
+			String type = description['type'];
+			String name = description['title'];
+			var constructor = gameWidgetsMap[type];
+			Widget w;
+			switch(type)
+			{
+				case "GameBinaryButton":
+					w = new GameBinaryButton.make(description);
+					break;
+				case "GameSlider":
+					w = new GameSlider.make(description);
+					break;
+				case "GameRadial":
+					w = new GameRadial.make(description);
+					break;
+				default:
+					w = new Container(child: new Text(type));
+					print("I DON'T KNOW THIS GUY");
+					break;
+			}
+			grid.add(new TitledCommandPanel(name, w, isExpanded: true));
+		}
+
+		return grid;
+	}
 
     @override
     Widget build(BuildContext context)
     {
+		List<Widget> grid = buildGrid();
+
 		return new Expanded(
 					child:new Opacity(
                     	opacity: _opacity,
@@ -28,11 +69,7 @@ class InGame extends StatelessWidget
 							this.isOver ? 
 							new GameOver(_onRetry) :
 							new ControlGrid(
-								children:<Widget>[
-									new TitledCommandPanel("HEIGHT", new GameSlider(), isExpanded: true),
-									new TitledCommandPanel("MARGIN", new GameRadial(), isExpanded: true),
-									new TitledCommandPanel("SELECT OPTION", new GameBinaryButton(["OPTION0", "OPTION1"]), isExpanded: true)
-								]
+								children: grid
 							)
 						)
 					)
@@ -46,6 +83,15 @@ class GameBinaryButton extends StatelessWidget
 	final List<String> _labels;
 
 	GameBinaryButton(this._labels, {Key key}) : super(key: key);
+
+	GameBinaryButton.make(Map params) : _labels = new List<String>(params['buttons'].length)
+	{
+		List l = params['buttons'];
+		for(int i = 0; i < l.length; i++)
+		{
+			_labels[i] = (l[i] as String);
+		}
+	}
 
 	@override
 	Widget build(BuildContext context)

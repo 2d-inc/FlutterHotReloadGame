@@ -6,6 +6,7 @@ import "game_colors.dart";
 class GameSlider extends StatefulWidget 
 {
 	GameSlider({Key key, this.value = 40, this.min = 0, this.max = 200}) : super(key: key);
+	GameSlider.make(Map params) : value = params['min'], min = params['min'], max = params['max'];
 
 	final int value;
 	final int min;
@@ -23,7 +24,6 @@ class _GameSliderState extends State<GameSlider>
 
 	_GameSliderState(this.value, this.minValue, this.maxValue);
 	
-
 	void valueChanged(double v)
 	{
 		setState(()
