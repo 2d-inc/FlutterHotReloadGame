@@ -209,9 +209,11 @@ class TerminalSceneRenderer extends RenderBox
 		
 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 
+		List<int> characterNameLookup = <int>[2,1,3,4];
 		for(int i = 0; i < 4; i++)
 		{
-			_characters[i] = new TerminalCharacter(this, "assets/nima/NPC${i+1}/NPC${i+1}");
+			int ci = characterNameLookup[i];
+			_characters[i] = new TerminalCharacter(this, "assets/nima/NPC$ci/NPC$ci");
 			_renderCharacters[i] = _characters[i];
 		}						
 
@@ -392,6 +394,7 @@ class TerminalSceneRenderer extends RenderBox
 			double realHeight = bounds[3] - bounds[1];
 			bounds[3] += realHeight * PadTop;
 			bounds[1] -= realHeight * PadBottom;
+			bounds[1] = max(bounds[1], _bounds[1]);
 		}
 		double height = bounds[3] - bounds[1];
 		double width = bounds[2] - bounds[0];
@@ -404,6 +407,7 @@ class TerminalSceneRenderer extends RenderBox
 		_position += new Offset((x-_position.dx)*mix, (y-_position.dy)*mix);
 
 		markNeedsPaint();
+		
 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 	}
 
@@ -432,7 +436,7 @@ class TerminalSceneRenderer extends RenderBox
 				return;
 			}
 			AABB b = talkCharacter.bounds;
-			_messageParagraph.layout(new ui.ParagraphConstraints(width:  min(size.width-MessagePadding*2.0-BubblePaddingH*2.0, b[2] - b[0] + BubblePaddingH*2)));
+			_messageParagraph.layout(new ui.ParagraphConstraints(width:  min(300.0, min(size.width-MessagePadding*2.0-BubblePaddingH*2.0, b[2] - b[0] + BubblePaddingH*2))));
 		}
 	}
 
@@ -456,22 +460,28 @@ class TerminalSceneRenderer extends RenderBox
 		{
 			return;
 		}
-		canvas.save();
-
-		
-		canvas.translate(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
-
 		double scale = size.height/_contentHeight;
+
+		canvas.save();		
+		canvas.translate(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
 		canvas.scale(scale, -scale);
-
-		// if(_state == TerminalSceneState.All)
-		// {			
-		// }
-
-		canvas.translate(_position.dx, _position.dy);//-bounds[0] - width/2.0, -bounds[1] - height/2.0);
-		//canvas.translate(-_bounds[0] - width/2.0, -_bounds[1] - height/2.0);
+		canvas.translate(_position.dx, _position.dy);
 
 		_scene.draw(canvas);
+
+		canvas.restore();
+		double fadeHeight = size.height*0.75;
+
+		double fadeOpacity = (_animationTime/_animation.duration);
+
+		canvas.drawRect(new Offset(offset.dx, offset.dy) & new Size(size.width, fadeHeight), 
+								new ui.Paint()	..shader = new ui.Gradient.linear(new Offset(0.0, offset.dy + (size.height-fadeHeight)), new Offset(0.0, offset.dy + fadeHeight), <Color>[new Color.fromARGB((128*fadeOpacity).round(), 0, 0, 0), const Color.fromARGB(0, 0, 0, 0)])
+											..style = ui.PaintingStyle.fill);
+
+		canvas.save();		
+		canvas.translate(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
+		canvas.scale(scale, -scale);
+		canvas.translate(_position.dx, _position.dy);
 		_renderCharacters.sort((TerminalCharacter a, TerminalCharacter b)
 		{
 			return ((b.actor.root.y - a.actor.root.y) * 100.0).round();
@@ -513,45 +523,9 @@ class TerminalSceneRenderer extends RenderBox
 			_bubbleOffset += new Offset((p.dx-_bubbleOffset.dx)*0.05, (p.dy-_bubbleOffset.dy)*0.2);
 
 			Size bubbleSize = new Size(_messageParagraph.width + BubblePaddingH*2.0, _messageParagraph.height + BubblePaddingV*2.0);
-			//print("P $p $bubbleSize");
-			/*
-			//Offset p = new Offset(MessagePadding+talkBounds[0]*scale, -talkBounds[3]*scale - _messageParagraph.height);
-			//Offset p = new Offset((talkBounds[0] + talkBounds[2])*0.5*scale-50.0, -talkBounds[3]*scale - _messageParagraph.height);
-
-			//canvas.drawRect(p & new Size(100.0, 100.0), new Paint()..color = Colors.red );
-			Offset bubblePos = new Offset(p.dx-BubblePaddingH, p.dy-BubblePaddingV);
-			Size bubbleSize = new Size(_messageParagraph.width + BubblePaddingH*2.0, _messageParagraph.height + BubblePaddingV*2.0);
-			RRect bubbleRRect = new RRect.fromRectAndRadius(bubblePos & bubbleSize, new Radius.circular(5.0));
-			RRect bubbleShadowRRect = new RRect.fromRectAndRadius((bubblePos + new Offset(5.0, 8.0)) & bubbleSize, new Radius.circular(5.0));
-
-			Path arrowFill = new Path();
-			Path arrowStroke = new Path();
-			double arrowStartX = bubblePos.dx+bubbleSize.width*0.25;
-			double arrowStartY = bubblePos.dy + bubbleSize.height - 2.0;
-			const double arrowSize = 30.0;
-			arrowFill.moveTo(arrowStartX, arrowStartY);
-			arrowFill.lineTo(arrowStartX + arrowSize/2.0, arrowStartY + arrowSize/2.0);
-			arrowFill.lineTo(arrowStartX + arrowSize, arrowStartY);
-
-			arrowStroke.moveTo(arrowStartX, arrowStartY+1.0);
-			arrowStroke.lineTo(arrowStartX + arrowSize/2.0, arrowStartY+1.0 + arrowSize/2.0);
-			arrowStroke.lineTo(arrowStartX + arrowSize, arrowStartY+1.0);
-
 			
-
-			canvas.drawRRect(bubbleShadowRRect, new Paint()..color = const Color.fromARGB(48, 0, 19, 28));
-			canvas.drawRRect(bubbleRRect, new Paint()..color = Colors.white);
-			canvas.drawRRect(bubbleRRect, new Paint()..color = const Color.fromARGB(255, 0, 92, 103)
-													..style = PaintingStyle.stroke
-													..strokeWidth = 2.0);
-			canvas.drawPath(arrowFill, new Paint()..color = Colors.white);
-			canvas.drawPath(arrowStroke, new Paint()..color = const Color.fromARGB(255, 0, 92, 103)
-													..style = PaintingStyle.stroke
-													..strokeWidth = 2.0);	*/
-
-
 			Path bubble = makeBubblePath(bubbleSize.width, bubbleSize.height);
-			canvas.translate(_bubbleOffset.dx+5.0, _bubbleOffset.dy+10.0);
+			canvas.translate(_bubbleOffset.dx + 4.0, _bubbleOffset.dy + 7.0);
 			canvas.drawPath(bubble, new Paint()..color = const Color.fromARGB(48, 0, 19, 28));
 			canvas.translate(-5.0, -10.0);
 			canvas.drawPath(bubble, new Paint()..color = Colors.white);
@@ -562,14 +536,6 @@ class TerminalSceneRenderer extends RenderBox
 			canvas.drawParagraph(_messageParagraph, new Offset(BubblePaddingH, BubblePaddingV));// new Offset(talkBounds[0]*scale, talkBounds[1]*-scale));
 		}
 		canvas.restore();
-		/*RadialTickParagraph tickParagraph = _tickParagraphs[i];
-				Offset tickTextPosition = new Offset(center.dx+c * radiusTickText, center.dy+s * radiusTickText);
-				canvas.drawParagraph(tickParagraph.paragraph, new Offset(tickTextPosition.dx - tickParagraph.size.width/2.0, tickTextPosition.dy - tickParagraph.size.height/2.0));*/
-		
-		
-		// canvas.scale(0.5, -0.5);
-		// canvas.translate(410.0, -1250.0);
-		// _sceneInstance.draw(canvas);
 	}
 
 	Path makeBubblePath(double width, double height)

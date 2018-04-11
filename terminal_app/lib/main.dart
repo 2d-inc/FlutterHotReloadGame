@@ -8,6 +8,7 @@ import "decorations/dotted_grid.dart";
 import "lobby.dart";
 import "in_game.dart";
 import "character_scene.dart";
+import "command_timer.dart";
 import "dart:math";
 
 void main() => runApp(new MyApp());
@@ -53,6 +54,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	TerminalSceneState _sceneState = TerminalSceneState.All;
 	int _sceneCharacterIndex = 0;
 	String _sceneMessage = "Come on, we've got a deadline to make!";
+	DateTime _commandStartTime = new DateTime.now();
+	DateTime _commandEndTime = new DateTime.now().add(const Duration(seconds:10));
 
 	WebSocketClient _client;
 
@@ -138,7 +141,12 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		{
 			_sceneState = TerminalSceneState.Upset;
 			_sceneCharacterIndex = new Random().nextInt(4);//rand()%4;
+			
+
+			// Fake setting command time and command
 			_sceneMessage = "Set padding to 20!";
+			_commandStartTime = new DateTime.now();
+			_commandEndTime = new DateTime.now().add(const Duration(seconds:10));
 		});
 		/* TODO: [debug] remove 
 		_gameOver = false;
@@ -211,7 +219,12 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 							(
 								children:<Widget>
 								[
-									new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage)
+									new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage),
+									new Container(
+										margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
+										height: 50.0,
+										child:new CommandTimer(startTime:_commandStartTime, endTime:_commandEndTime)
+									)
 								]	
 							)
 						)
