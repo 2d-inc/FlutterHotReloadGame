@@ -16,6 +16,16 @@ class LobbyWidget extends StatelessWidget
     @override
     Widget build(BuildContext context)
     {
+        int readyNum = 0;
+        for(var p in _arePlayersReady)
+        {
+            if(p)
+            {
+                readyNum++;
+            }
+        }
+
+        bool canStart = _ready && readyNum > 1;
         return new Expanded(
                 child: new Opacity(
                     opacity: _opacity,
@@ -24,15 +34,15 @@ class LobbyWidget extends StatelessWidget
                         children: 
                         [
                             // Players Row
-                            new CommandPanel(new PlayerListWidget(this._ready, this._arePlayersReady)),
+                            new CommandPanel(new PlayerListWidget(this._arePlayersReady)),
                             // Filler
                             new Expanded(child: new Container()),
                             // Buttons
                             new Column(
                                 children:
                                 [
-                                    new PanelButton(_ready ? "SET TO NOT READY":"SET TO READY", 59.0, 18.0, 1.3, null, _onReady),
-                                    new PanelButton("START", 59.0, 18.0, 1.3, const EdgeInsets.only(top:10.0), _onStart, isAccented: true)
+                                    new PanelButton(_ready ? "SET TO NOT READY" : "SET TO READY", 59.0, 18.0, 1.3, null, _onReady),
+                                    new PanelButton("START", 59.0, 18.0, 1.3, const EdgeInsets.only(top:10.0), _onStart, isAccented: canStart, isEnabled: canStart)
                                 ],
                             )
 

@@ -3,12 +3,8 @@ import 'dart:convert';
 import "package:flutter/material.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/rendering.dart";
-import "package:web_socket_channel/web_socket_channel.dart";
-import "package:web_socket_channel/io.dart";
 import "dart:io";
 import "decorations/dotted_grid.dart";
-import "game_controls/game_slider.dart";
-import "game_controls/game_radial.dart";
 import "lobby.dart";
 import "in_game.dart";
 import "character_scene.dart";
@@ -22,24 +18,24 @@ class MyApp extends StatelessWidget {
 	Widget build(BuildContext context) {
 		return new MaterialApp(
 			title: "Terminal",
-			home: new MyHomePage(
+			home: new Terminal(
 				title: "Terminal"
 			)
 		);
 	}
 }
 
-class MyHomePage extends StatefulWidget 
+class Terminal extends StatefulWidget 
 {
-	MyHomePage({Key key, this.title}) : super(key: key);
+	Terminal({Key key, this.title}) : super(key: key);
 
 	final String title;
 
 	@override
-	_MyHomePageState createState() => new _MyHomePageState();
+	_TerminalState createState() => new _TerminalState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin
+class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 {	
 	static const double gamePanelRatio = 0.33;
 	static const double lobbyPanelRatio = 0.66;
@@ -58,83 +54,18 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	int _sceneCharacterIndex = 0;
 	String _sceneMessage = "Come on, we've got a deadline to make!";
 
-	WebSocket _socket;
+	WebSocketClient _client;
 
 	bool _isReady = false;
+	bool _gameOver = false;
 	List<bool> _arePlayersReady;
-
-	_connect()
-	{
-		String address;
-		if(Platform.isAndroid)
-		{
-			address = "10.0.2.2";
-		}
-		else
-		{
-			address = InternetAddress.LOOPBACK_IP_V4.address;
-		}
-		WebSocket.connect("ws://"+ address + ":8080/ws").then(
-			(WebSocket ws)
-			{
-				print("CONNECTED");
-				_socket = ws;
-				_socket.pingInterval = const Duration(seconds: 5);
-				ws.listen((message)
-				{
-					var jsonMsg = JSON.decode(message);
-					print("GOT MESSAGE $jsonMsg");
-
-					try
-					{
-						var jsonMsg = JSON.decode(message);
-						String msg = jsonMsg['message'];
-						
-						switch(msg)
-						{
-							case "playerList":
-								List<bool> statusList = jsonMsg['payload'];
-								setState(() => _arePlayersReady = statusList);
-								break;
-							default:
-								print("UNKNOWN MESSAGE: $jsonMsg");
-								break;
-						}
-					}
-					on FormatException catch(e)
-					{
-						print("Wrong Message Formatting, not JSON: ${message}");
-						print(e);
-					}
-
-				}, 
-				onDone: _connect); // Try to reconnect when server drops
-			}
-		)
-		.catchError(
-			(e)
-			{
-				if(e is SocketException)
-				{
-					// Try to reconnect if server is unreachable
-					print("RETRY $e");
-					new Timer(const Duration(seconds: 5), _connect);
-				}
-				else
-				{
-					print("WEBSOCKET ERROR: $e");
-				}
-			}
-		)
-		.timeout(const Duration(seconds: 5), onTimeout: _connect);
-	}
 
 	@override
 	initState()
 	{
 		super.initState(); 
 		_arePlayersReady = [_isReady];
-		_connect();
+		_client = new WebSocketClient(this);
 
 		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 		_fadeCallback = () 
@@ -155,32 +86,22 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	@override
 	void dispose()
 	{
-		print("DISPOSING");
-		_socket?.close(99, "DISPOSING");
+		_client.dispose();
 		_panelController.dispose();
 		super.dispose();
 	}
 
-	void _handleReady()
+	bool handleReady()
 	{
-		setState(
-			()
-			{
-				_isReady = !_isReady;
-				String readyMsg = JSON.encode(
-					{
-						"message": "ready", 
-						"payload": _isReady
-					}	
-				);
-				_socket?.add(readyMsg);
-			}
-		);
+		bool readyState = !_isReady;
+		setState(() => _isReady = readyState);
+		return readyState;
 	}
 
 	void _handleStart()
 	{
 		// TODO: Server logic
+		_client.onStart();
 		double endOpacity = _isPlaying ? 1.0 : 0.0;
 
 		_fadeLobbyAnimation = new Tween<double>(
@@ -219,14 +140,23 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 			_sceneCharacterIndex = new Random().nextInt(4);//rand()%4;
 			_sceneMessage = "Set padding to 20!";
 		});
+		/* TODO: [debug] remove 
+		_gameOver = false;
+		new Timer(const Duration(seconds: 2), () {
+			setState( () {
+				_gameOver = true;
+			} );
+		});
+		*/
 	}
 
-	void _backToLobby(TapUpDetails details)
+	void _backToLobby()
 	{
 		if(_isPlaying)
 		{
 			_panelController.reverse();
 			_isPlaying = !_isPlaying;
+			gameOver(); /* TODO: [debug] remove */
 		}
 		setState(() 
 		{
@@ -235,17 +165,39 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 		});
 	}
 
+	void onGameStart(List commands)
+	{
+		print("I GOT THESE COMMANDS: $commands");
+	}
+
+	void gameOver()
+	{
+		List<bool> resetList = new List.filled(_arePlayersReady.length, false);
+		// Use setters
+		arePlayersReady = resetList;
+		isReady = false;
+	}
+
+	set arePlayersReady(List<bool> readyList)
+	{
+		setState(() => _arePlayersReady = readyList);
+	}
+
+	set isReady(bool isIt)
+	{
+		setState(() => _isReady = isIt);
+	}
+
 	@override
 	Widget build(BuildContext context) 
 	{
-		// List<bool> ready = [true, false, false, true];
-		return new Container(
+		
+		return 
+		new Container(
 			decoration:new BoxDecoration(color:Colors.white),
 			child:new Row(
 				children: <Widget>[
-					new GestureDetector(
-						onTapUp: _backToLobby,
-						child:	new Container(
+						new GestureDetector( onTap: _backToLobby, child: new Container(
 							width: MediaQuery.of(context).size.width * _panelRatio,
 							// decoration: new BoxDecoration
 							// (
@@ -293,7 +245,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 										// Two decoration lines underneath the title
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										_isPlaying ? new InGame(_gameOpacity, _handleReady, _handleStart) : new LobbyWidget(_isReady, _arePlayersReady, _lobbyOpacity, _handleReady, _handleStart),
+										_isPlaying ? new InGame(_gameOpacity, _handleStart, _backToLobby, isOver: _gameOver) : new LobbyWidget(_isReady, _arePlayersReady, _lobbyOpacity, _client.onReady, _handleStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,
@@ -308,5 +260,116 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 				],
 			)
 		);
+	}
+}
+
+class WebSocketClient
+{
+	WebSocket _socket;
+	_TerminalState _terminal;
+
+	WebSocketClient(this._terminal)
+	{
+		connect();
+	}
+
+    static String formatJSONMessage<T>(String msg, T payload)
+    {
+        return json.encode({
+            "message": msg,
+            "payload": payload
+        });
+    }
+
+	dispose()
+	{
+		_socket?.close(99, "DISPOSING");
+	}
+
+	void onReady()
+	{
+		bool state = _terminal.handleReady();
+		_socket?.add(formatJSONMessage("ready", state));
+	}
+
+	onStart()
+	{
+		_socket?.add(formatJSONMessage("startGame", true));
+	}
+
+	connect()
+	{
+		String address;
+		if(Platform.isAndroid)
+		{
+			address = "10.0.2.2";
+		}
+		else
+		{
+			address = InternetAddress.LOOPBACK_IP_V4.address;
+		}
+		WebSocket.connect("ws://"+ address + ":8080/ws").then(
+			(WebSocket ws)
+			{
+				print("CONNECTED");
+				_socket = ws;
+				_socket.pingInterval = const Duration(seconds: 5);
+				ws.listen((message)
+				{
+					try
+					{
+						var jsonMsg = json.decode(message);
+						String msg = jsonMsg['message'];
+						print("GOT MESSAGE $jsonMsg");
+						var payload = jsonMsg['payload'];
+						
+						switch(msg)
+						{
+							case "playerList":
+								List<bool> boolList = [];
+								for(var b in payload) // Workaround for Dart throw
+								{
+									if(b is bool) boolList.add(b);
+								}
+								_terminal.arePlayersReady = boolList;
+								break;
+							case "gameOver":
+								// Reset state
+								_terminal.gameOver();
+								break;
+							case "commandsList":
+								_terminal.onGameStart(payload as List);
+								break;
+							default:
+								print("UNKNOWN MESSAGE: $jsonMsg");
+								break;
+						}
+					}
+					on FormatException catch(e)
+					{
+						print("Wrong Message Formatting, not JSON: ${message}");
+						print(e);
+					}
+
+				}, 
+				onDone: connect); // Try to reconnect when server drops
+			}
+		)
+		.catchError(
+			(e)
+			{
+				if(e is SocketException)
+				{
+					// Try to reconnect if server is unreachable
+					print("RETRY $e");
+					new Timer(const Duration(seconds: 5), connect);
+				}
+				else
+				{
+					print("WEBSOCKET ERROR: $e");
+				}
+			}
+		)
+		.timeout(const Duration(seconds: 5), onTimeout: connect);
 	}
 }

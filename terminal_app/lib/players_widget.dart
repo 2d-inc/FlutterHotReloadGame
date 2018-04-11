@@ -7,10 +7,9 @@ enum PlayerStatus { READY, NOT_READY }
 
 class PlayerListWidget extends StatefulWidget 
 {
-    final bool _ready;
     final List<bool> _arePlayersReady;
 
-    PlayerListWidget(this._ready, this._arePlayersReady, {Key key}) : super(key: key);
+    PlayerListWidget(this._arePlayersReady, {Key key}) : super(key: key);
 
 	@override
 	PlayerListState createState() => new PlayerListState();
@@ -22,8 +21,7 @@ class PlayerListState extends State<PlayerListWidget>
     Widget build(BuildContext context)
     {
         List<TableRow> c = new List<TableRow>(widget._arePlayersReady.length);
-        c[0] = new PlayerRow("Player 1", widget._ready);
-        for(int i = 1; i < c.length; i++)
+        for(int i = 0; i < c.length; i++)
         {
             c[i] = (new PlayerRow("Player ${i+1}", widget._arePlayersReady[i]));
         }

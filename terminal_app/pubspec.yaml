@@ -42,6 +42,9 @@ flutter:
       - asset: assets/fonts/Inconsolata-Regular.ttf
       - asset: assets/fonts/Inconsolata-Bold.ttf
         weight: 700
+  - family: RalewayDots
+    fonts:
+      - asset: assets/fonts/RalewayDots-Regular.ttf
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
