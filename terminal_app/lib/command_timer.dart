@@ -11,20 +11,22 @@ class CommandTimer extends LeafRenderObjectWidget
 {
 	final DateTime startTime;
 	final DateTime endTime;
-	
-	CommandTimer({Key key, this.startTime, this.endTime}): super(key: key);
+	final double opacity;
+
+	CommandTimer({Key key, this.startTime, this.endTime, this.opacity}): super(key: key);
 
 	@override
 	RenderObject createRenderObject(BuildContext context) 
 	{
-		return new CommandTimerRenderer(startTime, endTime);
+		return new CommandTimerRenderer(startTime, endTime, opacity);
 	}
 
 	@override
 	void updateRenderObject(BuildContext context, covariant CommandTimerRenderer renderObject)
 	{
 		renderObject..startTime = startTime
-					..endTime = endTime;
+					..endTime = endTime
+					..opacity = opacity;
 	}
 }
 
@@ -50,10 +52,27 @@ class CommandTimerRenderer extends RenderBox
 {
 	DateTime _startTime;
 	DateTime _endTime;
-	CommandTimerRenderer(DateTime startTime, DateTime endTime)
+	double _opacity;
+
+	CommandTimerRenderer(DateTime startTime, DateTime endTime, double opacity)
 	{
 		this.startTime = startTime;
 		this.endTime = endTime;
+		this.opacity = opacity;
+	}
+
+	double get opacity
+	{
+		return _opacity;
+	}
+
+	set opacity(double value)
+	{
+		if(value == _opacity)
+		{
+			return;
+		}
+		_opacity = value;
 	}
 
 	DateTime get startTime
@@ -110,15 +129,21 @@ class CommandTimerRenderer extends RenderBox
 		const double IconSize = 15.0;
 		const double Padding = 10.0;
 		final double CenterY = offset.dy + size.height/2.0;
+		int alpha = (255 * _opacity).round();
+		if(alpha == 0)
+		{
+			return;
+		}
 
-		canvas.drawCircle(new Offset(dx+IconSize/2.0, CenterY), IconSize/2.0+1, new ui.Paint()..color = Colors.white
-																														..style = PaintingStyle.stroke
-																														..strokeWidth = 2.0);
+		canvas.drawCircle(new Offset(dx+IconSize/2.0, CenterY), IconSize/2.0+1, new ui.Paint()
+																								..color = Colors.white.withAlpha(alpha)
+																								..style = PaintingStyle.stroke
+																								..strokeWidth = 2.0);
 		ui.Path hands = new ui.Path();
 		hands.moveTo(dx + IconSize/2.0 - 4.0, CenterY+1);
 		hands.lineTo(dx + IconSize/2.0, CenterY+1);
 		hands.lineTo(dx + IconSize/2.0, CenterY-6.0);
-		canvas.drawPath(hands, new ui.Paint()..color = Colors.white
+		canvas.drawPath(hands, new ui.Paint()..color = Colors.white.withAlpha(alpha)
 											..style = PaintingStyle.stroke
 											..strokeWidth = 2.0);
 
@@ -147,8 +172,8 @@ class CommandTimerRenderer extends RenderBox
 		Offset barOffset = new Offset(dx, CenterY - BarHeight/2.0);
 		Offset barShadowOffset = new Offset(barOffset.dx + 4.0, barOffset.dy + 7.0);
 
-		canvas.drawRRect(new RRect.fromRectAndRadius(barShadowOffset & new Size(width, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = const Color.fromARGB(48, 0, 19, 28));
-		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = Colors.white);
-		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width*fi, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = const Color.fromARGB(255, 86, 234, 246));
+		canvas.drawRRect(new RRect.fromRectAndRadius(barShadowOffset & new Size(width, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = new Color.fromARGB((48*_opacity.round()), 0, 19, 28));
+		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = Colors.white.withAlpha(alpha));
+		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width*fi, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = const Color.fromARGB(255, 86, 234, 246).withAlpha(alpha));
 	}
 }

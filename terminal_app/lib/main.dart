@@ -200,13 +200,60 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	Widget build(BuildContext context) 
 	{
 		
-		return 
-		new Container(
-			decoration:new BoxDecoration(color:Colors.white),
-			child:new Row(
-				children: <Widget>[
-						new GestureDetector( onTap: _backToLobby, child: new Container(
-							width: MediaQuery.of(context).size.width * _panelRatio,
+		return new Stack
+		(
+			fit:StackFit.loose,
+			//alignment: Alignment.,
+			children:<Widget>
+			[
+				new Positioned
+				(
+					width:MediaQuery.of(context).size.width * (1.0-_panelRatio),
+					top:0.0,
+					bottom:0.0,
+					right:0.0, 
+					child:new Container
+					(
+						padding: new EdgeInsets.all(12.0),
+						decoration:new DottedGrid(),
+						child:new Container
+						(
+							decoration: new BoxDecoration(border: new Border.all(color: const Color.fromARGB(127, 72, 196, 206)), borderRadius: new BorderRadius.circular(3.0)),
+							padding: new EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 6.0),
+							child: new Column
+							(
+								children: 
+								[
+									// Title Row
+									new Row(children: 
+										[	
+											new Text("SYSTEM ONLINE", style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
+											new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5))
+										]
+									),
+									// Two decoration lines underneath the title
+									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
+									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
+									_isPlaying ? new InGame(_gameOpacity, _handleStart, _backToLobby, isOver: _gameOver) : new LobbyWidget(_isReady, _arePlayersReady, _lobbyOpacity, _client.onReady, _handleStart),
+									new Container(
+										margin: new EdgeInsets.only(top: 10.0),
+										alignment: Alignment.bottomRight,
+										child: new Text("V0.1", style: const TextStyle(color: const Color.fromARGB(255, 50, 69, 71), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 12.0, decoration: TextDecoration.none, letterSpacing: 0.9))
+									),
+									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
+								]
+							)
+						)
+					)
+				),
+				new Positioned
+				(
+					left:0.0,
+					top:0.0,
+					bottom:0.0,
+					width:MediaQuery.of(context).size.width * _panelRatio,
+					child: new GestureDetector( onTap: _backToLobby, child: 
+						new Container(
 							// decoration: new BoxDecoration
 							// (
 							// 	image: new DecorationImage
@@ -219,59 +266,18 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 							(
 								children:<Widget>
 								[
-									new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage),
+									new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage, startTime:_commandStartTime, endTime:_commandEndTime),
 									new Container(
 										margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
 										height: 50.0,
-										child:new CommandTimer(startTime:_commandStartTime, endTime:_commandEndTime)
+										child:new CommandTimer(opacity:_gameOpacity, startTime:_commandStartTime, endTime:_commandEndTime)
 									)
 								]	
 							)
 						)
-						// new Container(
-						// 	width: MediaQuery.of(context).size.width * _panelRatio,
-						// 	decoration: new BoxDecoration(
-						// 		image: new DecorationImage(
-						// 			image: new AssetImage("assets/images/lobby_background.png"),
-						// 			fit: BoxFit.fitHeight
-						// 	),
-						// 	)
-						// )
 					),
-					new Expanded(
-						child:new Container(
-							padding: new EdgeInsets.all(12.0),
-							decoration:new DottedGrid(),
-							child: new Container(
-								decoration: new BoxDecoration(border: new Border.all(color: const Color.fromARGB(127, 72, 196, 206)), borderRadius: new BorderRadius.circular(3.0)),
-								padding: new EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 6.0),
-								child: new Column(
-									children: 
-									[
-										// Title Row
-										new Row(children: 
-											[	
-												new Text("SYSTEM ONLINE", style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
-												new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5))
-											]
-										),
-										// Two decoration lines underneath the title
-										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
-										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										_isPlaying ? new InGame(_gameOpacity, _handleStart, _backToLobby, isOver: _gameOver) : new LobbyWidget(_isReady, _arePlayersReady, _lobbyOpacity, _client.onReady, _handleStart),
-										new Container(
-											margin: new EdgeInsets.only(top: 10.0),
-											alignment: Alignment.bottomRight,
-											child: new Text("V0.1", style: const TextStyle(color: const Color.fromARGB(255, 50, 69, 71), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 12.0, decoration: TextDecoration.none, letterSpacing: 0.9))
-										),
-										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
-									]
-								)
-							)
-						)
-					)
-				],
-			)
+				)			
+			],
 		);
 	}
 }

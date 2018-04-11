@@ -17,15 +17,17 @@ enum TerminalSceneState
 
 class TerminalScene extends LeafRenderObjectWidget
 {
+	final DateTime startTime;
+	final DateTime endTime;
 	final TerminalSceneState state;
 	final int characterIndex;
 	final String message;
-	TerminalScene({Key key, this.state, this.characterIndex, this.message}): super(key: key);
+	TerminalScene({Key key, this.state, this.characterIndex, this.message, this.startTime, this.endTime}): super(key: key);
 
 	@override
 	RenderObject createRenderObject(BuildContext context) 
 	{
-		return new TerminalSceneRenderer(state, characterIndex, message);
+		return new TerminalSceneRenderer(state, characterIndex, message, startTime, endTime);
 	}
 
 	@override
@@ -33,7 +35,9 @@ class TerminalScene extends LeafRenderObjectWidget
 	{
 		renderObject..state = state
 					..characterIndex = characterIndex
-					..message = message;
+					..message = message
+					..startTime = startTime
+					..endTime = endTime;
 	}
 }
 
@@ -197,15 +201,19 @@ class TerminalSceneRenderer extends RenderBox
 	AABB _characterBounds;
 	String _message;
 	ui.Paragraph _messageParagraph;
+	DateTime _startTime;
+	DateTime _endTime;
 
 	List<TerminalCharacter> _characters = new List<TerminalCharacter>(4);
 	List<TerminalCharacter> _renderCharacters = new List<TerminalCharacter>(4);
 	
-	TerminalSceneRenderer(TerminalSceneState state, int characterIndex, String message)
+	TerminalSceneRenderer(TerminalSceneState state, int characterIndex, String message, DateTime startTime, DateTime endTime)
 	{
 		this.state = state;
 		this.characterIndex = characterIndex;
 		this.message = message;
+		this.startTime = startTime;
+		this.endTime = endTime;
 		
 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 
@@ -237,6 +245,34 @@ class TerminalSceneRenderer extends RenderBox
 			_position = new Offset(x, y);
 			markNeedsLayout();
 		});
+	}
+
+	DateTime get startTime
+	{
+		return _startTime;
+	}
+
+	set startTime(DateTime value)
+	{
+		if(_startTime == value)
+		{
+			return;
+		}
+		_startTime = value;
+	}
+
+	DateTime get endTime
+	{
+		return _endTime;
+	}
+
+	set endTime(DateTime value)
+	{
+		if(_endTime == value)
+		{
+			return;
+		}
+		_endTime = value;
 	}
 
 	int get characterIndex
@@ -380,6 +416,17 @@ class TerminalSceneRenderer extends RenderBox
 		}
 		_scene.advance(elapsed);
 
+
+		DateTime now = new DateTime.now();
+		double f = 1.0-(now.difference(_startTime).inMilliseconds/_endTime.difference(_startTime).inMilliseconds).clamp(0.0, 1.0);
+		if(showOnlyBoss)
+		{
+			boss.state = f < 0.25 ? TerminalSceneState.Angry : f < 0.6 ? TerminalSceneState.Upset : TerminalSceneState.Happy;
+		}
+		else
+		{
+			boss.state = TerminalSceneState.All;
+		}
 		for(TerminalCharacter character in _characters)
 		{
 			character.advance(elapsed, !showOnlyBoss || character == boss);
@@ -463,25 +510,20 @@ class TerminalSceneRenderer extends RenderBox
 		double scale = size.height/_contentHeight;
 
 		canvas.save();		
+		canvas.clipRect(offset & size);
 		canvas.translate(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
 		canvas.scale(scale, -scale);
 		canvas.translate(_position.dx, _position.dy);
-
 		_scene.draw(canvas);
-
 		canvas.restore();
 		double fadeHeight = size.height*0.75;
 
-		double fadeOpacity = (_animationTime/_animation.duration);
+		double fadeOpacity = _animation == null ? 0.0 : (_animationTime/_animation.duration);
 
 		canvas.drawRect(new Offset(offset.dx, offset.dy) & new Size(size.width, fadeHeight), 
-								new ui.Paint()	..shader = new ui.Gradient.linear(new Offset(0.0, offset.dy + (size.height-fadeHeight)), new Offset(0.0, offset.dy + fadeHeight), <Color>[new Color.fromARGB((128*fadeOpacity).round(), 0, 0, 0), const Color.fromARGB(0, 0, 0, 0)])
+								new ui.Paint()	..shader = new ui.Gradient.linear(new Offset(0.0, offset.dy + (size.height-fadeHeight)), new Offset(0.0, offset.dy + fadeHeight), <Color>[new Color.fromARGB((100*fadeOpacity).round(), 0, 0, 0), const Color.fromARGB(0, 0, 0, 0)])
 											..style = ui.PaintingStyle.fill);
 
-		canvas.save();		
-		canvas.translate(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
-		canvas.scale(scale, -scale);
-		canvas.translate(_position.dx, _position.dy);
 		_renderCharacters.sort((TerminalCharacter a, TerminalCharacter b)
 		{
 			return ((b.actor.root.y - a.actor.root.y) * 100.0).round();
@@ -496,11 +538,20 @@ class TerminalSceneRenderer extends RenderBox
 			{
 				continue;
 			}
+			
+			canvas.save();		
+			if(boss != character)
+			{
+				canvas.clipRect(offset & size);
+			}
+			canvas.translate(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
+			canvas.scale(scale, -scale);
+			canvas.translate(_position.dx, _position.dy);
 
 			character.draw(canvas);
+			canvas.restore();
 		}
-
-		canvas.restore();
+		
 
 		canvas.save();
 		if(_messageParagraph != null)
