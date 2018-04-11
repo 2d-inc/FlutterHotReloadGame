@@ -53,7 +53,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	Animation<double> _fadeGameAnimation;
 	TerminalSceneState _sceneState = TerminalSceneState.All;
 	int _sceneCharacterIndex = 0;
-	String _sceneMessage = "Come on, we've got a deadline to make!";
+	String _sceneMessage = "Waiting for 2 players!";
 	DateTime _commandStartTime = new DateTime.now();
 	DateTime _commandEndTime = new DateTime.now().add(const Duration(seconds:10));
 
@@ -69,7 +69,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		super.initState(); 
 		_arePlayersReady = [_isReady];
 		_client = new WebSocketClient(this);
-
+		updateSceneMessage();
 		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 		_fadeCallback = () 
 		{
@@ -169,7 +169,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		setState(() 
 		{
 			_sceneState = TerminalSceneState.All;
-			_sceneMessage = "Come on, we've got a deadline to make!";
+			updateSceneMessage();
 		});
 	}
 
@@ -186,9 +186,23 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		isReady = false;
 	}
 
+	// Should be called within a set state.
+	updateSceneMessage()
+	{
+		String message = _arePlayersReady.fold<int>(0, (int count, bool value) { if(value) { count++; } return count;} ) >= 2 ? "Come on, we've got a deadline to make!" : "Waiting for 2 players!";
+		if(message != _sceneMessage)
+		{
+			_sceneMessage = message;
+		}
+	}
+
 	set arePlayersReady(List<bool> readyList)
 	{
-		setState(() => _arePlayersReady = readyList);
+		setState(()
+		{
+			_arePlayersReady = readyList;
+			updateSceneMessage();
+		});
 	}
 
 	set isReady(bool isIt)
