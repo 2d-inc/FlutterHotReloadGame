@@ -24,13 +24,13 @@ class InGame extends StatelessWidget
                     	opacity: _opacity,
 						child:new Container(
 							margin:new EdgeInsets.only(top:43.0), 
-							child:new ControlGrid(
-								children:<Widget>[
-									new TitledCommandPanel("HEIGHT", new GameSlider(), isExpanded: true),
-									new TitledCommandPanel("MARGIN", new GameRadial(), isExpanded: true),
-									new TitledCommandPanel("TEST", new Container(), isExpanded: true),
-								]
-							)
+							// child:new ControlGrid(
+							// 	children:<Widget>[
+							// 		new TitledCommandPanel("HEIGHT", new GameSlider(), isExpanded: true),
+							// 		new TitledCommandPanel("MARGIN", new GameRadial(), isExpanded: true),
+							// 		new TitledCommandPanel("TEST", new Container(), isExpanded: true),
+							// 	]
+							// )
 						)
 					)
 				);

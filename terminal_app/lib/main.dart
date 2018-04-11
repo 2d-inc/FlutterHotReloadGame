@@ -11,6 +11,8 @@ import "game_controls/game_slider.dart";
 import "game_controls/game_radial.dart";
 import "lobby.dart";
 import "in_game.dart";
+import "character_scene.dart";
+import "dart:math";
 
 void main() => runApp(new MyApp());
 
@@ -52,6 +54,9 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 	Animation<double> _slideAnimation;
 	Animation<double> _fadeLobbyAnimation;
 	Animation<double> _fadeGameAnimation;
+	TerminalSceneState _sceneState = TerminalSceneState.All;
+	int _sceneCharacterIndex = 0;
+	String _sceneMessage = "Come on, we've got a deadline to make!";
 
 	WebSocket _socket;
 
@@ -131,7 +136,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 		_arePlayersReady = [_isReady];
 		_connect();
 
-		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 10000));
+		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 		_fadeCallback = () 
 		{
 			setState(
@@ -207,6 +212,13 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
 		_isPlaying = !_isPlaying;
 		_panelController.forward();
+
+		setState(() 
+		{
+			_sceneState = TerminalSceneState.Upset;
+			_sceneCharacterIndex = new Random().nextInt(4);//rand()%4;
+			_sceneMessage = "Set padding to 20!";
+		});
 	}
 
 	void _backToLobby(TapUpDetails details)
@@ -216,6 +228,11 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 			_panelController.reverse();
 			_isPlaying = !_isPlaying;
 		}
+		setState(() 
+		{
+			_sceneState = TerminalSceneState.All;
+			_sceneMessage = "Come on, we've got a deadline to make!";
+		});
 	}
 
 	@override
@@ -230,13 +247,31 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 						onTapUp: _backToLobby,
 						child:	new Container(
 							width: MediaQuery.of(context).size.width * _panelRatio,
-							decoration: new BoxDecoration(
-								image: new DecorationImage(
-									image: new AssetImage("assets/images/lobby_background.png"),
-									fit: BoxFit.fitHeight
-							),
+							// decoration: new BoxDecoration
+							// (
+							// 	image: new DecorationImage
+							// 	(
+							// 		image: new AssetImage("assets/images/lobby_background.png"),
+							// 		fit: BoxFit.fitHeight
+							// 	)
+							// ),
+							child:new Stack
+							(
+								children:<Widget>
+								[
+									new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage)
+								]	
 							)
 						)
+						// new Container(
+						// 	width: MediaQuery.of(context).size.width * _panelRatio,
+						// 	decoration: new BoxDecoration(
+						// 		image: new DecorationImage(
+						// 			image: new AssetImage("assets/images/lobby_background.png"),
+						// 			fit: BoxFit.fitHeight
+						// 	),
+						// 	)
+						// )
 					),
 					new Expanded(
 						child:new Container(
