@@ -190,6 +190,8 @@ const double BubblePaddingV = 12.0;
 class TerminalSceneRenderer extends RenderBox
 {
 	FlutterActor _scene;
+	ActorAnimation _flicker;
+	double _flickerTime = 0.0;
 	ActorAnimation _animation;
 	int _characterIndex = 0;
 	double _animationTime = 0.0;
@@ -243,6 +245,7 @@ class TerminalSceneRenderer extends RenderBox
 			
 			_contentHeight = height;
 			_position = new Offset(x, y);
+			_flicker = _scene.getAnimation("Flicker");
 			markNeedsLayout();
 		});
 	}
@@ -414,6 +417,12 @@ class TerminalSceneRenderer extends RenderBox
 			_animationTime = _animationTime.clamp(0.0, _animation.duration);
 			_animation.apply(_animationTime, _scene, 1.0);
 		}
+		if(_flicker != null)
+		{
+			_flickerTime = (_flickerTime+elapsed)%_flicker.duration;
+			_flicker.apply(_flickerTime, _scene, 1.0);
+		}
+
 		_scene.advance(elapsed);
 
 
