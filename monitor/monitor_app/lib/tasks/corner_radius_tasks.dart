@@ -6,12 +6,22 @@ class ListCornerRadius extends CommandTask
 {
 	int _cornerRadius = 0;
 
+	Map serialize()
+	{
+		return CommandTask.makeRadial(taskLabel(), 0, 60);
+	}
+
 	void complete(bool success, int value)
 	{
 		if(success)
 		{
 			_cornerRadius = value;
 		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		return "SET LIST CORNER RADIUS TO $value";
 	}
 	
 	String apply(String code)
@@ -60,9 +70,19 @@ class CarouselCornerRadius extends CommandTask
 {
 	int _cornerRadius = 0;
 
+	Map serialize()
+	{
+		return CommandTask.makeRadial(taskLabel(), 0, 30);
+	}
+
 	void complete(bool success, int value)
 	{
 		_cornerRadius = value;
+	}
+	
+	String getIssueCommand(int value)
+	{
+		return "SET CAROUSEL CORNER RADIUS TO $value";
 	}
 
 	String apply(String code)
@@ -91,7 +111,7 @@ class CarouselCornerRadius extends CommandTask
 		// We can only set the corner radius if the styling of the carousel has been set.
 		int index = currentQueue.indexWhere((IssuedTask t)
 		{	
-			return t.task is FeaturedItemSize;
+			return t.task is ShowFeaturedCarousel;
 		});
 		if(index == -1)
 		{

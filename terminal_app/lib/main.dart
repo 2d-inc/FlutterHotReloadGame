@@ -162,6 +162,9 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			_isPlaying = !_isPlaying;
 			_sceneState = TerminalSceneState.Upset;
 			_sceneCharacterIndex = new Random().nextInt(4);//rand()%4;
+			_sceneMessage = null;
+			_commandStartTime = new DateTime.now();
+			_commandEndTime = new DateTime.now().add(new Duration(seconds: 60));
 		});
 	}
 
@@ -360,7 +363,7 @@ class WebSocketClient
 		String address;
 		if(Platform.isAndroid)
 		{
-			address = "10.0.2.2";
+			address = "192.168.1.108";//"10.0.2.2";
 		}
 		else
 		{

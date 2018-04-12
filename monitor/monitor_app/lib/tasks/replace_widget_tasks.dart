@@ -5,6 +5,16 @@ class ShowFeaturedAligned extends CommandTask
 {
 	int _featuredItemSize = 0;
 
+	Map serialize()
+	{
+		return CommandTask.makeSlider(taskLabel(), 0, 350);
+	}
+	
+	String getIssueCommand(int value)
+	{
+		return "SET FEATURED ITEM SIZE TO $value!";
+	}
+
 	void complete(bool success, int value)
 	{
 		_featuredItemSize = value;
@@ -46,6 +56,11 @@ class ShowFeaturedCarousel extends CommandTask
 {
 	int _featuredItemSize = 0;
 
+	Map serialize()
+	{
+		return CommandTask.makeSlider(taskLabel(), 0, 350);
+	}
+
 	void complete(bool success, int value)
 	{
 		_featuredItemSize = value;
@@ -71,6 +86,11 @@ class ShowFeaturedCarousel extends CommandTask
 		return "Set Featured Item Size";
 	}
 
+	String getIssueCommand(int value)
+	{
+		return "SET FEATURED ITEM SIZE TO $value!";
+	}
+
 	bool doesAutoApply()
 	{
 		return true;
@@ -94,7 +114,7 @@ class ShowFeaturedCarousel extends CommandTask
 		{
 			ShowFeaturedCarousel c = currentQueue[last].task as ShowFeaturedCarousel;
 			currentQueue.add(new IssuedTask()..task = this
-										..value = c._featuredItemSize == 304 ? 404 : 304);
+										..value = c._featuredItemSize == 304 ? 350 : 304);
 		}
 	}
 }
@@ -103,9 +123,19 @@ class CategoryFontWeight extends CommandTask
 {
 	int _fontWeight = 0;
 
+	Map serialize()
+	{
+		return CommandTask.makeSlider(taskLabel(), 0, 350);
+	}
+
 	void complete(bool success, int value)
 	{
 		_fontWeight = value;
+	}
+
+	String getIssueCommand(int value)
+	{
+		return "SET FONT WEIGHT TO $value!";
 	}
 
 	String apply(String code)

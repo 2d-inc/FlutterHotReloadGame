@@ -8,6 +8,11 @@ class AddIconATask extends CommandTask
 	bool _hasPizza = false;
 	bool _hasBurger = false;
 	bool _hasDessert = false;
+	
+	Map serialize()
+	{
+		return CommandTask.makeBinary(taskLabel(), options);
+	}
 
 	void complete(bool success, int value)
 	{
@@ -26,6 +31,12 @@ class AddIconATask extends CommandTask
 					break;
 			}
 		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		String name = options[value];
+		return "ADD $name ICON!";
 	}
 
 	String apply(String code)
@@ -93,6 +104,17 @@ class AddIconBTask extends CommandTask
 	
 	bool _hasSushi = false;
 	bool _hasNoodles = false;
+
+	Map serialize()
+	{
+		return CommandTask.makeBinary(taskLabel(), options);
+	}
+
+	String getIssueCommand(int value)
+	{
+		String name = options[value];
+		return "ADD $name ICON!";
+	}
 
 	void complete(bool success, int value)
 	{

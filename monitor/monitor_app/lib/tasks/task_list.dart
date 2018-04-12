@@ -8,9 +8,11 @@ const int NumGameTasks = 20;
 
 class TaskList
 {
-	List<CommandTask> _highPrioriy;
-	List<CommandTask> _all;
-	List<IssuedTask> _toIssue;
+	List<CommandTask> _highPrioriy = new List<CommandTask>();
+	List<CommandTask> _all = new List<CommandTask>();
+	List<IssuedTask> _toIssue = new List<IssuedTask>();
+
+	List<CommandTask> toAssign = new List<CommandTask>();
 	
 	TaskList()
 	{
@@ -22,6 +24,34 @@ class TaskList
 		_all.add(new ListCornerRadius());
 		_all.add(new CarouselCornerRadius());
 		_all.add(new ShowFeaturedCarousel());
+
+		buildIssueList();
+	}
+
+	IssuedTask nextTask(List<CommandTask> avoid)
+	{
+		if(_toIssue.length == 0)
+		{
+			return null;
+		}
+
+		//List<String> avoidTypes = avoid.map((CommandTask task) { return task.taskType(); });
+		List<String> avoidTypes = new List<String>();
+		for(CommandTask task in avoid)
+		{
+			avoidTypes.add(task.taskType());
+		}
+
+		IssuedTask firstValid = _toIssue.firstWhere((IssuedTask possibleTask)
+		{
+			return !avoidTypes.contains(possibleTask.task.taskType());
+		}, orElse: () { return null; });
+		if(firstValid != null)
+		{
+			_toIssue.remove(firstValid);
+			return firstValid;
+		}
+		return null;
 	}
 
 	void buildIssueList()
@@ -38,6 +68,19 @@ class TaskList
 			}
 			int index = rand.nextInt(_all.length);
 			_all[index].tryToIssue(_toIssue);
+		}
+
+		for(IssuedTask t in _toIssue)
+		{
+			String lookingForType = t.task.taskType();
+			CommandTask found = toAssign.firstWhere((CommandTask t)
+			{
+				return t.taskType() == lookingForType;
+			}, orElse:(){ return null; });
+			if(found == null)
+			{
+				toAssign.add(t.task);
+			}
 		}
 	}
 }
