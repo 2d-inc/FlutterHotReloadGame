@@ -30,9 +30,9 @@ class MyApp extends StatelessWidget {
 
 
 List<FeaturedRestaurantData> featuredRestaurants = <FeaturedRestaurantData>[
-	const FeaturedRestaurantData("Pizzeria Delfina", description: "This energetic, farm-to-table restaurant serves up Neopolitan-inspired pizza with gelato.", deliveryTime: 15, color:const Color.fromARGB(255, 255, 223, 204), flare:"assets/flares/Pizzeria"),
-	const FeaturedRestaurantData("Bushido Izakaya", description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime: 32, color:const Color.fromARGB(255, 237, 218, 229), flare:"assets/flares/Sushi"),
-	const FeaturedRestaurantData("Umami Burger", description: "Serves gourmet burgers, truffle fries, salads, and craft beers for lunch and dinner.", deliveryTime: 27, color:const Color.fromARGB(255, 255, 234, 216), flare:"assets/flares/Pizzeria"),
+	const FeaturedRestaurantData("Pizza Place", description: "This energetic, farm-to-table restaurant serves up Neopolitan-inspired pizza with gelato.", deliveryTime: 15, color:const Color.fromARGB(255, 255, 223, 204), flare:"assets/flares/Pizzeria"),
+	const FeaturedRestaurantData("Sushi Overload", description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime: 32, color:const Color.fromARGB(255, 237, 218, 229), flare:"assets/flares/Sushi"),
+	const FeaturedRestaurantData("Burger Paradise", description: "Serves gourmet burgers, truffle fries, salads, and craft beers for lunch and dinner.", deliveryTime: 27, color:const Color.fromARGB(255, 255, 234, 216), flare:"assets/flares/Pizzeria"),
 ];
 
 class MyHomePage extends StatefulWidget {
@@ -53,25 +53,14 @@ class MyHomePage extends StatefulWidget {
 	_MyHomePageState createState() => new _MyHomePageState();
 }
 
+const featuredRestaurantSize = FEATURED_RESTAURANT_SIZE;
+
 class _MyHomePageState extends State<MyHomePage> {
-	// int _counter = 0;
-
-	// void _incrementCounter() {
-	// 	setState(() {
-	// 		// This call to setState tells the Flutter framework that something has
-	// 		// changed in this State, which causes it to rerun the build method below
-	// 		// so that the display can reflect the updated values. If we changed
-	// 		// _counter without calling setState(), then the build method would not be
-	// 		// called again, and so nothing would appear to happen.
-	// 		_counter++;
-	// 	});
-	// }
-
 	@override
 	Widget build(BuildContext context) {
+		const Color backgroundColor = const Color.fromARGB(255, 242, 243, 246);// 
 		return new Container(
-			decoration:new BoxDecoration(
-				color: true ? new Color.fromARGB(255, 242, 243, 246) : Colors.white),
+			decoration:new BoxDecoration(color: backgroundColor),
 			child:
 			new Stack(
 				children:<Widget>[
@@ -79,28 +68,34 @@ class _MyHomePageState extends State<MyHomePage> {
 				shrinkWrap: true,
 				padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
 				children: <Widget>[
-					new Container(
-						height:305.0,
-						child:new FeaturedCarousel(data:featuredRestaurants),
+					featuredRestaurantSize > 10 ? new Container(
+						height:featuredRestaurantSize,
+						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: CAROUSEL_CORNER_RADIUS,),
+					) : 
+					new Column(
+						crossAxisAlignment: CrossAxisAlignment.start,
+						children: <Widget>
+						[
+							new Container(
+								padding:const EdgeInsets.fromLTRB(20.0, 15.0, 0.0, 10.0),
+								child:new Text("Featured", 
+									style:const TextStyle(fontSize:13.0,color:Colors.black, decoration: TextDecoration.none)),
+							),
+							new Container(
+								height:210.0,
+								child:new ListView(
+									shrinkWrap: true,
+									padding:const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
+									scrollDirection: Axis.horizontal,
+									children: <Widget> [
+										const FeaturedRestaurantSimple('Pizzeria Delfina', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15),
+										const FeaturedRestaurantSimple('Bushido Izakaya', description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime:32),
+										const FeaturedRestaurantSimple('Umami Burgers', description: "Umami Burgers serves burgers, fries...", deliveryTime:45)
+									]
+								)
+							)
+						]
 					),
-					/*new Container(
-						padding:const EdgeInsets.fromLTRB(20.0, 5.0, 0.0, 10.0),
-						child:new Text("Featured", 
-							style:const TextStyle(fontSize:13.0,color:Colors.black, decoration: TextDecoration.none)),
-					),
-					new Container(
-						height:210.0,
-						child:new ListView(
-							shrinkWrap: true,
-							padding:const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
-							scrollDirection: Axis.horizontal,
-							children: <Widget> [
-								const FeaturedRestaurantSimple('Pizzeria Delfina', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15),
-								const FeaturedRestaurantSimple('Bushido Izakaya', description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime:32),
-								const FeaturedRestaurantSimple('Umami Burgers', description: "Umami Burgers serves burgers, fries...", deliveryTime:45)
-							]
-						)
-					),*/
 					new Container(
 						height:133.0,
 						child:new ListView(
@@ -121,10 +116,10 @@ class _MyHomePageState extends State<MyHomePage> {
 					const RestaurantSimple('Sprout Cafe', description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2),
 					const RestaurantSimple('Asian Box', description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
 					const RestaurantSimple('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2),*/
-					const RestaurantDesigned('Curry Up Now', description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/samosa.jpg"),
-					const RestaurantDesigned('Sprout Cafe', description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/cafe.jpg"),
-					const RestaurantDesigned('Asian Box', description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg"),
-					const RestaurantDesigned('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg"),
+					const RestaurantDesigned('Indian Food', cornerRadius:LIST_CORNER_RADIUS, description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/samosa.jpg"),
+					const RestaurantDesigned('Fancy Cafe', cornerRadius:LIST_CORNER_RADIUS, description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/cafe.jpg"),
+					const RestaurantDesigned('Asian Fare', cornerRadius:LIST_CORNER_RADIUS, description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg"),
+					const RestaurantDesigned('Fresh from Hawaii', cornerRadius:LIST_CORNER_RADIUS, description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg"),
 				],
 			),
 			new Container(padding:const EdgeInsets.fromLTRB(20.0, 30.0, 0.0, 0.0), alignment: Alignment.topLeft, child:new Flare("assets/flares/MenuIcon")),
