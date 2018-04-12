@@ -71,7 +71,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		super.initState(); 
 		_arePlayersReady = [_isReady];
 		_client = new WebSocketClient(this);
-		updateSceneMessage();
+		resetSceneMessage();
 		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 		_fadeCallback = () 
 		{
@@ -113,7 +113,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 				_isPlaying = !_isPlaying;
 			}
 			_sceneState = TerminalSceneState.All;
-			updateSceneMessage();
+			resetSceneMessage();
 		});
 	}
 
@@ -163,14 +163,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			_sceneState = TerminalSceneState.Upset;
 			_sceneCharacterIndex = new Random().nextInt(4);//rand()%4;
 		});
-		/* TODO: [debug] remove 
-		_gameOver = false;
-		new Timer(const Duration(seconds: 2), () {
-			setState( () {
-				_gameOver = true;
-			} );
-		});
-		*/
 	}
 
 	void onNewTask(Map task)
@@ -185,7 +177,22 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 				_commandEndTime = new DateTime.now().add(new Duration(seconds: time));
 			}
 		);
+	}
 
+	void onTaskFail(String msg)
+	{
+		setState(()
+		{
+			_sceneMessage = msg;
+		});
+	}
+
+	void onTaskComplete(String msg)
+	{
+		setState(()
+		{
+			_sceneMessage = msg;
+		});
 	}
 
 	void gameOver()
@@ -203,7 +210,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	}
 
 	// Should be called within a set state.
-	updateSceneMessage()
+	resetSceneMessage()
 	{
 		String message = _arePlayersReady.fold<int>(0, (int count, bool value) { if(value) { count++; } return count;} ) >= 2 ? "Come on, we've got a deadline to make!" : "Waiting for 2 players!";
 		if(message != _sceneMessage)
@@ -217,7 +224,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		setState(()
 		{
 			_arePlayersReady = readyList;
-			updateSceneMessage();
+			resetSceneMessage();
 		});
 	}
 
@@ -394,10 +401,10 @@ class WebSocketClient
 								_terminal.arePlayersReady = boolList;
 								break;
 							case "taskFail":
-								// TODO:
+								_terminal.onTaskFail(payload as String);
 								break;
 							case "taskComplete":
-								// TODO:
+								_terminal.onTaskComplete(payload as String);
 								break;
 							default:
 								print("UNKNOWN MESSAGE: $jsonMsg");
