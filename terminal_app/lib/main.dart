@@ -71,7 +71,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		super.initState(); 
 		_arePlayersReady = [_isReady];
 		_client = new WebSocketClient(this);
-		updateSceneMessage();
+		resetSceneMessage();
 		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 		_fadeCallback = () 
 		{
@@ -111,15 +111,20 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			{
 				_panelController.reverse();
 				_isPlaying = !_isPlaying;
-				gameOver(); /* TODO: [debug] remove */
 			}
 			_sceneState = TerminalSceneState.All;
-			updateSceneMessage();
+			resetSceneMessage();
 		});
 	}
 
 	void onGameStart(List commands)
 	{
+		if(!_isReady)
+		{
+			print("THIS PLAYER ISN'T READY YET");
+			return;
+		}
+
 		setState(() => _gameCommands = commands);
 		double endOpacity = _isPlaying ? 1.0 : 0.0;
 
@@ -157,21 +162,37 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			_isPlaying = !_isPlaying;
 			_sceneState = TerminalSceneState.Upset;
 			_sceneCharacterIndex = new Random().nextInt(4);//rand()%4;
-			
+		});
+	}
 
-			// Fake setting command time and command
-			_sceneMessage = "Set padding to 20!";
-			_commandStartTime = new DateTime.now();
-			_commandEndTime = new DateTime.now().add(const Duration(seconds:10));
+	void onNewTask(Map task)
+	{
+		String msg = task['message'] as String;
+		int time = task['expiry'] as int;
+
+		setState(
+			() {
+				_sceneMessage = msg;
+				_commandStartTime = new DateTime.now();
+				_commandEndTime = new DateTime.now().add(new Duration(seconds: time));
+			}
+		);
+	}
+
+	void onTaskFail(String msg)
+	{
+		setState(()
+		{
+			_sceneMessage = msg;
 		});
-		/* TODO: [debug] remove 
-		_gameOver = false;
-		new Timer(const Duration(seconds: 2), () {
-			setState( () {
-				_gameOver = true;
-			} );
+	}
+
+	void onTaskComplete(String msg)
+	{
+		setState(()
+		{
+			_sceneMessage = msg;
 		});
-		*/
 	}
 
 	void gameOver()
@@ -185,10 +206,11 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 				_isReady = false;
 			}
 		);
+		_backToLobby(); // TODO: show the game over screen instead
 	}
 
 	// Should be called within a set state.
-	updateSceneMessage()
+	resetSceneMessage()
 	{
 		String message = _arePlayersReady.fold<int>(0, (int count, bool value) { if(value) { count++; } return count;} ) >= 2 ? "Come on, we've got a deadline to make!" : "Waiting for 2 players!";
 		if(message != _sceneMessage)
@@ -202,7 +224,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		setState(()
 		{
 			_arePlayersReady = readyList;
-			updateSceneMessage();
+			resetSceneMessage();
 		});
 	}
 
@@ -361,6 +383,15 @@ class WebSocketClient
 						
 						switch(msg)
 						{
+							case "commandsList":
+								_terminal.onGameStart(payload as List);
+								break;
+							case "gameOver":
+								_terminal.gameOver();
+								break;
+							case "newTask":
+								_terminal.onNewTask(payload as Map);
+								break;
 							case "playerList":
 								List<bool> boolList = [];
 								for(var b in payload) // Workaround for Dart throw
@@ -369,12 +400,11 @@ class WebSocketClient
 								}
 								_terminal.arePlayersReady = boolList;
 								break;
-							case "gameOver":
-								// Reset state
-								_terminal.gameOver();
+							case "taskFail":
+								_terminal.onTaskFail(payload as String);
 								break;
-							case "commandsList":
-								_terminal.onGameStart(payload as List);
+							case "taskComplete":
+								_terminal.onTaskComplete(payload as String);
 								break;
 							default:
 								print("UNKNOWN MESSAGE: $jsonMsg");
