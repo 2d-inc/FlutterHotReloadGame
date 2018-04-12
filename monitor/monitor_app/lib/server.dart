@@ -1,16 +1,22 @@
 import "dart:io";
 import "dart:convert";
-
+import "dart:async";
 import 'dart:math';
 
-enum CommandTypes { SLIDER, RADIAL, BINARY, TOGGLE }
+enum CommandTypes { slider, radial, binary }
+enum TaskStatus { complete, inProgress, failed }
 
 class GameClient
 {
+    static const Duration timeBetweenTasks = const Duration(seconds: 1);
     WebSocket _socket;
     GameServer _server;
     bool _isReady = false;
     List<Map> _commands = [];
+
+    Map _currentTask;
+    TaskStatus _taskStatus;
+    Timer _countdown;
 
     GameClient(GameServer server, WebSocket socket)
     {
@@ -45,6 +51,10 @@ class GameClient
                     print("READY TO START");
                     _server.onClientStartChanged(this);
                     break;
+                case "clientInput":
+                    var payload = jsonMsg['payload'];
+                    _server.onClientInput(payload);
+                    break;
                 default:
                     print("MESSAGE: $jsonMsg");
                     break;
@@ -56,23 +66,66 @@ class GameClient
             print(e);
         }
     }
+    
+    reset()
+    {
+        _taskStatus = null;
+        _currentTask = null;
+        _countdown.cancel();
+    }
 
     gameOver()
     {
-        _socket.add(GameServer.formatJSONMessage("gameOver", true));
+        reset();
+        _sendJSONMessage("gameOver", true);
+    }
+
+    void onTaskCompleted()
+    {
+        _countdown.cancel();
+        _sendJSONMessage("taskComplete", "Like a glove!");
+    }
+
+    void onTaskFailed()
+    {
+        _sendJSONMessage("taskFail", "You're dead to me!" );
     }
 
     get isReady => _isReady;
 
+    get currentTask => _currentTask;
+    
+    get taskStatus => _taskStatus;
+
     set commands(List<Map> commandsList)
     {
         _commands = commandsList;
-        _socket.add(GameServer.formatJSONMessage("commandsList", _commands));
+        _sendJSONMessage("commandsList", _commands);
+    }
+
+    // TODO: use Task object instead of Map
+    set currentTask(Map value)
+    {
+        _taskStatus = TaskStatus.inProgress;
+        _currentTask = value;
+        new Timer(timeBetweenTasks, () => _sendJSONMessage("newTask", value));
+        
+        int expiry = value['expiry'] as int;
+        _countdown = new Timer(new Duration(seconds: expiry), () => _taskStatus = TaskStatus.failed);
     }
 
     set readyList(List<bool> readyPlayers)
     {
-        _socket.add(GameServer.formatJSONMessage("playerList", readyPlayers));
+        _sendJSONMessage("playerList", readyPlayers);
+    }
+
+    void _sendJSONMessage<T>(String msg, T payload)
+    {
+        var message = json.encode({
+            "message": msg,
+            "payload": payload
+        });
+        _socket.add(message);
     }
 
 }
@@ -80,18 +133,11 @@ class GameClient
 class GameServer
 {
     List<GameClient> _clients = new List<GameClient>();
+    Timer loopTimer;
 
     GameServer()
     {
         connect();
-    }
-
-    static String formatJSONMessage<T>(String msg, T payload)
-    {
-        return json.encode({
-            "message": msg,
-            "payload": payload
-        });
     }
 
     void connect()
@@ -141,11 +187,6 @@ class GameServer
 
     onClientStartChanged(GameClient client)
     {
-        /* 
-            TODO:
-            iterate all the clients. 
-            If everyone is ready, call game start
-        */
         bool readyToStart = true;
         for(var gc in _clients)
         {
@@ -154,27 +195,96 @@ class GameServer
         
         if(readyToStart)
         {
-            onGameStart();
+            // tell every client the game has started and what their commands are...
+            // build list of command id to possible values
+            for(var gc in _clients)
+            {
+                gc.commands = generateCommands();
+            }
+
+            // Start game!
+            loopTimer = new Timer.periodic(const Duration(milliseconds: 1000), (timer) => gameLoop());
         }
     }
 
-    onGameStart()
+    onClientInput(Map input)
     {
-        // tell every client the game has started and what their commands are...
-        // build list of command id to possible values
+        var inputType = input['type'];
+        var inputValue = input['value'];
         for(var gc in _clients)
         {
-            gc.commands = generateCommands();
+            if(gc.currentTask['type'] == inputType && gc.currentTask['value'] == inputValue)
+            {
+                gc.taskStatus == TaskStatus.complete;
+            }
         }
     }
 
+    void gameLoop()
+    {
+        print("LOOP RUNNING!");
+        for(var gc in _clients)
+        {
+            TaskStatus st = gc.taskStatus;
+            switch(st)
+            {
+                case TaskStatus.complete:
+                    print("COMPLETE!");
+                    gc.onTaskCompleted();
+                    break;
+                case TaskStatus.inProgress:
+                    print("IN_PROGRESS!");
+                    continue;
+                case TaskStatus.failed:
+                    print("FAILED!");
+                    gc.onTaskFailed();
+                    break;         
+            }
+            print("GETTING TASK");
+            bool isAlive = assignTask(gc);
+            if(!isAlive)
+            {
+                onGameOver();
+                return;
+            }
+            print("ASSIGN TASK $gc!");
+        }
+    }
+    
     onGameOver()
     {
+        print("GAME OVER!");
+        assignedTasks = 0;
+        loopTimer.cancel();
         for(var gc in _clients)
         {
             gc.gameOver();
         }
     }
+
+    // TODO: remove
+    static int assignedTasks = 0;
+    static const int MAX_TASKS = 2;
+
+    bool assignTask(GameClient client)
+    {
+        // TODO: Select the task from the bucket of available tasks
+        if(assignedTasks < MAX_TASKS)
+        {
+            assignedTasks++;
+            client.currentTask = {
+                "type": "Set padding to 20",
+                "expiry": 5
+            };
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+   
 
     _handleWebSocket(WebSocket socket)
     {
@@ -198,17 +308,14 @@ class GameServer
             switch(ct)
             {
                 // TODO: randomize parameters values
-                case CommandTypes.BINARY:
+                case CommandTypes.binary:
                     currentCommand = _makeBinary("DATA CONNECTION", [ "BODY TEXT", "HEADLINE" ]);
                     break;
-                case CommandTypes.RADIAL:
+                case CommandTypes.radial:
                     currentCommand = _makeRadial("MARGIN", 0, 40);
                     break;
-                case CommandTypes.SLIDER:
+                case CommandTypes.slider:
                     currentCommand = _makeSlider("HEIGHT", 0, 200);
-                    break;
-                case CommandTypes.TOGGLE:
-                    currentCommand = _makeToggle("DATA CONNECTION");
                     break;
                 default:
                     print("UNKOWN COMMAND ${ct}");

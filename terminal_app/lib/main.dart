@@ -111,7 +111,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			{
 				_panelController.reverse();
 				_isPlaying = !_isPlaying;
-				gameOver(); /* TODO: [debug] remove */
 			}
 			_sceneState = TerminalSceneState.All;
 			updateSceneMessage();
@@ -120,6 +119,12 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	void onGameStart(List commands)
 	{
+		if(!_isReady)
+		{
+			print("THIS PLAYER ISN'T READY YET");
+			return;
+		}
+
 		setState(() => _gameCommands = commands);
 		double endOpacity = _isPlaying ? 1.0 : 0.0;
 
@@ -185,6 +190,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 				_isReady = false;
 			}
 		);
+		_backToLobby(); // TODO: show the game over screen instead
 	}
 
 	// Should be called within a set state.
@@ -361,6 +367,15 @@ class WebSocketClient
 						
 						switch(msg)
 						{
+							case "commandsList":
+								_terminal.onGameStart(payload as List);
+								break;
+							case "gameOver":
+								_terminal.gameOver();
+								break;
+							case "newTask":
+								// TODO:
+								break;
 							case "playerList":
 								List<bool> boolList = [];
 								for(var b in payload) // Workaround for Dart throw
@@ -369,12 +384,11 @@ class WebSocketClient
 								}
 								_terminal.arePlayersReady = boolList;
 								break;
-							case "gameOver":
-								// Reset state
-								_terminal.gameOver();
+							case "taskFail":
+								// TODO:
 								break;
-							case "commandsList":
-								_terminal.onGameStart(payload as List);
+							case "taskComplete":
+								// TODO:
 								break;
 							default:
 								print("UNKNOWN MESSAGE: $jsonMsg");
