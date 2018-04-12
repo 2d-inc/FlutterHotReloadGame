@@ -360,7 +360,8 @@ class WebSocketClient
 		String address;
 		if(Platform.isAndroid)
 		{
-			address = "10.0.2.2";
+			//address = "10.0.2.2";
+			address = "10.76.253.108";
 		}
 		else
 		{

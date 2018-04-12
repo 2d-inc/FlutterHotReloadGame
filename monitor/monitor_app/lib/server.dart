@@ -142,7 +142,8 @@ class GameServer
 
     void connect()
     {
-        HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080)
+        //HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080)
+        HttpServer.bind("10.76.253.108", 8080)
             .then((server) async
             {
                 print("Serving at ${server.address}, ${server.port}");
