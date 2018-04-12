@@ -273,7 +273,7 @@ class GameServer
         {
             assignedTasks++;
             client.currentTask = {
-                "type": "Set padding to 20",
+                "message": "Set padding to 20",
                 "expiry": 5
             };
             return true;

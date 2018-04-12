@@ -162,12 +162,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			_isPlaying = !_isPlaying;
 			_sceneState = TerminalSceneState.Upset;
 			_sceneCharacterIndex = new Random().nextInt(4);//rand()%4;
-			
-
-			// Fake setting command time and command
-			_sceneMessage = "Set padding to 20!";
-			_commandStartTime = new DateTime.now();
-			_commandEndTime = new DateTime.now().add(const Duration(seconds:10));
 		});
 		/* TODO: [debug] remove 
 		_gameOver = false;
@@ -177,6 +171,21 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			} );
 		});
 		*/
+	}
+
+	void onNewTask(Map task)
+	{
+		String msg = task['message'] as String;
+		int time = task['expiry'] as int;
+
+		setState(
+			() {
+				_sceneMessage = msg;
+				_commandStartTime = new DateTime.now();
+				_commandEndTime = new DateTime.now().add(new Duration(seconds: time));
+			}
+		);
+
 	}
 
 	void gameOver()
@@ -374,7 +383,7 @@ class WebSocketClient
 								_terminal.gameOver();
 								break;
 							case "newTask":
-								// TODO:
+								_terminal.onNewTask(payload as Map);
 								break;
 							case "playerList":
 								List<bool> boolList = [];
