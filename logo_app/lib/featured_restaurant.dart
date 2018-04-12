@@ -5,6 +5,9 @@ import "package:flare/flare.dart" as flr;
 import "dart:typed_data";
 import "package:flutter/scheduler.dart";
 
+const double CAROUSEL_CORNER_RADIUS = 10.0;
+const double FEATURED_RESTAURANT_SIZE = 0.0;
+
 class FeaturedRestaurantSimple extends StatelessWidget
 {
 	const FeaturedRestaurantSimple(this.name, 
@@ -127,9 +130,10 @@ class FeaturedRestaurantData
 
 class FeaturedCarousel extends StatefulWidget 
 {
-	FeaturedCarousel({Key key, this.data}) : super(key: key);
+	FeaturedCarousel({Key key, this.data, this.cornerRadius}) : super(key: key);
 
 	final List<FeaturedRestaurantData> data;
+	final double cornerRadius;
 
 	@override
 	_FeaturedCarouselState createState() => new _FeaturedCarouselState(data);
@@ -209,7 +213,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel>  with SingleTickerP
 			FeaturedRestaurantData restaurant = data[visibleIdx+i];
 			//visibleHeros.add(new RepaintBoundary(child:new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare)));
 			visibleHeros.add(new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare));
-			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i, deliveryTime: restaurant.deliveryTime,));
+			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i, deliveryTime: restaurant.deliveryTime, cornerRadius:widget.cornerRadius));
 		}
 
 		if(visibleDetails.length == 0)
@@ -235,13 +239,15 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 	final String description;
 	final int deliveryTime;
 	final double scroll;
+	final double cornerRadius;
 
 	FeaturedRestaurantDetail(this.name,
 		{
 			Key key, 
 			this.description,
 			this.deliveryTime,
-			this.scroll = 0.0
+			this.scroll = 0.0,
+			this.cornerRadius
 		}): super(key: key);
 
 	@override
@@ -250,7 +256,8 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 		return new FeaturedRestaurantDetailRenderObject(name,
 					description:description,
 					deliveryTime:deliveryTime,
-					scroll:scroll);
+					scroll:scroll,
+					cornerRadius:cornerRadius);
 	}
 
 	@override
@@ -259,7 +266,8 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 		renderObject..name = name
 					..description = description
 					..deliveryTime = deliveryTime
-					..scroll = scroll;
+					..scroll = scroll
+					..cornerRadius = cornerRadius;
 	}
 }
 const double Padding = 20.0;
@@ -278,6 +286,7 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 	String _description;
 	int _deliveryTime;
 	double _scroll;
+	double _cornerRadius;
 
 	ui.Paragraph _nameParagraph;
 	ui.Paragraph _timeParagraph;
@@ -289,12 +298,14 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		{
 			String description = "",
 			int deliveryTime = 0,
-			double scroll = 0.0
+			double scroll = 0.0,
+			double cornerRadius = 0.0
 		})
 	{
 		this.name = name;
 		this.description = description;	
 		this.deliveryTime = deliveryTime;
+		this.cornerRadius = _cornerRadius;
 		_scroll = scroll;
 	}
 
@@ -336,7 +347,7 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		final Canvas canvas = context.canvas;
 		canvas.save();
 		canvas.translate(_scroll * (width+ItemPadding), size.height-DetailHeight);
-    	final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+Padding, offset.dy) & new Size(width, DetailHeight), const Radius.circular(10.0));
+    	final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+Padding, offset.dy) & new Size(width, DetailHeight), new Radius.circular(_cornerRadius));
 		canvas.drawRRect(rrect, new ui.Paint()..color = Colors.white);
 		
 		canvas.drawParagraph(_nameParagraph, new Offset(offset.dx+Padding+DetailPaddingLeft, offset.dy + DetailPaddingTop));
@@ -436,6 +447,21 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 			return;
 		}
 		_scroll = value;
+		markNeedsPaint();
+	}
+	
+	double get cornerRadius
+	{
+		return _cornerRadius;
+	}
+
+	set cornerRadius(double value)
+	{
+		if(_cornerRadius == value)
+		{
+			return;
+		}
+		_cornerRadius = value;
 		markNeedsPaint();
 	}
 }

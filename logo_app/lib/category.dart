@@ -112,7 +112,7 @@ class CategoryDesigned extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
 						child:new Text(name, 
-							style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(255, 158, 164, 184), decoration: TextDecoration.none))
+							style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(255, 158, 164, 184), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
 					)
 				]
 			)

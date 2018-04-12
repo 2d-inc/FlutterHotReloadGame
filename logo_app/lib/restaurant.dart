@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import "dart:math";
 import "dart:ui" as ui;
 
+const double LIST_CORNER_RADIUS = 10.0;
+
 class RestaurantsHeaderSimple extends StatelessWidget
 {
 	Widget build(BuildContext context)
@@ -39,7 +41,7 @@ class RestaurantsHeaderDesigned extends StatelessWidget
 			child:new Row(
 				children: <Widget>[
 					new Expanded(child:new Text("NEARBY", style:const TextStyle(fontSize:14.0, fontWeight: FontWeight.w500, fontFamily: "Roboto", color:const Color.fromARGB(127, 48, 44, 72), decoration: TextDecoration.none))),
-					new Text("1600 Amphitheater Pkwy", style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(255, 107, 146, 242), decoration: TextDecoration.none)),
+					new Text("1600 Amphitheater Pkwy", style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(255, 107, 146, 242), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
 				]
 			)
 		);
@@ -182,7 +184,8 @@ class RestaurantDesigned extends StatelessWidget
 		this.dollarSigns,
 		this.deliveryTime,
 		this.rating,
-		this.img
+		this.img,
+		this.cornerRadius = 10.0
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -192,6 +195,7 @@ class RestaurantDesigned extends StatelessWidget
 	final int dollarSigns;
 	final int deliveryTime;
 	final int rating;
+	final double cornerRadius;
 	
 	Widget build(BuildContext context) 
 	{
@@ -200,7 +204,7 @@ class RestaurantDesigned extends StatelessWidget
 			child:new Container(
 				decoration: new BoxDecoration(
 					color:Colors.white, 
-					borderRadius: const BorderRadius.all(const Radius.circular(10.0)),
+					borderRadius: new BorderRadius.all(new Radius.circular(this.cornerRadius)),
 					boxShadow: <BoxShadow>[
 						new BoxShadow(
             				color: const Color.fromARGB(22, 0, 35, 120),
@@ -215,7 +219,7 @@ class RestaurantDesigned extends StatelessWidget
 							width:100.0,
 							height:100.0,
 							decoration: new BoxDecoration(
-								borderRadius: const BorderRadius.only(topLeft:const Radius.circular(10.0), bottomLeft:const Radius.circular(10.0)),
+								borderRadius: new BorderRadius.only(topLeft:new Radius.circular(this.cornerRadius), bottomLeft:new Radius.circular(this.cornerRadius)),
 								
 								image: new DecorationImage(
 									image: new ExactAssetImage(img),
@@ -238,6 +242,7 @@ class RestaurantDesigned extends StatelessWidget
 													fontSize:15.0,
 													fontFamily:"Roboto",
 													color: const Color.fromARGB(255, 48, 44, 72),
+													fontWeight: FontWeight.normal,
 													decoration: TextDecoration.none)),
 										),
 										new Container(
@@ -249,23 +254,24 @@ class RestaurantDesigned extends StatelessWidget
 													fontSize:15.0,
 													fontFamily:"Roboto",
 													color: const Color.fromARGB(102, 48, 44, 72),
+													fontWeight: FontWeight.normal,
 													decoration: TextDecoration.none)
 												),
 										),
 										new Row(
 											children:<Widget>[
-												new Expanded(child:new Text(rating.round().toString() + "/10", style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none))),
+												new Expanded(child:new Text(rating.round().toString() + "/10", style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), fontWeight: FontWeight.normal, decoration: TextDecoration.none))),
 												new Expanded(
 													child:new Row(
             											mainAxisSize: MainAxisSize.min,
 														children: [
-															new Text("\$"*min(dollarSigns,5), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(255, 48, 44, 72), decoration: TextDecoration.none)),
-															new Text("\$"*(5-min(dollarSigns,5)), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none))
+															new Text("\$"*min(dollarSigns,5), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(255, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
+															new Text("\$"*(5-min(dollarSigns,5)), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
 														]
 													)
 												),
 												new Text(deliveryTime.toString() + " min", 
-													style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none)),
+													style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
 											]
 										)
 									]

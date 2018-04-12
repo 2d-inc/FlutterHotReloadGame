@@ -569,6 +569,11 @@ class TerminalSceneRenderer extends RenderBox
 			if(talkCharacter != null)
 			{
 				talkCharacter.recomputeBounds();
+				if(showOnlyBoss)
+				{
+					AABB.combine(_characterBounds, _characterBounds, talkCharacter.bounds);
+					//_characterBounds = talkCharacter.bounds;
+				}
 			}
 			
 			canvas.translate(offset.dx + size.width/2.0, offset.dy + size.height/2.0);

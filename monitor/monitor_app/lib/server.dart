@@ -2,19 +2,22 @@ import "dart:io";
 import "dart:convert";
 import "dart:async";
 import 'dart:math';
+import "tasks/task_list.dart";
+import "tasks/command_tasks.dart";
+import "package:flutter/scheduler.dart";
 
 enum CommandTypes { slider, radial, binary }
 enum TaskStatus { complete, inProgress, failed }
 
 class GameClient
 {
-    static const Duration timeBetweenTasks = const Duration(seconds: 1);
+    static const Duration timeBetweenTasks = const Duration(seconds: 2);
     WebSocket _socket;
     GameServer _server;
     bool _isReady = false;
-    List<Map> _commands = [];
+    List<CommandTask> _commands = [];
 
-    Map _currentTask;
+    IssuedTask _currentTask;
     TaskStatus _taskStatus;
     Timer _countdown;
 
@@ -88,6 +91,7 @@ class GameClient
 
     void onTaskFailed()
     {
+        print("DEAD TO ME!");
         _sendJSONMessage("taskFail", "You're dead to me!" );
     }
 
@@ -97,21 +101,42 @@ class GameClient
     
     get taskStatus => _taskStatus;
 
-    set commands(List<Map> commandsList)
+    set commands(List<CommandTask> commandsList)
     {
         _commands = commandsList;
-        _sendJSONMessage("commandsList", _commands);
+
+        //List<Map> serializedCommands = _commands.map((CommandTask task) { return task.serialize(); });
+        List<Map> serializedCommands = new List<Map>();
+        for(CommandTask task in _commands)
+        {
+            serializedCommands.add(task.serialize());
+        }
+        
+        _sendJSONMessage("commandsList", serializedCommands);
     }
 
-    // TODO: use Task object instead of Map
-    set currentTask(Map value)
+    List<CommandTask> get commands
+    {
+        return _commands;
+    }
+
+    // TODO: update this logic to use a client advance function that's called once per game loop
+    // this will require storing DateTimes for expiry values and comparing them to DateTime.now.
+    setCurrentTask(IssuedTask value, bool delay)
     {
         _taskStatus = TaskStatus.inProgress;
         _currentTask = value;
-        new Timer(timeBetweenTasks, () => _sendJSONMessage("newTask", value));
+        if(delay)
+        {
+            new Timer(timeBetweenTasks, () => _sendJSONMessage("newTask", value.serialize()));
+        }
+        else
+        {
+            _sendJSONMessage("newTask", value.serialize());
+        }
         
-        int expiry = value['expiry'] as int;
-        _countdown = new Timer(new Duration(seconds: expiry), () => _taskStatus = TaskStatus.failed);
+        int expiry = value.expires;// value['expiry'] as int;
+        _countdown = new Timer(new Duration(seconds: delay ? expiry + timeBetweenTasks.inSeconds : expiry), () { print("FAILED THE TASK!"); return _taskStatus = TaskStatus.failed; });
     }
 
     set readyList(List<bool> readyPlayers)
@@ -132,12 +157,36 @@ class GameClient
 
 class GameServer
 {
+    TaskList _taskList;
     List<GameClient> _clients = new List<GameClient>();
-    Timer loopTimer;
+    double _lastFrameTime = 0.0;
+    bool _inGame = false;
 
     GameServer()
     {
+        SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
         connect();
+    }
+
+    void beginFrame(Duration timeStamp) 
+	{
+		final double t = timeStamp.inMicroseconds / Duration.microsecondsPerMillisecond / 1000.0;
+		
+		if(_lastFrameTime == 0)
+		{
+			_lastFrameTime = t;
+			SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
+			// hack to circumvent not being enable to initialize lastFrameTime to a starting timeStamp (maybe it's just the date?)
+			// Is the FrameCallback supposed to pass elapsed time since last frame? timeStamp seems to behave more like a date
+			return;
+		}
+
+        if(_inGame)
+        {
+            gameLoop();
+        }
+
+        SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
     }
 
     void connect()
@@ -196,15 +245,31 @@ class GameServer
         
         if(readyToStart)
         {
+            // Build the full list.
+            _taskList = new TaskList();
+            List<CommandTask> taskTypes = new List<CommandTask>.from(_taskList.toAssign);
+            int readyCount = _clients.fold<int>(0, (int count, GameClient client) { if(client.isReady) { count++; } return count; });
+            //int perClient = (taskTypes.length/min(1,readyCount)).ceil();
+            int perClient = 2;
             // tell every client the game has started and what their commands are...
             // build list of command id to possible values
+            Random rand = new Random();
             for(var gc in _clients)
             {
-                gc.commands = generateCommands();
-            }
+                if(!gc.isReady)
+                {
+                    continue;
+                }
 
-            // Start game!
-            loopTimer = new Timer.periodic(const Duration(milliseconds: 1000), (timer) => gameLoop());
+                List<CommandTask> tasksForClient = new List<CommandTask>();
+                while(tasksForClient.length < perClient && taskTypes.length != 0)
+                {
+                    tasksForClient.add(taskTypes.removeAt(rand.nextInt(taskTypes.length)));
+                }
+                gc.commands = tasksForClient;
+                assignTask(gc, false);
+            }
+            _inGame = true;
         }
     }
 
@@ -223,66 +288,53 @@ class GameServer
 
     void gameLoop()
     {
-        print("LOOP RUNNING!");
+       // print("LOOP RUNNING!");
         for(var gc in _clients)
         {
             TaskStatus st = gc.taskStatus;
             switch(st)
             {
                 case TaskStatus.complete:
-                    print("COMPLETE!");
+                    //print("COMPLETE!");
                     gc.onTaskCompleted();
                     break;
                 case TaskStatus.inProgress:
-                    print("IN_PROGRESS!");
+                    //print("IN_PROGRESS!");
                     continue;
                 case TaskStatus.failed:
-                    print("FAILED!");
+                    //print("FAILED!");
                     gc.onTaskFailed();
                     break;         
             }
-            print("GETTING TASK");
+           // print("GETTING TASK");
             bool isAlive = assignTask(gc);
             if(!isAlive)
             {
                 onGameOver();
                 return;
             }
-            print("ASSIGN TASK $gc!");
         }
     }
     
     onGameOver()
     {
         print("GAME OVER!");
-        assignedTasks = 0;
-        loopTimer.cancel();
+        _inGame = false;
         for(var gc in _clients)
         {
             gc.gameOver();
         }
     }
 
-    // TODO: remove
-    static int assignedTasks = 0;
-    static const int MAX_TASKS = 2;
-
-    bool assignTask(GameClient client)
+    bool assignTask(GameClient client, [bool delay = true])
     {
-        // TODO: Select the task from the bucket of available tasks
-        if(assignedTasks < MAX_TASKS)
-        {
-            assignedTasks++;
-            client.currentTask = {
-                "message": "Set padding to 20",
-                "expiry": 5
-            };
-            return true;
-        }
-        else
+        IssuedTask task = _taskList.nextTask(client.commands);
+        if(task == null)
         {
             return false;
         }
+        client.setCurrentTask(task, delay);
+        return true;
     }
 
    
