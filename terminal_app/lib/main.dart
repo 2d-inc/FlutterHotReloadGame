@@ -3,6 +3,7 @@ import 'dart:convert';
 import "package:flutter/material.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/rendering.dart";
+import 'package:flutter/services.dart';
 import "dart:io";
 import "decorations/dotted_grid.dart";
 import "lobby.dart";
@@ -11,10 +12,14 @@ import "character_scene.dart";
 import "command_timer.dart";
 import "dart:math";
 
-void main() => runApp(new MyApp());
+void main() 
+{
+	// Hide UI top and bottom bar
+	SystemChrome.setEnabledSystemUIOverlays([]);
+	runApp(new MyApp());
+}
 
 class MyApp extends StatelessWidget {
-	// This widget is the root of your application.
 	@override
 	Widget build(BuildContext context) {
 		return new MaterialApp(
@@ -40,6 +45,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 {	
 	static const double gamePanelRatio = 0.33;
 	static const double lobbyPanelRatio = 0.66;
+	static const MethodChannel platform = const MethodChannel('2d.hot_reload.io/battery');
 
 	bool _isPlaying = false;
 	double _panelRatio = 0.66;
@@ -54,6 +60,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	TerminalSceneState _sceneState = TerminalSceneState.All;
 	int _sceneCharacterIndex = 0;
 	String _sceneMessage = "Waiting for 2 players!";
+	String _batteryLevel = "LOADING%";
 	DateTime _commandStartTime = new DateTime.now();
 	DateTime _commandEndTime = new DateTime.now().add(const Duration(seconds:10));
 
@@ -67,10 +74,13 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	List _gameCommands = [];
 
+	int _lastTap = 0;
+	int _tapCount = 0;
+
 	@override
 	initState()
 	{
-		super.initState(); 
+		super.initState();
 		_arePlayersReady = [_isReady];
 		_client = new WebSocketClient(this);
 		_client.onConnectionChanged = ()
@@ -81,6 +91,12 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			});
 		};
 
+		Future batteryQuery = platform.invokeMethod('getBatteryLevel');
+		batteryQuery.then((percent) => setState(() => _batteryLevel = "$percent%")).
+			catchError(
+				(e) => print("Just got an error!====\n$e"), 
+				test: (e) => e is FormatException
+			);
 		resetSceneMessage();
 		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 		_fadeCallback = () 
@@ -265,6 +281,33 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		setState(() => _isReady = isIt);
 	}
 
+	_validateIpAddress(String ip)
+	{
+		print("VALIDATING $ip");
+		List<String> values = _ipInputController.text.split('.');
+		if(values.length != 4)
+		{
+			print("INVALID IP");
+			return false;
+		}
+		else
+		{
+			for(String s in values)
+			{
+				int ipValue = int.parse(s, onError: (source){});
+				ipValue = ipValue ?? -1;
+				if(ipValue < 0 || ipValue > 255)
+				{
+					print("INVALID INPUT VALUES");
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	final TextEditingController _ipInputController = new TextEditingController();
+
 	@override
 	Widget build(BuildContext context) 
 	{
@@ -297,7 +340,54 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 									new Row(children: 
 										[	
 											new Text(_isConnected ? "SYSTEM ONLINE" : "SYSTEM OFFLINE", style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
-											new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5))
+											new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5)),
+											new Expanded(child: new Container()),
+											new GestureDetector( 
+												onTap: () {
+													int now = new DateTime.now().millisecondsSinceEpoch;
+													int diff = now - _lastTap;
+													print(diff);
+													if(diff < 1000)
+													{
+														_tapCount++;
+														if(_tapCount > 2)
+														{
+															_tapCount = 0;
+															showDialog(
+																context: context,
+																builder: (_) => new AlertDialog(
+																	title: new Text("LOCAL_IP"),
+																	content: new TextFormField(
+																		controller: _ipInputController, 
+																		decoration: new InputDecoration( hintText:  "IP ADDRESS"), autofocus: true, maxLength: 15, maxLines:  1, keyboardType: TextInputType.number
+																		),
+																		actions: 
+																		[
+																			new FlatButton(
+																				child : new Text("OK"),
+																				onPressed: ()
+																				{
+																					String ip = _ipInputController.text;
+																					if(_validateIpAddress(ip))
+																					{
+																						_client.address = ip;
+																						Navigator.of(context).pop();
+																					}
+																				}
+																			)
+																	],
+																)
+															);
+														}
+													}
+													else
+													{
+														_tapCount = 1;
+													}
+
+													_lastTap = now;
+												},
+												child: Text(_batteryLevel, style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)))
 										]
 									),
 									// Two decoration lines underneath the title
@@ -363,6 +453,7 @@ class WebSocketClient
 	int _reconnectSeconds = ReconnectMinSeconds;
 	bool _isConnected = false;
 	VoidCallback onConnectionChanged;
+	String address;
 
 	bool get isConnected
 	{
@@ -371,6 +462,14 @@ class WebSocketClient
 
 	WebSocketClient(this._terminal)
 	{
+		if(Platform.isAndroid)
+		{
+			address = "192.168.1.108";//"10.0.2.2";
+		}
+		else
+		{
+			address = InternetAddress.LOOPBACK_IP_V4.address;
+		}
 		connect();
 	}
 
