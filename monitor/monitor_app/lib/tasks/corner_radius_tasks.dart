@@ -8,7 +8,7 @@ class ListCornerRadius extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeRadial(taskLabel(), 0, 60);
+		return CommandTask.makeRadial(this, 0, 60);
 	}
 
 	void complete(bool success, int value)
@@ -72,7 +72,7 @@ class CarouselCornerRadius extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeRadial(taskLabel(), 0, 30);
+		return CommandTask.makeRadial(this, 0, 30);
 	}
 
 	void complete(bool success, int value)

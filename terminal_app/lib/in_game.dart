@@ -6,6 +6,7 @@ import "package:flutter/foundation.dart";
 import "package:flutter/rendering.dart";
 import "game_controls/game_slider.dart";
 import "game_controls/game_radial.dart";
+import "game_controls/game_command_widget.dart";
 
 class InGame extends StatelessWidget
 {
@@ -30,18 +31,18 @@ class InGame extends StatelessWidget
 		{
 			String type = description['type'];
 			String name = description['title'];
-			var constructor = gameWidgetsMap[type];
+			String taskType = description["taskType"];
 			Widget w;
 			switch(type)
 			{
 				case "GameBinaryButton":
-					w = new GameBinaryButton.make(description);
+					w = new GameBinaryButton.make(taskType, description);
 					break;
 				case "GameSlider":
-					w = new GameSlider.make(description);
+					w = new GameSlider.make(taskType, description);
 					break;
 				case "GameRadial":
-					w = new GameRadial.make(description);
+					w = new GameRadial.make(taskType, description);
 					break;
 				default:
 					w = new Container(child: new Text(type));
@@ -76,14 +77,15 @@ class InGame extends StatelessWidget
     }   
 }
 
-class GameBinaryButton extends StatelessWidget
+class GameBinaryButton extends StatelessWidget implements GameCommand
 {
 	// TODO: final List<VoidCallback> _callbacks;
 	final List<String> _labels;
+	final String taskType;
 
-	GameBinaryButton(this._labels, {Key key}) : super(key: key);
+	//GameBinaryButton(this._labels, {Key key}) : super(key: key);
 
-	GameBinaryButton.make(Map params) : _labels = new List<String>(params['buttons'].length)
+	GameBinaryButton.make(this.taskType, Map params) : _labels = new List<String>(params['buttons'].length)
 	{
 		List l = params['buttons'];
 		for(int i = 0; i < l.length; i++)

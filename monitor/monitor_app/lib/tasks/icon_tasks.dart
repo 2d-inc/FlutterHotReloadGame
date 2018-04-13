@@ -11,7 +11,7 @@ class AddIconATask extends CommandTask
 	
 	Map serialize()
 	{
-		return CommandTask.makeBinary(taskLabel(), options);
+		return CommandTask.makeBinary(this, options);
 	}
 
 	void complete(bool success, int value)
@@ -107,7 +107,7 @@ class AddIconBTask extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeBinary(taskLabel(), options);
+		return CommandTask.makeBinary(this, options);
 	}
 
 	String getIssueCommand(int value)

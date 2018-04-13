@@ -240,6 +240,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		setState(()
 		{
 			_sceneMessage = msg;
+			_commandStartTime = null;
+			_commandEndTime = null;
 		});
 	}
 

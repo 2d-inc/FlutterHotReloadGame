@@ -7,7 +7,7 @@ class ShowFeaturedAligned extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeSlider(taskLabel(), 0, 350);
+		return CommandTask.makeSlider(this, 0, 350);
 	}
 	
 	String getIssueCommand(int value)
@@ -58,7 +58,7 @@ class ShowFeaturedCarousel extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeSlider(taskLabel(), 0, 350);
+		return CommandTask.makeSlider(this, 0, 350);
 	}
 
 	void complete(bool success, int value)
@@ -125,7 +125,7 @@ class CategoryFontWeight extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeSlider(taskLabel(), 0, 350);
+		return CommandTask.makeSlider(this, 0, 350);
 	}
 
 	void complete(bool success, int value)

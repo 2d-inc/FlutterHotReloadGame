@@ -8,40 +8,44 @@ abstract class CommandTask
 	void tryToIssue(List<IssuedTask> currentQueue);
 	Map serialize();
 
-    static Map makeSlider(String title, int min, int max)
+    static Map makeSlider(CommandTask task, int min, int max)
     {
         return {
             "type": "GameSlider",
-            "title": title,
+            "title": task.taskLabel(),
+            "taskType": task.taskType(),
             "min": min,
             "max": max
         };
     }
 
-    static Map makeRadial(String title, int min, int max)
+    static Map makeRadial(CommandTask task, int min, int max)
     {
         return {
             "type": "GameRadial",
-            "title": title,
+            "title": task.taskLabel(),
+            "taskType": task.taskType(),
             "min": min,
             "max": max
         };
     }
 
-    static Map makeBinary(String title, List<String> options)
+    static Map makeBinary(CommandTask task, List<String> options)
     {
         return {
             "type": "GameBinaryButton",
-            "title": title,
+            "title": task.taskLabel(),
+            "taskType": task.taskType(),
             "buttons": options
         };
     }
 
-    static Map makeToggle(String title)
+    static Map makeToggle(CommandTask task)
     {
         return {
             "type": "GameToggle",
-            "title": title
+            "title": task.taskLabel(),
+            "taskType": task.taskType()
         };
     }
 }

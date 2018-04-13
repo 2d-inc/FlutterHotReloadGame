@@ -94,8 +94,10 @@ class GameClient
         _sendJSONMessage("gameOver", true);
     }
 
-    void _onTaskCompleted()
+    void _completeTask()
     {
+        _taskStatus = TaskStatus.complete;
+        _currentTask = null;
         _sendJSONMessage("taskComplete", "Like a glove!");
     }
 
@@ -126,7 +128,7 @@ class GameClient
 
     get isReady => _isReady;
 
-    get currentTask => _currentTask;
+    IssuedTask get currentTask => _currentTask;
     
     get taskStatus => _taskStatus;
 
@@ -213,6 +215,22 @@ class GameClient
                 }
                 break;
         }
+    }
+
+    bool performTask(String type, int value)
+    {
+        if(_currentTask == null)
+        {
+            return false;
+        }
+        
+        if(_currentTask.task.taskType() == type && _currentTask.value == value)
+        {
+            _completeTask();
+            return true;
+        }
+
+        return false;
     }
 
     set readyList(List<bool> readyPlayers)
@@ -376,11 +394,14 @@ class GameServer
     {
         var inputType = input['type'];
         var inputValue = input['value'];
-        for(var gc in _clients)
+        if(inputType is String && inputValue is int)
         {
-            if(gc.currentTask['type'] == inputType && gc.currentTask['value'] == inputValue)
+            for(var gc in _clients)
             {
-                gc.taskStatus == TaskStatus.complete;
+                if(gc.performTask(inputType, inputValue))
+                {
+                    break;
+                }
             }
         }
     }
