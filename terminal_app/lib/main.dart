@@ -82,16 +82,11 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		_arePlayersReady = [_isReady];
 		_client = new WebSocketClient(this);
 		Future batteryQuery = platform.invokeMethod('getBatteryLevel');
-		// batteryQuery.then((int percent) => setState(() => _batteryLevel = "$percent%"));
-		batteryQuery.then(
-			(percent) 
-			{
-				print("JUST GOT THE BATTERY LEVEL: %$percent");
-				setState(() => _batteryLevel = "$percent%");
-			}).catchError((e) 
-			{
-				print("Just got an error!====\n$e");
-			}/* , test: (e) => e is FormatException */);
+		batteryQuery.then((percent) => setState(() => _batteryLevel = "$percent%")).
+			catchError(
+				(e) => print("Just got an error!====\n$e"), 
+				test: (e) => e is FormatException
+			);
 		resetSceneMessage();
 		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 		_fadeCallback = () 
@@ -358,7 +353,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 													}
 													else
 													{
-														print("RESET COUNT");
 														_tapCount = 1;
 													}
 
