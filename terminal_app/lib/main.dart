@@ -58,6 +58,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	DateTime _commandEndTime = new DateTime.now().add(const Duration(seconds:10));
 
 	WebSocketClient _client;
+	bool _isConnected = false;
+	bool _canBeReady = false;
 
 	bool _isReady = false;
 	bool _gameOver = false;
@@ -71,6 +73,14 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		super.initState(); 
 		_arePlayersReady = [_isReady];
 		_client = new WebSocketClient(this);
+		_client.onConnectionChanged = ()
+		{
+			setState(()
+			{
+				_isConnected = _client.isConnected;
+			});
+		};
+
 		resetSceneMessage();
 		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 		_fadeCallback = () 
@@ -110,10 +120,23 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			if(_isPlaying)
 			{
 				_panelController.reverse();
-				_isPlaying = !_isPlaying;
+				_isPlaying = false;
 			}
 			_sceneState = TerminalSceneState.All;
 			resetSceneMessage();
+		});
+	}
+
+	void setGameStatus(bool isServerInGame, bool isClientInGame)
+	{
+		setState(() 
+		{
+			// we can only mark ready if the server isn't already in a game.
+			_canBeReady = !isServerInGame;
+			if(_isPlaying && !isClientInGame)
+			{
+				_backToLobby();
+			}
 		});
 	}
 
@@ -124,23 +147,26 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			print("THIS PLAYER ISN'T READY YET");
 			return;
 		}
+		if(_isPlaying)
+		{
+			print("ALREADY PLAYING.");
+			return;
+		}
 
 		setState(() => _gameCommands = commands);
-		double endOpacity = _isPlaying ? 1.0 : 0.0;
 
 		_fadeLobbyAnimation = new Tween<double>(
 			begin: _lobbyOpacity,
-			end: endOpacity,
+			end: 0.0,
 		).animate(new CurvedAnimation(
 				parent: _panelController,
 				curve: new Interval(0.0, 0.33, curve: Curves.easeInOut)
 			)
 		);
 
-		double endPanelRatio = _isPlaying ? lobbyPanelRatio : gamePanelRatio;
 		_slideAnimation = new Tween<double>(
 			begin: _panelRatio,
-			end: endPanelRatio
+			end: gamePanelRatio
 		).animate(new CurvedAnimation(
 				parent: _panelController,
 				curve: new Interval(0.34, 0.66, curve: Curves.easeInOut)
@@ -159,12 +185,13 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 		setState(() 
 		{
-			_isPlaying = !_isPlaying;
-			_sceneState = TerminalSceneState.Upset;
-			_sceneCharacterIndex = new Random().nextInt(4);//rand()%4;
+			_isPlaying = true;
+			_sceneState = TerminalSceneState.BossOnly;
+			_sceneCharacterIndex = new Random().nextInt(4);
 			_sceneMessage = null;
 			_commandStartTime = new DateTime.now();
 			_commandEndTime = new DateTime.now().add(new Duration(seconds: 60));
+			print("PLAYING AND SETTING CHARACTER TO $_sceneCharacterIndex");
 		});
 	}
 
@@ -174,10 +201,12 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		int time = task['expiry'] as int;
 
 		setState(
-			() {
+			() 
+			{
+				_sceneCharacterIndex = new Random().nextInt(4);
 				_sceneMessage = msg;
-				_commandStartTime = new DateTime.now();
-				_commandEndTime = new DateTime.now().add(new Duration(seconds: time));
+				_commandStartTime = time == 0 ? null : new DateTime.now();
+				_commandEndTime = time == 0 ? null :  new DateTime.now().add(new Duration(seconds: time));
 			}
 		);
 	}
@@ -200,21 +229,21 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	void gameOver()
 	{
-		List<bool> resetList = new List.filled(_arePlayersReady.length, false);
-		setState(
-			()
-			{
-				_gameCommands = [];
-				_arePlayersReady = resetList;
-				_isReady = false;
-			}
-		);
+		setState(()
+		{
+			_gameCommands = [];
+			_isReady = false;
+		});
 		_backToLobby(); // TODO: show the game over screen instead
 	}
 
 	// Should be called within a set state.
 	resetSceneMessage()
 	{
+		if(_isPlaying)
+		{
+			return;
+		}
 		String message = _arePlayersReady.fold<int>(0, (int count, bool value) { if(value) { count++; } return count;} ) >= 2 ? "Come on, we've got a deadline to make!" : "Waiting for 2 players!";
 		if(message != _sceneMessage)
 		{
@@ -267,7 +296,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 									// Title Row
 									new Row(children: 
 										[	
-											new Text("SYSTEM ONLINE", style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
+											new Text(_isConnected ? "SYSTEM ONLINE" : "SYSTEM OFFLINE", style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
 											new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5))
 										]
 									),
@@ -276,7 +305,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
 									_isPlaying ? 
 										new InGame(_gameOpacity, _backToLobby, _gameCommands, isOver: _gameOver)
-										: new LobbyWidget(_isReady, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
+										: new LobbyWidget(_isConnected && _canBeReady, _isReady, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
 									new Container(
 										margin: new EdgeInsets.only(top: 10.0),
 										alignment: Alignment.bottomRight,
@@ -328,6 +357,17 @@ class WebSocketClient
 {
 	WebSocket _socket;
 	_TerminalState _terminal;
+	Timer _reconnectTimer;
+	static const int ReconnectMinSeconds = 2;
+	static const int ReconnectMaxSeconds = 10;
+	int _reconnectSeconds = ReconnectMinSeconds;
+	bool _isConnected = false;
+	VoidCallback onConnectionChanged;
+
+	bool get isConnected
+	{
+		return _isConnected;
+	}
 
 	WebSocketClient(this._terminal)
 	{
@@ -358,23 +398,64 @@ class WebSocketClient
 		_socket?.add(formatJSONMessage("startGame", true));
 	}
 
+	reconnect()
+	{
+		if(_reconnectTimer != null)
+		{
+			_reconnectTimer.cancel();
+			_reconnectTimer = null;
+		}
+		if(_socket != null)
+		{
+			_socket.close();
+			_socket = null;
+		}
+		_isConnected = false;
+
+		if(onConnectionChanged != null)
+		{
+			onConnectionChanged();
+		}
+
+		int delay = _reconnectSeconds;
+		_reconnectSeconds = (_reconnectSeconds * 1.5).round().clamp(ReconnectMinSeconds, ReconnectMaxSeconds);
+
+		debugPrint("Attempting websocket reconnect in $delay seconds.");
+		_reconnectTimer = new Timer(new Duration(seconds: delay), connect);
+	}
+	
 	connect()
 	{
+		assert(_socket == null);
 		String address;
 		if(Platform.isAndroid)
 		{
-			address = "192.168.1.108";//"10.0.2.2";
+			address = "10.0.2.2";
 		}
 		else
 		{
 			address = InternetAddress.LOOPBACK_IP_V4.address;
 		}
-		WebSocket.connect("ws://"+ address + ":8080/ws").then(
+		address = "192.168.1.156";
+		debugPrint("Attempting connection to ws://" + address + ":8080/ws");
+		WebSocket.connect("ws://" + address + ":8080/ws").then
+		(
 			(WebSocket ws)
 			{
-				print("CONNECTED");
+				_isConnected = true;
+				if(onConnectionChanged != null)
+				{
+					onConnectionChanged();
+				}
+				debugPrint("Websocket connected");
+				// Reset to min connect time for future reconnects.
+				_reconnectSeconds = ReconnectMinSeconds;
+
+				// Store socket.
 				_socket = ws;
-				_socket.pingInterval = const Duration(seconds: 5);
+				//_socket.pingInterval = const Duration(seconds: 5);
+
+				// Listen for messages.
 				ws.listen((message)
 				{
 					try
@@ -383,6 +464,14 @@ class WebSocketClient
 						String msg = jsonMsg['message'];
 						print("GOT MESSAGE $jsonMsg");
 						var payload = jsonMsg['payload'];
+
+						var gameActive = jsonMsg['gameActive'];
+						var inGame = jsonMsg['inGame'];
+						
+						if(gameActive is bool && inGame is bool)
+						{
+							_terminal.setGameStatus(gameActive, inGame);
+						}
 						
 						switch(msg)
 						{
@@ -421,24 +510,30 @@ class WebSocketClient
 					}
 
 				}, 
-				onDone: connect); // Try to reconnect when server drops
+
+				onDone: ()
+				{
+					debugPrint("Websocket done.");
+					reconnect();
+				}); // Try to reconnect when server drops
 			}
 		)
-		.catchError(
+		.catchError
+		(
 			(e)
 			{
-				if(e is SocketException)
-				{
-					// Try to reconnect if server is unreachable
-					print("RETRY $e");
-					new Timer(const Duration(seconds: 5), connect);
-				}
-				else
-				{
-					print("WEBSOCKET ERROR: $e");
-				}
+				debugPrint("Websocket caught error: $e");
+				reconnect();
 			}
 		)
-		.timeout(const Duration(seconds: 5), onTimeout: connect);
+		.timeout
+		(
+			const Duration(seconds: 5), 
+			onTimeout: ()
+			{
+				debugPrint("Websocket connect timed out.");
+				reconnect();
+			}
+		);
 	}
 }

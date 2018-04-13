@@ -7,7 +7,7 @@ import "tasks/command_tasks.dart";
 import "package:flutter/scheduler.dart";
 
 enum CommandTypes { slider, radial, binary }
-enum TaskStatus { complete, inProgress, failed }
+enum TaskStatus { complete, inProgress, failed, noMore }
 
 class GameClient
 {
@@ -15,13 +15,21 @@ class GameClient
     WebSocket _socket;
     GameServer _server;
     bool _isReady = false;
+    bool _isInGame = false;
     List<CommandTask> _commands = [];
 
     IssuedTask _currentTask;
     TaskStatus _taskStatus;
-    Timer _countdown;
+    DateTime _sendTaskTime;
+    DateTime _failTaskTime;
+    int _idx;
 
-    GameClient(GameServer server, WebSocket socket)
+    bool get isInGame
+    {
+        return _isInGame;
+    }
+
+    GameClient(GameServer server, WebSocket socket, this._idx)
     {
         _socket = socket;
         _server = server;
@@ -48,7 +56,7 @@ class GameClient
                 case "ready":
                     _isReady = jsonMsg['payload'];
                     print("PLAYER READY? ${_isReady}");
-                    _server.onClientReadyChanged();
+                    _server.sendReadyState();
                     break;
                 case "startGame":
                     print("READY TO START");
@@ -72,9 +80,12 @@ class GameClient
     
     reset()
     {
+        _isInGame = false;
+        _isReady = false;
         _taskStatus = null;
         _currentTask = null;
-        _countdown.cancel();
+        _sendTaskTime = null;
+        _failTaskTime = null;
     }
 
     gameOver()
@@ -83,15 +94,33 @@ class GameClient
         _sendJSONMessage("gameOver", true);
     }
 
-    void onTaskCompleted()
+    void _onTaskCompleted()
     {
-        _countdown.cancel();
         _sendJSONMessage("taskComplete", "Like a glove!");
     }
 
-    void onTaskFailed()
+    void _sendTask()
     {
-        print("DEAD TO ME!");
+        // a null task means we are done with tasks (but game may not be over as other clients may be still completing tasks)
+        if(_currentTask == null)
+        {
+            _sendJSONMessage("newTask", 
+            {
+                "message":"I'm done with you. Listen to your colleagues.",
+                "expiry":0
+            });
+        }
+        else
+        {
+            _sendJSONMessage("newTask", _currentTask.serialize());
+        }
+        
+    }
+
+    void _failTask()
+    {
+        _taskStatus = TaskStatus.failed;
+        _currentTask = null;
         _sendJSONMessage("taskFail", "You're dead to me!" );
     }
 
@@ -120,23 +149,70 @@ class GameClient
         return _commands;
     }
 
-    // TODO: update this logic to use a client advance function that's called once per game loop
-    // this will require storing DateTimes for expiry values and comparing them to DateTime.now.
-    setCurrentTask(IssuedTask value, bool delay)
+    startGame()
     {
-        _taskStatus = TaskStatus.inProgress;
-        _currentTask = value;
-        if(delay)
+        _isInGame = _isReady;
+        _taskStatus = TaskStatus.complete;
+        _currentTask = null;
+
+        _assignTask(false);
+    }
+
+    void _assignTask(bool delaySend)
+    {
+        assert(_sendTaskTime == null);
+        _currentTask = _server.getNextTask(this);
+        print("ASSIGNED TASK $_currentTask to $_idx");
+        _taskStatus = _currentTask == null ? TaskStatus.noMore : TaskStatus.inProgress;
+        _sendTaskTime = null;
+        if(delaySend)
         {
-            new Timer(timeBetweenTasks, () => _sendJSONMessage("newTask", value.serialize()));
+            _sendTaskTime = new DateTime.now().add(timeBetweenTasks);
         }
         else
         {
-            _sendJSONMessage("newTask", value.serialize());
+            _sendTask();
         }
         
-        int expiry = value.expires;// value['expiry'] as int;
-        _countdown = new Timer(new Duration(seconds: delay ? expiry + timeBetweenTasks.inSeconds : expiry), () { print("FAILED THE TASK!"); return _taskStatus = TaskStatus.failed; });
+        if(_currentTask != null)
+        {
+            int expiry = _currentTask.expires;
+            _failTaskTime = new DateTime.now().add(new Duration(seconds:delaySend ? expiry + timeBetweenTasks.inSeconds : expiry));
+        }
+    }
+
+    void advanceGame()
+    {
+        if(!_isInGame || !_isReady)
+        {
+            print("Attempted to advance when we're not in ready or in game.");
+            return;
+        }
+        
+        DateTime now = new DateTime.now();
+        switch(_taskStatus)
+        {
+            case TaskStatus.inProgress:
+            case TaskStatus.noMore:
+                if(_sendTaskTime != null && _sendTaskTime.isBefore(now))
+                {
+                    _sendTaskTime = null;
+                    _sendTask();
+                }
+                if(_failTaskTime != null && _failTaskTime.isBefore(now))
+                {
+                    _failTaskTime = null;
+                    _failTask();
+                }
+                break;
+            case TaskStatus.complete:
+            case TaskStatus.failed:
+                if(_currentTask == null)
+                {
+                    _assignTask(true);
+                }
+                break;
+        }
     }
 
     set readyList(List<bool> readyPlayers)
@@ -148,7 +224,9 @@ class GameClient
     {
         var message = json.encode({
             "message": msg,
-            "payload": payload
+            "payload": payload,
+            "gameActive":_server._inGame,
+            "inGame":_isInGame
         });
         _socket.add(message);
     }
@@ -191,7 +269,9 @@ class GameServer
 
     void connect()
     {
-        HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080)
+        String address = "192.168.1.156";
+        // String address = InternetAddress.LOOPBACK_IP_V4;
+        HttpServer.bind(address, 8080)
             .then((server) async
             {
                 print("Serving at ${server.address}, ${server.port}");
@@ -216,10 +296,10 @@ class GameServer
     onClientDisconnected(GameClient client)
     {
         this._clients.remove(client);
-        onClientReadyChanged();
+        sendReadyState();
     }
 
-    onClientReadyChanged()
+    sendReadyState()
     {
         int l = _clients.length;
         List<bool> readyList = new List(l);
@@ -234,42 +314,62 @@ class GameServer
         }
     }
 
+    int get readyCount
+    {
+        return _clients.fold<int>(0, 
+            (int count, GameClient client) 
+            { 
+                if(client.isReady)
+                {
+                    count++;
+                }
+                return count; 
+            });
+    }
+
     onClientStartChanged(GameClient client)
     {
-        bool readyToStart = true;
+        int numClientsReady = readyCount;
+
+        if(numClientsReady < 2)
+        {
+            print("Received start, but less than two clients are ready.");
+            return;
+        }
+        else if(_inGame)
+        {
+            print("Received start, but already in an active game.");
+            return;
+        }
+
+        // Build the full list.
+        _taskList = new TaskList();
+        List<CommandTask> taskTypes = new List<CommandTask>.from(_taskList.toAssign);
+        
+        // Todo: change back to this logic.
+        //int perClient = (taskTypes.length/min(1,numClientsReady)).ceil();
+        int perClient = 2;
+
+        // tell every client the game has started and what their commands are...
+        // build list of command id to possible values
+        Random rand = new Random();
         for(var gc in _clients)
         {
-            readyToStart == readyToStart && gc.isReady;
-        }
-        
-        if(readyToStart)
-        {
-            // Build the full list.
-            _taskList = new TaskList();
-            List<CommandTask> taskTypes = new List<CommandTask>.from(_taskList.toAssign);
-            int readyCount = _clients.fold<int>(0, (int count, GameClient client) { if(client.isReady) { count++; } return count; });
-            //int perClient = (taskTypes.length/min(1,readyCount)).ceil();
-            int perClient = 2;
-            // tell every client the game has started and what their commands are...
-            // build list of command id to possible values
-            Random rand = new Random();
-            for(var gc in _clients)
+            if(!gc.isReady)
             {
-                if(!gc.isReady)
-                {
-                    continue;
-                }
-
-                List<CommandTask> tasksForClient = new List<CommandTask>();
-                while(tasksForClient.length < perClient && taskTypes.length != 0)
-                {
-                    tasksForClient.add(taskTypes.removeAt(rand.nextInt(taskTypes.length)));
-                }
-                gc.commands = tasksForClient;
-                assignTask(gc, false);
+                continue;
             }
-            _inGame = true;
+
+            List<CommandTask> tasksForClient = new List<CommandTask>();
+            while(tasksForClient.length < perClient && taskTypes.length != 0)
+            {
+                tasksForClient.add(taskTypes.removeAt(rand.nextInt(taskTypes.length)));
+            }
+            gc.commands = tasksForClient;
+
+            gc.startGame();
         }
+        _inGame = true;
     }
 
     onClientInput(Map input)
@@ -287,31 +387,20 @@ class GameServer
 
     void gameLoop()
     {
-       // print("LOOP RUNNING!");
-        for(var gc in _clients)
+        bool someoneHasTask = false;
+        for(GameClient gc in _clients)
         {
-            TaskStatus st = gc.taskStatus;
-            switch(st)
+            gc.advanceGame();
+
+            if(gc.currentTask != null)
             {
-                case TaskStatus.complete:
-                    //print("COMPLETE!");
-                    gc.onTaskCompleted();
-                    break;
-                case TaskStatus.inProgress:
-                    //print("IN_PROGRESS!");
-                    continue;
-                case TaskStatus.failed:
-                    //print("FAILED!");
-                    gc.onTaskFailed();
-                    break;         
+                someoneHasTask = true;
             }
-           // print("GETTING TASK");
-            bool isAlive = assignTask(gc);
-            if(!isAlive)
-            {
-                onGameOver();
-                return;
-            }
+        }
+
+        if(!someoneHasTask && _taskList.isEmpty)
+        {
+            onGameOver();
         }
     }
     
@@ -323,27 +412,21 @@ class GameServer
         {
             gc.gameOver();
         }
+
+        sendReadyState();
     }
 
-    bool assignTask(GameClient client, [bool delay = true])
+    IssuedTask getNextTask(GameClient client)
     {
-        IssuedTask task = _taskList.nextTask(client.commands);
-        if(task == null)
-        {
-            return false;
-        }
-        client.setCurrentTask(task, delay);
-        return true;
+        return _taskList.nextTask(client.commands);
     }
-
-   
 
     _handleWebSocket(WebSocket socket)
     {
         print("ADD WEBCLIENT! ${this._clients.length}");
-        GameClient client = new GameClient(this, socket);
+        GameClient client = new GameClient(this, socket, _clients.length);
         _clients.add(client);
-        onClientReadyChanged();
+        sendReadyState();
     }
 
     List<Map> generateCommands()

@@ -24,7 +24,6 @@ class InGame extends StatelessWidget
 
 	List<Widget> buildGrid()
 	{
-		print("READY TO BUILD: $_gridDescription");
 		List<Widget> grid = [];
 
 		for(var description in _gridDescription)
