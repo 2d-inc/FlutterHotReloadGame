@@ -77,6 +77,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	int _lastTap = 0;
 	int _tapCount = 0;
 
+	int _randomSeed = 1;
+
 	@override
 	initState()
 	{
@@ -168,7 +170,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			print("ALREADY PLAYING.");
 			return;
 		}
-
+		_randomSeed = new Random().nextInt(19890926);
 		setState(() => _gameCommands = commands);
 
 		_fadeLobbyAnimation = new Tween<double>(
@@ -402,7 +404,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
 									_isPlaying ? 
-										new InGame(_gameOpacity, _backToLobby, _gameCommands, _issueCommand, isOver: _gameOver)
+										new InGame(_gameOpacity, _backToLobby, _gameCommands, _issueCommand, _randomSeed, isOver: _gameOver)
 										: new LobbyWidget(_isConnected && _canBeReady, _isReady, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
 									new Container(
 										margin: new EdgeInsets.only(top: 10.0),
@@ -470,14 +472,6 @@ class WebSocketClient
 
 	WebSocketClient(this._terminal)
 	{
-		if(Platform.isAndroid)
-		{
-			address = "192.168.1.108";//"10.0.2.2";
-		}
-		else
-		{
-			address = InternetAddress.LOOPBACK_IP_V4.address;
-		}
 		connect();
 	}
 

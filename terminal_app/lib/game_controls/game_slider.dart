@@ -3,11 +3,17 @@ import "dart:ui" as ui;
 import "dart:math";
 import "game_colors.dart";
 import "game_command_widget.dart";
+import "game_radial.dart";
 
 class GameSlider extends StatefulWidget implements GameCommand
 {
 	//GameSlider({Key key, this.value = 40, this.min = 0, this.max = 200}) : super(key: key);
 	GameSlider.make(this.issueCommand, this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
+
+	GameSlider.fromRadial(GameRadial radial) :
+		issueCommand = radial.issueCommand,
+		taskType = radial.taskType,
+		value = radial.value, min = radial.min, max = radial.max;
 
 	final int value;
 	final int min;
