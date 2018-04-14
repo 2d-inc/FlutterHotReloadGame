@@ -7,7 +7,7 @@ class ShowFeaturedAligned extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeSlider(this, 0, 350);
+		return CommandTask.makeSlider(this, 0, 304);
 	}
 	
 	String getIssueCommand(int value)
@@ -48,7 +48,7 @@ class ShowFeaturedAligned extends CommandTask
 	void tryToIssue(List<IssuedTask> currentQueue)
 	{
 		currentQueue.add(new IssuedTask()..task = this
-										..value = 10);
+										..value = 76);
 	}
 }
 
@@ -58,7 +58,7 @@ class ShowFeaturedCarousel extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeSlider(this, 0, 350);
+		return CommandTask.makeSlider(this, 0, 304);
 	}
 
 	void complete(bool success, int value)
@@ -114,7 +114,7 @@ class ShowFeaturedCarousel extends CommandTask
 		{
 			ShowFeaturedCarousel c = currentQueue[last].task as ShowFeaturedCarousel;
 			currentQueue.add(new IssuedTask()..task = this
-										..value = c._featuredItemSize == 304 ? 350 : 304);
+										..value = c._featuredItemSize == 304 ? 228 : 304);
 		}
 	}
 }

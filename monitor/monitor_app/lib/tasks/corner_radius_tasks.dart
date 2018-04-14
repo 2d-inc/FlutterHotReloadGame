@@ -56,7 +56,7 @@ class ListCornerRadius extends CommandTask
 				break;
 			case 1:
 				currentQueue.add(new IssuedTask()..task = this
-													..value = 10);
+													..value = 15);
 				break;
 			case 2:
 				currentQueue.add(new IssuedTask()..task = this
@@ -122,11 +122,11 @@ class CarouselCornerRadius extends CommandTask
 		{
 			case 0:
 				currentQueue.add(new IssuedTask()..task = this
-													..value = 5);
+													..value = 8);
 				break;
 			case 1:
 				currentQueue.add(new IssuedTask()..task = this
-													..value = 10);
+													..value = 15);
 				break;
 			case 2:
 				currentQueue.add(new IssuedTask()..task = this

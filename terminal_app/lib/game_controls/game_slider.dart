@@ -19,30 +19,60 @@ class GameSlider extends StatefulWidget implements GameCommand
 	_GameSliderState createState() => new _GameSliderState(value, min, max);
 }
 
-class _GameSliderState extends State<GameSlider>
+class _GameSliderState extends State<GameSlider> with SingleTickerProviderStateMixin
 {
 	int value = 0;
 	final int minValue;
 	final int maxValue;
+	
+	AnimationController _controller;
+	Animation<double> _valueAnimation;
 
 	_GameSliderState(this.value, this.minValue, this.maxValue);
+	int targetValue = 0;
 	
 	void valueChanged(double v)
 	{
-		setState(()
+		int target = (minValue + (v * 4).round() * ((maxValue-minValue)/4)).round();
+		if(targetValue == target)
 		{
-			value = (minValue + v * (maxValue-minValue)).round();
-		});
+			return;
+		}
+		targetValue = target;
+		_valueAnimation = new Tween<double>
+		(
+			begin: value.toDouble(),
+			end: targetValue.toDouble()
+		).animate(_controller);
+	
+		_controller
+			..value = 0.0
+			//..fling(velocity: 0.01);
+			..animateTo(1.0, curve:Curves.easeInOut);
+
+
+		// setState(()
+		// {
+		// 	value = (minValue + v * (maxValue-minValue)).round();
+		// });
 	}
 
 	void commitValueChange()
 	{
-		widget.issueCommand(widget.taskType, value);
+		widget.issueCommand(widget.taskType, targetValue);
 	}
 
 	initState() 
 	{
     	super.initState();
+		_controller = new AnimationController(duration: const Duration(milliseconds:200), vsync: this);
+		_controller.addListener(()
+		{
+			setState(()
+			{
+				value = _valueAnimation.value.round();
+			});
+		});
 	}
 
 	@override

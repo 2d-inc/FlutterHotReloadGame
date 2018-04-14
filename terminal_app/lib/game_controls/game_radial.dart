@@ -21,7 +21,7 @@ class GameRadial extends StatefulWidget implements GameCommand
 	_GameRadialState createState() => new _GameRadialState(value, min, max);
 }
 
-class _GameRadialState extends State<GameRadial>  with SingleTickerProviderStateMixin
+class _GameRadialState extends State<GameRadial> with SingleTickerProviderStateMixin
 {
 	AnimationController _controller;
 	Animation<double> _valueAnimation;
@@ -49,14 +49,12 @@ class _GameRadialState extends State<GameRadial>  with SingleTickerProviderState
 		// Offset local = ro.globalToLocal(details.globalPosition);
 
 		accumulation = (accumulation+details.delta.dy/context.size.height).clamp(0.0, 1.0);
-		int v = (minValue + (accumulation * 4).round() * ((maxValue-minValue)/4)).round();
+		int v = (minValue + ((1.0-accumulation) * 4).round() * ((maxValue-minValue)/4)).round();
 		if(targetValue == v)
 		{
 			return;
 		}
 		targetValue = v;
-	//	targetValue = min(maxValue, max(minValue, (targetValue - (details.delta.dy/context.size.height) * (maxValue-minValue)).round()));
-		print("TARGET VALUE $targetValue ${(targetValue * 4).round()} ${(minValue + (targetValue * 4).round() * ((maxValue-minValue)/4))}");
 
 		
 		_valueAnimation = new Tween<double>
@@ -78,7 +76,7 @@ class _GameRadialState extends State<GameRadial>  with SingleTickerProviderState
 
 	void dragEnd(DragEndDetails details)
 	{
-		widget.issueCommand(widget.taskType, value);
+		widget.issueCommand(widget.taskType, targetValue);
 		// _slideAnimation = new Tween<double>(
 		// 	begin: scroll,
 		// 	end: -min((data.length-1).toDouble(), max(0.0, -scroll.roundToDouble()))
