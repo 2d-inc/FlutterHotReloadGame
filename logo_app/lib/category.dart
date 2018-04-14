@@ -5,11 +5,13 @@ class CategorySimple extends StatelessWidget
 {
 	const CategorySimple(this.name, 
 	{
-		Key key
+		Key key,
+		this.flare
 	}) : assert(name != null),
 			super(key: key);
 
 	final String name;
+	final String flare;
 
 	Widget build(BuildContext context) 
 	{
@@ -45,11 +47,13 @@ class CategoryAligned extends StatelessWidget
 {
 	const CategoryAligned(this.name, 
 	{
-		Key key
+		Key key,
+		this.flare
 	}) : assert(name != null),
 			super(key: key);
 
 	final String name;
+	final String flare;
 
 	Widget build(BuildContext context) 
 	{

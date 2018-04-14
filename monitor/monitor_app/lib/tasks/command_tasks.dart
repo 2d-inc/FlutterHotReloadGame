@@ -1,12 +1,37 @@
 abstract class CommandTask
 {
+    int _lineOfInterest = null;
 	String apply(String code);
-	void complete(bool success, int value);
+	void complete(int value, String code);
 	String taskType();
 	String taskLabel();
 	String getIssueCommand(int value);
 	void tryToIssue(List<IssuedTask> currentQueue);
 	Map serialize();
+    bool doesAutocomplete() { return false; }
+
+    bool get hasLineOfInterest
+    {
+        return _lineOfInterest != null;
+    }
+
+    void findLineOfInterest(String code, String match)
+    {
+        int idx = code.indexOf(match);
+        _lineOfInterest = 0;
+        for(int i = 0; i < idx; i++)
+        {
+            if(code[i] == '\n')
+            {
+                _lineOfInterest++;
+            }
+        }
+    }
+
+    int get lineOfInterest
+    {
+        return _lineOfInterest ?? 0;
+    }
 
     static Map makeSlider(CommandTask task, int min, int max)
     {
@@ -54,7 +79,7 @@ class IssuedTask
 {
 	CommandTask task;
 	int value;
-	int expires = 10;
+	int expires = 5;
 
 	Map serialize()
 	{

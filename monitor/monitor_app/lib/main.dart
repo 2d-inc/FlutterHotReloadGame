@@ -91,6 +91,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	bool _upFacing = false;
 	List<Sound> _sounds;
 	FlutterTask _flutterTask = new FlutterTask("~/Projects/BiggerLogo/logo_app");
+	GameServer _server;
 	Random _rng = new Random();
 	bool _ready = false;
 	String _contents;
@@ -103,14 +104,13 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	Animation<double> _scrollAnimation;
 	Animation<double> _highlightAnimation;
 	AnimationStatusListener _scrollStatusListener;
-
 	int _readyCount = 0;
 
 	@override
 	initState()
 	{
 		super.initState();
-		_scrollController = new AnimationController(duration: const Duration(seconds: 1), vsync: this)
+		_scrollController = new AnimationController(duration: const Duration(milliseconds: 350), vsync: this)
 			..addListener(
 				() {
 					setState(() {
@@ -156,8 +156,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 				setState(
 					()
 					{
-						int row = _upFacing ? 56 : 10;
-						this._highlight = new Highlight(row, 0, 1);
 						_highlightAnimation = new Tween<double>(
 							begin: HIGHLIGHT_ALPHA_FULL.toDouble(),
 							end: 0.0
@@ -263,7 +261,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		// 		}
 		// 	});
 
-		new GameServer();
 
 		_flutterTask.onReady(()
 		{
@@ -274,13 +271,8 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		});
 
 		// Read contents.
-		_flutterTask.read("/lib/main.dart").then((contents)
+		_flutterTask.read("/main_template.dart").then((contents)
 		{
-			// Reset all widgets.
-			// _contents = contents.replaceAllMapped(new RegExp(r"(FeaturedRestaurantAligned)\('"), (Match m)
-			// {
-			// 	return "FeaturedRestaurantSimple('";
-			// });
 			_contents = contents;
 			if(_contents != null)
 			{
@@ -294,9 +286,29 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 			_flutterTask.write("/lib/main.dart", _contents).then((ok)
 			{
 				// Start emulator.
-				_flutterTask.load("iphone").then((success)
+				_flutterTask.load('"iPhone 8"').then((success)
 				{
-					
+					_server = new GameServer(_flutterTask, _contents);
+					_server.onUpdateCode = (String code, int lineOfInterest)
+					{
+						setState(()
+						{
+							_contents = code; 
+							//lineOfInterest = 22;
+							_highlight = new Highlight(lineOfInterest, 0, 1);
+							print("SHOWING LINE OF INTEREST $lineOfInterest");
+							double lineOffset = lineOfInterest*22.0;
+							_scrollAnimation = new Tween<double>(
+								begin: this._offset.dy,
+								end: lineOffset
+							).animate(_scrollController)
+								..addStatusListener(_scrollStatusListener);
+							_scrollController
+								..value = 0.0
+								..animateTo(1.0, curve: Curves.easeInOut);
+							this._offset = new Offset(0.0, lineOffset);
+						});
+					};
 				});
 			});
 		});

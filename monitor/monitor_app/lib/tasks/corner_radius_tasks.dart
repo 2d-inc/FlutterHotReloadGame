@@ -11,11 +11,12 @@ class ListCornerRadius extends CommandTask
 		return CommandTask.makeRadial(this, 0, 60);
 	}
 
-	void complete(bool success, int value)
+	void complete(int value, String code)
 	{
-		if(success)
+		_cornerRadius = value;
+		if(!hasLineOfInterest)
 		{
-			_cornerRadius = value;
+			findLineOfInterest(code, "LIST_CORNER_RADIUS");
 		}
 	}
 
@@ -26,7 +27,7 @@ class ListCornerRadius extends CommandTask
 	
 	String apply(String code)
 	{
-		code.replaceAll("LIST_CORNER_RADIUS", _cornerRadius.toString() + ".0");
+		code = code.replaceAll("LIST_CORNER_RADIUS", _cornerRadius.toString() + ".0");
 		return code;
 	}
 
@@ -75,9 +76,13 @@ class CarouselCornerRadius extends CommandTask
 		return CommandTask.makeRadial(this, 0, 30);
 	}
 
-	void complete(bool success, int value)
+	void complete(int value, String code)
 	{
 		_cornerRadius = value;
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "CAROUSEL_CORNER_RADIUS");
+		}
 	}
 	
 	String getIssueCommand(int value)
@@ -87,7 +92,7 @@ class CarouselCornerRadius extends CommandTask
 
 	String apply(String code)
 	{
-		code.replaceAll("CAROUSEL_CORNER_RADIUS", _cornerRadius.toString() + ".0");
+		code = code.replaceAll("CAROUSEL_CORNER_RADIUS", _cornerRadius.toString() + ".0");
 		return code;
 	}
 

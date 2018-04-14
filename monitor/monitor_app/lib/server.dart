@@ -3,17 +3,21 @@ import "dart:convert";
 import "dart:async";
 import 'dart:math';
 import "tasks/task_list.dart";
+import "tasks/icon_tasks.dart";
 import "tasks/command_tasks.dart";
 import "package:flutter/scheduler.dart";
+import 'flutter_task.dart';
 
 enum CommandTypes { slider, radial, binary }
 enum TaskStatus { complete, inProgress, failed, noMore }
+typedef void UpdateCodeCallback(String code, int line);
 
 class GameClient
 {
     static const Duration timeBetweenTasks = const Duration(seconds: 2);
     WebSocket _socket;
     GameServer _server;
+
     bool _isReady = false;
     bool _isInGame = false;
     List<CommandTask> _commands = [];
@@ -96,6 +100,7 @@ class GameClient
 
     void _completeTask()
     {
+        _server.completeTask(_currentTask);
         _taskStatus = TaskStatus.complete;
         _currentTask = null;
         _failTaskTime = null;
@@ -122,6 +127,10 @@ class GameClient
 
     void _failTask()
     {
+        if(_currentTask.task.doesAutocomplete())
+        {
+            _server.completeTask(_currentTask);
+        }
         _taskStatus = TaskStatus.failed;
         _currentTask = null;
         _sendJSONMessage("taskFail", "You're dead to me!" );
@@ -254,12 +263,20 @@ class GameClient
 
 class GameServer
 {
+    FlutterTask _flutterTask;
     TaskList _taskList;
     List<GameClient> _clients = new List<GameClient>();
     double _lastFrameTime = 0.0;
     bool _inGame = false;
+    bool _isHotReloading = false;
+    bool _waitingToHotReload = false;
+    String _template;
+    int _lineOfInterest = 0;
+    UpdateCodeCallback onUpdateCode;
 
-    GameServer()
+    Map<String, CommandTask> _completedTasks;
+
+    GameServer(this._flutterTask, this._template)
     {
         SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
         connect();
@@ -364,10 +381,12 @@ class GameServer
         // Build the full list.
         _taskList = new TaskList();
         List<CommandTask> taskTypes = new List<CommandTask>.from(_taskList.toAssign);
+        _completedTasks = new Map<String, CommandTask>();
         
         // Todo: change back to this logic.
-        //int perClient = (taskTypes.length/min(1,numClientsReady)).ceil();
-        int perClient = 2;
+        int perClient = (taskTypes.length/max(1,numClientsReady)).ceil();
+        //int perClient = 2;
+        hotReload();
 
         // tell every client the game has started and what their commands are...
         // build list of command id to possible values
@@ -432,6 +451,7 @@ class GameServer
         }
     }
     
+    
     onGameOver()
     {
         print("GAME OVER!");
@@ -442,6 +462,49 @@ class GameServer
         }
 
         sendReadyState();
+    }
+
+    void completeTask(IssuedTask it)
+    {
+        it.task.complete(it.value, _template);
+        if(it.task.hasLineOfInterest)
+        {
+            _lineOfInterest = it.task.lineOfInterest;
+        }
+        _completedTasks[it.task.taskType()] = it.task;
+        hotReload();
+    }
+
+    void hotReload()
+    {
+        if(_isHotReloading)
+        {
+            _waitingToHotReload = true;
+            return;
+        }
+
+        String code = _template.toString();
+        
+        _completedTasks.forEach((String key, CommandTask task)
+        {
+            code = task.apply(code);
+        });
+
+        _isHotReloading = true;
+
+        _flutterTask.write("/lib/main.dart", code).then((ok)
+		{
+            _flutterTask.hotReload().then((ok)
+            {
+                onUpdateCode(code, _lineOfInterest ?? 0);
+                _isHotReloading = false;
+                if(_waitingToHotReload)
+                {
+                    _waitingToHotReload = false;
+                    hotReload();
+                }
+            });
+        });
     }
 
     IssuedTask getNextTask(GameClient client)

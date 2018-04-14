@@ -56,7 +56,9 @@ class RestaurantSimple extends StatelessWidget
 		this.description,
 		this.dollarSigns,
 		this.deliveryTime,
-		this.rating
+		this.rating,
+		this.img,
+		this.cornerRadius
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -65,6 +67,8 @@ class RestaurantSimple extends StatelessWidget
 	final int dollarSigns;
 	final int deliveryTime;
 	final int rating;
+	final String img;
+	final double cornerRadius;
 	
 	Widget build(BuildContext context) 
 	{
@@ -112,15 +116,19 @@ class RestaurantAligned extends StatelessWidget
 		this.description,
 		this.dollarSigns,
 		this.deliveryTime,
-		this.rating
+		this.rating,
+		this.img,
+		this.cornerRadius
 	}) : assert(name != null),
 			super(key: key);
 	
 	final String name;
 	final String description;
+	final String img;
 	final int dollarSigns;
 	final int deliveryTime;
 	final int rating;
+	final double cornerRadius;
 	
 	Widget build(BuildContext context) 
 	{

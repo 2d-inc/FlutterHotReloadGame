@@ -53,7 +53,7 @@ class MyHomePage extends StatefulWidget {
 	_MyHomePageState createState() => new _MyHomePageState();
 }
 
-const featuredRestaurantSize = 304.0;
+const featuredRestaurantSize = FEATURED_RESTAURANT_SIZE;
 
 class _MyHomePageState extends State<MyHomePage> {
 	@override
@@ -70,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
 				children: <Widget>[
 					featuredRestaurantSize > 10 ? new Container(
 						height:featuredRestaurantSize,
-						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: 8.0,),
+						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: CAROUSEL_CORNER_RADIUS,),
 					) : 
 					new Column(
 						crossAxisAlignment: CrossAxisAlignment.start,

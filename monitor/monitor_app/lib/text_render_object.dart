@@ -63,9 +63,11 @@ class TextRenderObject extends RenderBox
 			);
 
 		ui.ParagraphBuilder pb = new ui.ParagraphBuilder(codeStyle);
-		pb.addText("Loading...");
+		
 		ui.Paragraph singleLine = pb.build()..layout(new ui.ParagraphConstraints(width: double.maxFinite));
 		this._lineHeight = singleLine.height;
+		print("LINE HEIGHT ${singleLine.height}");
+		pb.addText("Loading...");
 	}
 
 	@override
