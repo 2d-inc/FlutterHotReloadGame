@@ -66,7 +66,6 @@ class TextRenderObject extends RenderBox
 		
 		ui.Paragraph singleLine = pb.build()..layout(new ui.ParagraphConstraints(width: double.maxFinite));
 		this._lineHeight = singleLine.height;
-		print("LINE HEIGHT ${singleLine.height}");
 		pb.addText("Loading...");
 	}
 
@@ -177,14 +176,21 @@ class TextRenderObject extends RenderBox
 		}
 	}
 
-	set scrollValue(double value)
+	set scrollValue(double lineNumber)
 	{
-		value = max(value, 0.0);
+		lineNumber = max(lineNumber, 0.0);
 
-		if(this._lineScrollOffset != value)
+		if(this._lineScrollOffset != lineNumber)
 		{
 			double max = (_maxLines-1) * _lineHeight;
-			this._lineScrollOffset = min(max, value);
+
+			// calcualte offset by line number and center of screen.
+			double offset = lineNumber * _lineHeight;
+
+			offset -= size.height/2.0; // go down to center of screen
+			offset += _lineHeight/2.0; // go back up by half of the line
+
+			this._lineScrollOffset = min(max, offset);
 
 			markNeedsLayout();
 			markNeedsPaint();

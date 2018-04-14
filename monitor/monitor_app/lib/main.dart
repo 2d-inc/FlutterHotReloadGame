@@ -28,14 +28,12 @@ Future<String> loadFileAssets(String filename) async
 
 class CodeBoxWidget extends LeafRenderObjectWidget
 {
-	final Offset _offset;
 	final String _contents;
 	final double _lineNumber;
 	final Highlight _highlight;
 	final int _alpha;
 
 	CodeBoxWidget(
-		this._offset, 
 		this._contents, 
 		this._lineNumber,
 		this._highlight,
@@ -45,15 +43,11 @@ class CodeBoxWidget extends LeafRenderObjectWidget
 	@override
 	RenderObject createRenderObject(BuildContext context)
 	{
-		var ro = new TextRenderObject();
-		// DEBUG on Emulators ONLY:
-		// loadFileAssets("main.dart").then(
-		// 	(String code)
-		// 	{
-		// 		print("Got ${code.split('\n').length} lines of code!");
-		// 		ro.text = code;
-		// 	}
-		// );
+		var ro = new TextRenderObject()
+			..text = this._contents
+			..scrollValue = _lineNumber
+			..highlight = this._highlight
+			..highlightAlpha = this._alpha;
 
 		return ro;
 	}
@@ -61,13 +55,11 @@ class CodeBoxWidget extends LeafRenderObjectWidget
 	@override
 	void updateRenderObject(BuildContext context, TextRenderObject renderObject) 
 	{
-		// print("UPDATE $_lineNumber");
 		renderObject
 			..text = this._contents
 			..scrollValue = _lineNumber
 			..highlight = this._highlight
-			..highlightAlpha = this._alpha
-			;
+			..highlightAlpha = this._alpha;
 	}
 }
 
@@ -86,7 +78,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	static const int HIGHLIGHT_ALPHA_FULL = 150;
 	static const int MAX_FLICKER_COUNT = 6;
 
-	Offset _offset;
+	double _lineOfInterest = 0.0;
 	Highlight _highlight;
 	bool _upFacing = false;
 	List<Sound> _sounds;
@@ -104,7 +96,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	Animation<double> _scrollAnimation;
 	Animation<double> _highlightAnimation;
 	AnimationStatusListener _scrollStatusListener;
-	int _readyCount = 0;
 
 	@override
 	initState()
@@ -113,8 +104,9 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		_scrollController = new AnimationController(duration: const Duration(milliseconds: 350), vsync: this)
 			..addListener(
 				() {
-					setState(() {
-						_offset = new Offset(_offset.dx, _scrollAnimation.value);
+					setState(() 
+					{
+						_lineOfInterest = _scrollAnimation.value;
 					});
 				}		
 		);
@@ -175,69 +167,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		super.dispose();
 	}
 
-	handleWebSocketMessage(msg) 
-	{
-		if(_isReloading || !_ready)
-		{
-			return;
-		}
-		_isReloading = true;
-		print("JUST RECEIVED: $msg");
-		if(msg is String)
-		{
-			var json = JSON.decode(msg);
-			print("I got this message ${json['message']} for this player ${json['player']}");
-			String message = json['message'];
-			switch(message)
-			{
-				case "ready":
-					{
-						_readyCount++;
-						break;
-					}
-				default:
-					break;
-			}
-		}
-		setState(() 
-		{
-			if(_contents.indexOf("FeaturedRestaurantSimple") != -1)
-			{
-				_contents = _contents.replaceAll("FeaturedRestaurantSimple", "FeaturedRestaurantAligned");
-			}
-			else if(_contents.indexOf("CategorySimple") != -1)
-			{
-				_contents = _contents.replaceAll("CategorySimple", "CategoryAligned");
-			}
-			else if(_contents.indexOf("RestaurantsHeaderSimple") != -1)
-			{
-				_contents = _contents.replaceAll("RestaurantsHeaderSimple", "RestaurantsHeaderAligned");
-			}
-			else if(_contents.indexOf("RestaurantSimple") != -1)
-			{
-				_contents = _contents.replaceAll("RestaurantSimple", "RestaurantAligned");
-			}
-			else
-			{
-				// Reset.
-				_contents = _contents.replaceAll("FeaturedRestaurantAligned", "FeaturedRestaurantSimple");
-				_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
-				_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
-				_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
-			}
-			_flutterTask.write("/lib/main.dart", _contents).then((ok)
-			{
-				// Start emulator.
-				_flutterTask.hotReload().then((ok)
-				{
-					_isReloading = false;
-				});
-			});
-		});
-	}
-
 	CodeBoxState() :
-		_offset = Offset.zero,
 		_highlight = new Highlight(0, 0, 0)
 	{
 		// HttpServer.bind(/* "192.168.1.156" */InternetAddress.LOOPBACK_IP_V4, 8080).then(
@@ -280,7 +210,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 				_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
 				_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
 				_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
-				this._offset = new Offset(0.0, 1500.0);
 			}
 
 			_flutterTask.write("/lib/main.dart", _contents).then((ok)
@@ -294,19 +223,17 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 						setState(()
 						{
 							_contents = code; 
-							//lineOfInterest = 22;
 							_highlight = new Highlight(lineOfInterest, 0, 1);
-							print("SHOWING LINE OF INTEREST $lineOfInterest");
-							double lineOffset = lineOfInterest*22.0;
 							_scrollAnimation = new Tween<double>(
-								begin: this._offset.dy,
-								end: lineOffset
+								begin: _lineOfInterest,
+								end: lineOfInterest.toDouble()
+
 							).animate(_scrollController)
 								..addStatusListener(_scrollStatusListener);
+
 							_scrollController
 								..value = 0.0
 								..animateTo(1.0, curve: Curves.easeInOut);
-							this._offset = new Offset(0.0, lineOffset);
 						});
 					};
 				});
@@ -320,29 +247,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 			sound.load("/assets/button" + i.toString() + ".mp3");
 			_sounds.add(sound); 
 		}
-	}
-
-	void _scrollToPosition()
-	{
-		_flutterTask.hotReload();
-		int idx = _rng.nextInt(_sounds.length);
-		_sounds[idx].play();
-
-		setState(() 
-		{
-			// TODO: debug/test only
-			_upFacing = !_upFacing;
-			final double lineOffset = _upFacing ? 1000.0 : 0.0;
-			_scrollAnimation = new Tween<double>(
-				begin: this._offset.dy,
-				end: lineOffset
-			).animate(_scrollController)
-				..addStatusListener(_scrollStatusListener);
-			_scrollController
-				..value = 0.0
-				..animateTo(1.0, curve: Curves.easeInOut);
-			this._offset = new Offset(0.0, lineOffset);
-		});
 	}
 
 	@override
@@ -375,9 +279,8 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							width: BACKGROUND_SCREEN_WIDTH,
 							height: BACKGROUND_SCREEN_HEIGHT,
 							child: new CodeBoxWidget(
-									_offset, 
 									_contents, 
-									_offset.dy, 
+									_lineOfInterest, 
 									_highlight, 
 									_highlightAlpha
 								)
@@ -386,13 +289,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 			);
 
 		return new Scaffold(
-			body: new Center(child: stack),
-			// TODO: remove this
-			floatingActionButton: new FloatingActionButton(
-				onPressed: _scrollToPosition,
-				tooltip: "Scroll To Another Position!",
-				child: new Icon(Icons.move_to_inbox)
-			)
+			body: new Center(child: stack)
 		);
 	}
 }
