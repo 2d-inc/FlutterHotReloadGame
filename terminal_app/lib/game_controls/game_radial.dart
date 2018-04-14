@@ -9,12 +9,13 @@ import "game_command_widget.dart";
 class GameRadial extends StatefulWidget implements GameCommand
 {
 	//GameRadial({Key key, this.value = 40, this.min = 0, this.max = 200}) : super(key: key);
-	GameRadial.make(this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
+	GameRadial.make(this.issueCommand, this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
 	
 	final String taskType;
 	final int value;
 	final int min;
 	final int max;
+	final IssueCommandCallback issueCommand;
 
 	@override
 	_GameRadialState createState() => new _GameRadialState(value, min, max);
@@ -23,10 +24,12 @@ class GameRadial extends StatefulWidget implements GameCommand
 class _GameRadialState extends State<GameRadial>  with SingleTickerProviderStateMixin
 {
 	AnimationController _controller;
-	Animation<double> _slideAnimation;
+	Animation<double> _valueAnimation;
 	int value = 0;
 	final int minValue;
 	final int maxValue;
+	double accumulation = 0.0;
+	int targetValue = 0;
 
 	_GameRadialState(this.value, this.minValue, this.maxValue);
 	
@@ -44,14 +47,38 @@ class _GameRadialState extends State<GameRadial>  with SingleTickerProviderState
 		// 	return;
 		// }
 		// Offset local = ro.globalToLocal(details.globalPosition);
-		setState(()
+
+		accumulation = (accumulation+details.delta.dy/context.size.height).clamp(0.0, 1.0);
+		int v = (minValue + (accumulation * 4).round() * ((maxValue-minValue)/4)).round();
+		if(targetValue == v)
 		{
-			value = min(maxValue, max(minValue, (value - (details.delta.dy/context.size.height) * (maxValue-minValue)).round()));
-		});
+			return;
+		}
+		targetValue = v;
+	//	targetValue = min(maxValue, max(minValue, (targetValue - (details.delta.dy/context.size.height) * (maxValue-minValue)).round()));
+		print("TARGET VALUE $targetValue ${(targetValue * 4).round()} ${(minValue + (targetValue * 4).round() * ((maxValue-minValue)/4))}");
+
+		
+		_valueAnimation = new Tween<double>
+		(
+			begin: value.toDouble(),
+			end: targetValue.toDouble()
+		).animate(_controller);
+	
+		_controller
+			..value = 0.0
+			//..fling(velocity: 0.01);
+			..animateTo(1.0, curve:Curves.easeInOut);
+
+		// setState(()
+		// {
+		// 	value = min(maxValue, max(minValue, (value - (details.delta.dy/context.size.height) * (maxValue-minValue)).round()));
+		// });
 	}
 
 	void dragEnd(DragEndDetails details)
 	{
+		widget.issueCommand(widget.taskType, value);
 		// _slideAnimation = new Tween<double>(
 		// 	begin: scroll,
 		// 	end: -min((data.length-1).toDouble(), max(0.0, -scroll.roundToDouble()))
@@ -65,12 +92,12 @@ class _GameRadialState extends State<GameRadial>  with SingleTickerProviderState
 	initState() 
 	{
     	super.initState();
-    	_controller = new AnimationController(vsync: this);
+    	_controller = new AnimationController(duration: const Duration(milliseconds:200), vsync: this);
 		_controller.addListener(()
 		{
 			setState(()
 			{
-				//scroll = _slideAnimation.value;
+				value = _valueAnimation.value.round();
 			});
 		});
 	}
@@ -274,8 +301,6 @@ class GameRadialNotchesRenderObject extends RenderBox
 		canvas.scale(1.0, -1.0);
 		canvas.drawPath(_arrowPath, arrowPaint);
 		canvas.restore();
-		
-		
 	}
 
 	double get value

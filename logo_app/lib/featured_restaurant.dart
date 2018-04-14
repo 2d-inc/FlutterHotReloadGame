@@ -139,7 +139,7 @@ class FeaturedCarousel extends StatefulWidget
 	_FeaturedCarouselState createState() => new _FeaturedCarouselState(data);
 }
 
-class _FeaturedCarouselState extends State<FeaturedCarousel>  with SingleTickerProviderStateMixin
+class _FeaturedCarouselState extends State<FeaturedCarousel> with SingleTickerProviderStateMixin
 {
 	AnimationController _controller;
 	Animation<double> _slideAnimation;

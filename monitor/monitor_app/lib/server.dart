@@ -98,6 +98,7 @@ class GameClient
     {
         _taskStatus = TaskStatus.complete;
         _currentTask = null;
+        _failTaskTime = null;
         _sendJSONMessage("taskComplete", "Like a glove!");
     }
 
@@ -409,17 +410,23 @@ class GameServer
     void gameLoop()
     {
         bool someoneHasTask = false;
+        int playersLeft = 0;
         for(GameClient gc in _clients)
         {
+            if(!gc.isInGame)
+            {
+                continue;
+            }
             gc.advanceGame();
 
             if(gc.currentTask != null)
             {
                 someoneHasTask = true;
             }
+            playersLeft++;
         }
 
-        if(!someoneHasTask && _taskList.isEmpty)
+        if(playersLeft < 2 || (!someoneHasTask && _taskList.isEmpty))
         {
             onGameOver();
         }

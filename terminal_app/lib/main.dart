@@ -310,6 +310,12 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	final TextEditingController _ipInputController = new TextEditingController();
 
+	void _issueCommand(String taskType, int value)
+	{
+		print("SEND COMMAND $taskType $value");
+		_client.sendCommand(taskType, value);
+	}
+	
 	@override
 	Widget build(BuildContext context) 
 	{
@@ -396,7 +402,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
 									_isPlaying ? 
-										new InGame(_gameOpacity, _backToLobby, _gameCommands, isOver: _gameOver)
+										new InGame(_gameOpacity, _backToLobby, _gameCommands, _issueCommand, isOver: _gameOver)
 										: new LobbyWidget(_isConnected && _canBeReady, _isReady, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
 									new Container(
 										margin: new EdgeInsets.only(top: 10.0),
@@ -497,6 +503,11 @@ class WebSocketClient
 	onStart()
 	{
 		_socket?.add(formatJSONMessage("startGame", true));
+	}
+
+	sendCommand(String taskType, int value)
+	{
+		_socket?.add(formatJSONMessage("clientInput", {"type":taskType, "value":value}));
 	}
 
 	reconnect()

@@ -14,6 +14,8 @@ class InGame extends StatelessWidget
     final double _opacity;
 	final bool isOver;
 	final List _gridDescription;
+	final IssueCommandCallback _issueCommand;
+	
 
 	static const Map gameWidgetsMap = const {
 		"GameBinaryButton" : GameBinaryButton,
@@ -21,7 +23,7 @@ class InGame extends StatelessWidget
 		"GameRadial": GameRadial,
 	};
 
-    const InGame(this._opacity, this._onRetry, this._gridDescription, {  this.isOver: false , Key key } ) : super(key: key);
+    const InGame(this._opacity, this._onRetry, this._gridDescription, this._issueCommand, {  this.isOver: false , Key key } ) : super(key: key);
 
 	List<Widget> buildGrid()
 	{
@@ -36,13 +38,13 @@ class InGame extends StatelessWidget
 			switch(type)
 			{
 				case "GameBinaryButton":
-					w = new GameBinaryButton.make(taskType, description);
+					w = new GameBinaryButton.make(_issueCommand, taskType, description);
 					break;
 				case "GameSlider":
-					w = new GameSlider.make(taskType, description);
+					w = new GameSlider.make(_issueCommand, taskType, description);
 					break;
 				case "GameRadial":
-					w = new GameRadial.make(taskType, description);
+					w = new GameRadial.make(_issueCommand, taskType, description);
 					break;
 				default:
 					w = new Container(child: new Text(type));
@@ -82,10 +84,11 @@ class GameBinaryButton extends StatelessWidget implements GameCommand
 	// TODO: final List<VoidCallback> _callbacks;
 	final List<String> _labels;
 	final String taskType;
+	final IssueCommandCallback issueCommand;
 
 	//GameBinaryButton(this._labels, {Key key}) : super(key: key);
 
-	GameBinaryButton.make(this.taskType, Map params) : _labels = new List<String>(params['buttons'].length)
+	GameBinaryButton.make(this.issueCommand, this.taskType, Map params) : _labels = new List<String>(params['buttons'].length)
 	{
 		List l = params['buttons'];
 		for(int i = 0; i < l.length; i++)
@@ -100,7 +103,11 @@ class GameBinaryButton extends StatelessWidget implements GameCommand
 		List<Widget> buttons = [];
 		for(int i = 0; i < _labels.length; i++)
 		{
-			buttons.add(new Expanded(child:new PanelButton(_labels[i], 12.0, 0.9, const EdgeInsets.only(right:10.0, bottom: 26.0), () {/* TODO: */})));
+			buttons.add(new Expanded(child:new PanelButton(_labels[i], 12.0, 0.9, const EdgeInsets.only(right:10.0, bottom: 26.0), () 
+			{
+				issueCommand(taskType, i);
+				/* TODO: */
+			})));
 		}
 
 		return new Row(children: buttons);
@@ -125,6 +132,7 @@ class ControlGrid extends MultiChildRenderObjectWidget
 	{
 	}
 
+	
 	@override
 	void debugFillProperties(DiagnosticPropertiesBuilder description) 
 	{
@@ -162,6 +170,7 @@ class RenderControlGrid extends RenderBox with ContainerRenderObjectMixin<Render
 		// For now, just place them in a grid. Later we need to use MaxRects to figure out the best layout as some cells will be double height.
 		// FIXME: overflows for smaller layouts
 		RenderBox child = firstChild;
+
 		const double padding = 50.0;
 		const double numColumns = 2.0;
 		final double childWidth = (size.height - (padding*(numColumns-1)))/numColumns;

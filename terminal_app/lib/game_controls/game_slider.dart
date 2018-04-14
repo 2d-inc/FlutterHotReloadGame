@@ -7,12 +7,13 @@ import "game_command_widget.dart";
 class GameSlider extends StatefulWidget implements GameCommand
 {
 	//GameSlider({Key key, this.value = 40, this.min = 0, this.max = 200}) : super(key: key);
-	GameSlider.make(this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
+	GameSlider.make(this.issueCommand, this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
 
 	final int value;
 	final int min;
 	final int max;
 	final String taskType;
+	final IssueCommandCallback issueCommand;
 
 	@override
 	_GameSliderState createState() => new _GameSliderState(value, min, max);
@@ -32,6 +33,11 @@ class _GameSliderState extends State<GameSlider>
 		{
 			value = (minValue + v * (maxValue-minValue)).round();
 		});
+	}
+
+	void commitValueChange()
+	{
+		widget.issueCommand(widget.taskType, value);
 	}
 
 	initState() 
@@ -70,7 +76,7 @@ class _GameSliderState extends State<GameSlider>
 									decoration: TextDecoration.none)
 								)
 							),
-							new Expanded(child: new NotchedSlider((value-minValue)/(maxValue-minValue), valueChanged)),
+							new Expanded(child: new NotchedSlider((value-minValue)/(maxValue-minValue), valueChanged, commitValueChange)),
 							new Container(
 								margin: new EdgeInsets.only(left: 10.0), 
 								child:new Text(maxValue.toString(), 
@@ -93,10 +99,11 @@ typedef void ValueChangeCallback(double value);
 
 class NotchedSlider extends StatefulWidget 
 {
-	NotchedSlider(this.value, this.valueChanged, {Key key}) : super(key: key);
+	NotchedSlider(this.value, this.valueChanged, this.commitValue, {Key key}) : super(key: key);
 
 	final double value;
 	final ValueChangeCallback valueChanged;
+	final VoidCallback commitValue;
 
 	@override
 	_NotchedSliderState createState() => new _NotchedSliderState();
@@ -132,6 +139,11 @@ class _NotchedSliderState extends State<NotchedSlider>
 		Offset local = ro.globalToLocal(details.globalPosition);
 		widget.valueChanged(min(1.0, max(0.0, local.dx/context.size.width)));
 	}
+
+	void dragEnd(DragEndDetails details)
+	{
+		widget.commitValue();
+	}
 	
 	@override
 	Widget build(BuildContext context) 
@@ -139,6 +151,7 @@ class _NotchedSliderState extends State<NotchedSlider>
 		return new GestureDetector(
 			onHorizontalDragStart: dragStart,
 			onHorizontalDragUpdate: dragUpdate,
+			onHorizontalDragEnd: dragEnd,
 			child: new Container(
 				child:new GameSliderNotches(widget.value)
 			)
