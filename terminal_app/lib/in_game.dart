@@ -1,3 +1,5 @@
+import "dart:math";
+import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import "command_panel.dart";
 import "panel_button.dart";
@@ -15,7 +17,7 @@ class InGame extends StatelessWidget
 	final bool isOver;
 	final List _gridDescription;
 	final IssueCommandCallback _issueCommand;
-	
+	final int _seed;	
 
 	static const Map gameWidgetsMap = const {
 		"GameBinaryButton" : GameBinaryButton,
@@ -23,45 +25,121 @@ class InGame extends StatelessWidget
 		"GameRadial": GameRadial,
 	};
 
-    const InGame(this._opacity, this._onRetry, this._gridDescription, this._issueCommand, {  this.isOver: false , Key key } ) : super(key: key);
+    const InGame(this._opacity, this._onRetry, this._gridDescription, this._issueCommand, this._seed, {  this.isOver: false , Key key } ) : super(key: key);
 
-	List<Widget> buildGrid()
+	Widget buildGrid(BuildContext context, BoxConstraints constraints)
 	{
-		List<Widget> grid = [];
-
-		for(var description in _gridDescription)
+		// Decide which elements have the highest priority
+		PriorityQueue pq = new PriorityQueue((e1, e2) {
+			int p1 = e1['priority'];
+			int p2 = e2['priority'];
+			return p2-p1;
+		});
+		for(int i = 0; i < 5; i++)
 		{
+			var description = _gridDescription[i % _gridDescription.length];
+			int priority = 0;
 			String type = description['type'];
 			String name = description['title'];
 			String taskType = description["taskType"];
 			Widget w;
+			
 			switch(type)
 			{
 				case "GameBinaryButton":
+					Map d = description as Map;
+					List buttons = d['buttons'];
+					if(buttons.length > 2)
+					{
+						priority = 10;
+					}
+					else
+					{
+						priority = 1;
+					}
 					w = new GameBinaryButton.make(_issueCommand, taskType, description);
 					break;
 				case "GameSlider":
 					w = new GameSlider.make(_issueCommand, taskType, description);
+					priority = 1;
 					break;
 				case "GameRadial":
 					w = new GameRadial.make(_issueCommand, taskType, description);
+					priority = 5;
 					break;
-				default:
-					w = new Container(child: new Text(type));
-					print("I DON'T KNOW THIS GUY");
-					break;
+
 			}
-			grid.add(new TitledCommandPanel(name, w, isExpanded: true));
+			pq.add({
+				"widget": w,
+				"name": name,
+				"priority": priority
+			});
 		}
 
-		return grid;
+		const int padding = 50;
+		final Size gridSize = constraints.biggest;
+		final double cellWidth = (gridSize.width - padding) / 2;
+		final double cellHeight = (gridSize.height - padding * 2) / 3;
+		final double doubleCellHeight = cellHeight * 2 + padding;
+
+		int numCols = 2;
+		int numRows = 3;
+		double left = 0.0;
+		double top = 0.0;
+		// Generate the list of widget positions
+		List<Offset> positions = <Offset>[];
+		for(int i = 0; i < numCols; i++)
+		{
+			top = 0.0;
+			left = (cellWidth + padding)*i;
+
+			for(int j = 0; j < numRows; j++)
+			{
+				top = (cellHeight + padding) * j;
+				positions.add(new Offset(left, top));
+			}
+		}
+		List<Widget> grid = [];
+		Random rand = new Random(_seed);
+		int randCol = rand.nextInt(numCols);
+		int randRow = rand.nextInt(numRows - 1);
+		int biggerIndex = randCol * numRows + randRow;
+		Offset bigStart = positions.removeAt(biggerIndex);
+		positions.removeAt(biggerIndex); // Remove also the following element since we're occupying two rows
+		var biggest = pq.removeFirst();
+		grid.add(new Positioned(
+			width: cellWidth,
+			height: doubleCellHeight,
+			left: bigStart.dx,
+			top: bigStart.dy,
+			child: new TitledCommandPanel(biggest['name'], biggest['widget'], isExpanded: true)
+		));
+
+		while(pq.isNotEmpty)
+		{
+			var next = pq.removeFirst();
+			Offset nextPosition = positions.removeAt(0);
+			Widget w = next['widget'];
+			if(w is GameRadial)
+			{
+				print("TOO SMALL TO FIT RADIAL!");
+				w = new GameSlider.fromRadial(w);
+			}
+			grid.add(new Positioned(
+				width: cellWidth,
+				height: cellHeight,
+				left: nextPosition.dx,
+				top: nextPosition.dy,
+				child: new TitledCommandPanel(next['name'], w, isExpanded: true)
+			));
+		}
+
+		return new Stack(children: grid);
 	}
 
     @override
     Widget build(BuildContext context)
     {
-		List<Widget> grid = buildGrid();
-
 		return new Expanded(
 					child:new Opacity(
                     	opacity: _opacity,
@@ -70,9 +148,10 @@ class InGame extends StatelessWidget
 							child:
 							this.isOver ? 
 							new GameOver(_onRetry) :
-							new ControlGrid(
-								children: grid
-							)
+							new LayoutBuilder(builder: buildGrid)
+							// new ControlGrid(
+							// 	children: grid
+							// )
 						)
 					)
 				);
@@ -100,17 +179,23 @@ class GameBinaryButton extends StatelessWidget implements GameCommand
 	@override
 	Widget build(BuildContext context)
 	{
+		bool isTall = _labels.length > 2;
 		List<Widget> buttons = [];
 		for(int i = 0; i < _labels.length; i++)
 		{
-			buttons.add(new Expanded(child:new PanelButton(_labels[i], 12.0, 0.9, const EdgeInsets.only(right:10.0, bottom: 26.0), () 
+			buttons.add(
+				new Expanded(
+					child:
+						new PanelButton(_labels[i], 12.0, 0.9, 
+							isTall ? const EdgeInsets.only(bottom: 10.0) : const EdgeInsets.only(right:10.0, bottom: 26.0), 
+			() 
 			{
 				issueCommand(taskType, i);
 				/* TODO: */
 			})));
 		}
 
-		return new Row(children: buttons);
+		return buttons.length > 2 ? new Column(children: buttons) : Row(children: buttons);
 	}
 }
 
