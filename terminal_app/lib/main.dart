@@ -136,6 +136,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		setState(() 
 		{
 			_gameCommands = [];
+			_gameOver = false;
 			_isReady = false;
 			if(_isPlaying)
 			{
