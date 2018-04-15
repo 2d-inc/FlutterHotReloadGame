@@ -52,7 +52,10 @@ class StateMix
 {
 	CharacterState state;
 	ActorAnimation animation;
+	ActorAnimation transitionAnimation;
+
 	double animationTime;
+	double transitionTime;
 	double mix;
 }
 
@@ -117,6 +120,24 @@ class TerminalCharacter
 		return actor.getAnimation(animationName);
 	}
 
+	ActorAnimation getTransitionAnimation(CharacterState state)
+	{
+		String animationName;
+		switch(state)
+		{
+			case CharacterState.Happy:
+				animationName = null;
+				break;
+			case CharacterState.Angry:
+				animationName = "Upset-Angry";
+				break;
+			case CharacterState.Upset:
+				animationName = "Happy-Upset";
+				break;
+		}
+		return animationName == null ? null : actor.getAnimation(animationName);
+	}
+
 	void load(String filename)
 	{
 		actor = new FlutterActor();
@@ -125,6 +146,8 @@ class TerminalCharacter
 			for(StateMix sm in states)
 			{
 				sm.animation = getAnimation(sm.state);
+				sm.transitionAnimation = getTransitionAnimation(sm.state);
+				sm.transitionTime = 0.0;
 				if(sm.animation != null && sm.state == CharacterState.Happy)
 				{
 					sm.animationTime = 0.0;
@@ -160,11 +183,23 @@ class TerminalCharacter
 				sm.mix += elapsed*MixSpeed;
 			}
 			sm.mix = sm.mix.clamp(0.0, 1.0);
+			if(sm.mix == 0.0)
+			{
+				sm.transitionTime = 0.0;
+			}
 
 			if(sm.mix != 0 && animate)
 			{ 
-				sm.animationTime = (sm.animationTime+elapsed) % sm.animation.duration;
-				sm.animation.apply(sm.animationTime, actor, sm.mix);
+				if(sm.transitionAnimation == null || sm.transitionTime >= sm.transitionAnimation.duration)
+				{
+					sm.animationTime = (sm.animationTime+elapsed) % sm.animation.duration;
+					sm.animation.apply(sm.animationTime, actor, sm.mix);
+				}
+				else
+				{
+					sm.transitionTime = sm.transitionTime+elapsed;
+					sm.transitionAnimation.apply(sm.transitionTime, actor, sm.mix);
+				}
 			}
 		}
 
