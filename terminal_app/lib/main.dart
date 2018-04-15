@@ -135,6 +135,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	{
 		setState(() 
 		{
+			_gameCommands = [];
+			_isReady = false;
 			if(_isPlaying)
 			{
 				_panelController.reverse();
@@ -142,6 +144,18 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			}
 			_sceneState = TerminalSceneState.All;
 			resetSceneMessage();
+		});
+	}
+
+	void showGameOver()
+	{
+		setState(()
+		{
+			_gameOver = true;
+
+			_sceneMessage = null;
+			_commandStartTime = null;
+			_commandEndTime = null;
 		});
 	}
 
@@ -153,7 +167,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			_canBeReady = !isServerInGame;
 			if(_isPlaying && !isClientInGame)
 			{
-				_backToLobby();
+				//_backToLobby();
+				showGameOver();
 			}
 		});
 	}
@@ -249,12 +264,9 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	void gameOver()
 	{
-		setState(()
-		{
-			_gameCommands = [];
-			_isReady = false;
-		});
-		_backToLobby(); // TODO: show the game over screen instead
+		showGameOver();
+
+		//_backToLobby(); // TODO: show the game over screen instead
 	}
 
 	// Should be called within a set state.
@@ -543,7 +555,7 @@ class WebSocketClient
 			address = InternetAddress.LOOPBACK_IP_V4.address;
 		}
 		address = "192.168.1.156";
-		debugPrint("Attempting connection to ws://" + address + ":8080/ws");
+		print("Attempting connection to ws://" + address + ":8080/ws");
 		WebSocket.connect("ws://" + address + ":8080/ws").then
 		(
 			(WebSocket ws)
