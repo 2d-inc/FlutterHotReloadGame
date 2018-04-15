@@ -554,7 +554,7 @@ class WebSocketClient
 		{
 			address = InternetAddress.LOOPBACK_IP_V4.address;
 		}
-		address = "192.168.1.156";
+		//address = "192.168.1.156";
 		print("Attempting connection to ws://" + address + ":8080/ws");
 		WebSocket.connect("ws://" + address + ":8080/ws").then
 		(

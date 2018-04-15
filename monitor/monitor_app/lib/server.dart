@@ -305,9 +305,8 @@ class GameServer
 
     void connect()
     {
-        String address = "192.168.1.156";
-        // String address = InternetAddress.LOOPBACK_IP_V4;
-        HttpServer.bind(address, 8080)
+        //String address = "192.168.1.156";
+        HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080)
             .then((server) async
             {
                 print("Serving at ${server.address}, ${server.port}");
