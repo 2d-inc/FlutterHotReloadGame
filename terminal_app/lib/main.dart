@@ -136,6 +136,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		setState(() 
 		{
 			_gameCommands = [];
+			_gameOver = false;
 			_isReady = false;
 			if(_isPlaying)
 			{
@@ -324,6 +325,11 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	final TextEditingController _ipInputController = new TextEditingController();
 
+	_onScreenTap(PointerDownEvent ev)
+	{
+
+	}
+
 	void _issueCommand(String taskType, int value)
 	{
 		print("SEND COMMAND $taskType $value");
@@ -334,133 +340,140 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	Widget build(BuildContext context) 
 	{
 		
-		return new Stack
-		(
-			fit:StackFit.loose,
-			//alignment: Alignment.,
-			children:<Widget>
-			[
-				new Positioned
-				(
-					width:MediaQuery.of(context).size.width * (1.0-_panelRatio),
-					top:0.0,
-					bottom:0.0,
-					right:0.0, 
-					child:new Container
-					(
-						padding: new EdgeInsets.all(12.0),
-						decoration:new DottedGrid(),
-						child:new Container
-						(
-							decoration: new BoxDecoration(border: new Border.all(color: const Color.fromARGB(127, 72, 196, 206)), borderRadius: new BorderRadius.circular(3.0)),
-							padding: new EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 6.0),
-							child: new Column
-							(
-								children: 
-								[
-									// Title Row
-									new Row(children: 
-										[	
-											new Text(_isConnected ? "SYSTEM ONLINE" : "SYSTEM OFFLINE", style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
-											new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5)),
-											new Expanded(child: new Container()),
-											new GestureDetector( 
-												onTap: () {
-													int now = new DateTime.now().millisecondsSinceEpoch;
-													int diff = now - _lastTap;
-													print(diff);
-													if(diff < 1000)
+		return new Listener(
+			onPointerDown: 
+				(PointerDownEvent ev)
+				{
+					bool topLeftCorner = ev.position.dx < 75.0 && ev.position.dy < 75.0;
+					if(topLeftCorner)
+					{
+						int now = new DateTime.now().millisecondsSinceEpoch;
+						int diff = now - _lastTap;
+						print(diff);
+						if(diff < 1000)
+						{
+							_tapCount++;
+							if(_tapCount > 2)
+							{
+								_tapCount = 0;
+								showDialog(
+									context: context,
+									builder: (_) => new AlertDialog(
+										title: new Text("LOCAL_IP"),
+										content: new TextFormField(
+											controller: _ipInputController, 
+											decoration: new InputDecoration( hintText: 	 "IP ADDRESS"), autofocus: true, maxLength: 15, maxLines:  1, keyboardType: TextInputType.phone
+											),
+											actions: 
+											[
+												new FlatButton(
+													child : new Text("OK"),
+													onPressed: ()
 													{
-														_tapCount++;
-														if(_tapCount > 2)
+														String ip = _ipInputController.text;
+														if(_validateIpAddress(ip))
 														{
-															_tapCount = 0;
-															showDialog(
-																context: context,
-																builder: (_) => new AlertDialog(
-																	title: new Text("LOCAL_IP"),
-																	content: new TextFormField(
-																		controller: _ipInputController, 
-																		decoration: new InputDecoration( hintText:  "IP ADDRESS"), autofocus: true, maxLength: 15, maxLines:  1, keyboardType: TextInputType.number
-																		),
-																		actions: 
-																		[
-																			new FlatButton(
-																				child : new Text("OK"),
-																				onPressed: ()
-																				{
-																					String ip = _ipInputController.text;
-																					if(_validateIpAddress(ip))
-																					{
-																						_client.address = ip;
-																						Navigator.of(context).pop();
-																					}
-																				}
-																			)
-																	],
-																)
-															);
+															_client.address = ip;
+															Navigator.of(context).pop();
 														}
 													}
-													else
-													{
-														_tapCount = 1;
-													}
-
-													_lastTap = now;
-												},
-												child: Text(_batteryLevel, style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)))
-										]
-									),
-									// Two decoration lines underneath the title
-									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
-									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-									_isPlaying ? 
-										new InGame(_gameOpacity, _backToLobby, _gameCommands, _issueCommand, _randomSeed, isOver: _gameOver)
-										: new LobbyWidget(_isConnected && _canBeReady, _isReady, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
-									new Container(
-										margin: new EdgeInsets.only(top: 10.0),
-										alignment: Alignment.bottomRight,
-										child: new Text("V0.1", style: const TextStyle(color: const Color.fromARGB(255, 50, 69, 71), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 12.0, decoration: TextDecoration.none, letterSpacing: 0.9))
-									),
-									new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
-								]
-							)
-						)
-					)
-				),
-				new Positioned
-				(
-					left:0.0,
-					top:0.0,
-					bottom:0.0,
-					width:MediaQuery.of(context).size.width * _panelRatio,
-					child: new GestureDetector( onTap: _backToLobby, child: 
-						new Container(
-							// decoration: new BoxDecoration
-							// (
-							// 	image: new DecorationImage
-							// 	(
-							// 		image: new AssetImage("assets/images/lobby_background.png"),
-							// 		fit: BoxFit.fitHeight
-							// 	)
-							// ),
-							child:new Stack
-							(
-								children:<Widget>
-								[
-									new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage, startTime:_commandStartTime, endTime:_commandEndTime),
-									new Container(
-										margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
-										height: 50.0,
-										child:new CommandTimer(opacity:_gameOpacity, startTime:_commandStartTime, endTime:_commandEndTime)
+												)
+										],
 									)
-								]	
+								);
+							}
+						}
+						else
+						{
+							_tapCount = 1;
+						}
+
+						_lastTap = now;
+					}
+				},
+			child: new Stack
+			(
+				fit:StackFit.loose,
+				//alignment: Alignment.,
+				children:<Widget>
+				[
+					new Positioned
+					(
+						width:MediaQuery.of(context).size.width * (1.0-_panelRatio),
+						top:0.0,
+						bottom:0.0,
+						right:0.0, 
+						child:new Container
+						(
+							padding: new EdgeInsets.all(12.0),
+							decoration:new DottedGrid(),
+							child:new Container
+							(
+								decoration: new BoxDecoration(border: new Border.all(color: const Color.fromARGB(127, 72, 196, 206)), borderRadius: new BorderRadius.circular(3.0)),
+								padding: new EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 6.0),
+								child: new Column
+								(
+									children: 
+									[
+										// Title Row
+										new Row(children: 
+											[	
+												new Text(_isConnected ? "SYSTEM ONLINE" : "SYSTEM OFFLINE", style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
+												new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5)),
+												new Expanded(child: new Container()),
+												new Text(_batteryLevel, style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4))
+											]
+										),
+										// Two decoration lines underneath the title
+										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
+										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
+										_isPlaying ? 
+											new InGame(_gameOpacity, _backToLobby, _gameCommands, _issueCommand, _randomSeed, isOver: _gameOver)
+											: new LobbyWidget(_isConnected && _canBeReady, _isReady, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
+										new Container(
+											margin: new EdgeInsets.only(top: 10.0),
+											alignment: Alignment.bottomRight,
+											child: new Text("V0.1", style: const TextStyle(color: const Color.fromARGB(255, 50, 69, 71), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 12.0, decoration: TextDecoration.none, letterSpacing: 0.9))
+										),
+										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
+									]
+								)
 							)
 						)
 					),
-				)			
-			],
+					new Positioned
+					(
+						left:0.0,
+						top:0.0,
+						bottom:0.0,
+						width:MediaQuery.of(context).size.width * _panelRatio,
+						child: new GestureDetector( onTap: _backToLobby, child: 
+							new Container(
+								// decoration: new BoxDecoration
+								// (
+								// 	image: new DecorationImage
+								// 	(
+								// 		image: new AssetImage("assets/images/lobby_background.png"),
+								// 		fit: BoxFit.fitHeight
+								// 	)
+								// ),
+								child:new Stack
+								(
+									children:<Widget>
+									[
+										new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage, startTime:_commandStartTime, endTime:_commandEndTime),
+										new Container(
+											margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
+											height: 50.0,
+											child:new CommandTimer(opacity:_gameOpacity, startTime:_commandStartTime, endTime:_commandEndTime)
+										)
+									]	
+								)
+							)
+						),
+					)			
+				],
+			)
 		);
 	}
 }
