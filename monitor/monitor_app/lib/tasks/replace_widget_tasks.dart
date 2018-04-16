@@ -7,7 +7,7 @@ class ShowFeaturedAligned extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeSlider(taskLabel(), 0, 350);
+		return CommandTask.makeSlider(this, 0, 304);
 	}
 	
 	String getIssueCommand(int value)
@@ -15,16 +15,23 @@ class ShowFeaturedAligned extends CommandTask
 		return "SET FEATURED ITEM SIZE TO $value!";
 	}
 
-	void complete(bool success, int value)
+	void complete(int value, String code)
 	{
 		_featuredItemSize = value;
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "FeaturedRestaurantSimple");
+		}
 	}
+
+	@override
+	bool doesAutocomplete() { return true; }
 
 	String apply(String code)
 	{
 		if(_featuredItemSize != 0)
 		{
-			code.replaceAll("FeaturedRestaurantSimple", "FeaturedRestaurantAligned");
+			code = code.replaceAll("FeaturedRestaurantSimple", "FeaturedRestaurantAligned");
 		}
 		
 		return code;
@@ -48,7 +55,7 @@ class ShowFeaturedAligned extends CommandTask
 	void tryToIssue(List<IssuedTask> currentQueue)
 	{
 		currentQueue.add(new IssuedTask()..task = this
-										..value = 10);
+										..value = 76);
 	}
 }
 
@@ -58,19 +65,27 @@ class ShowFeaturedCarousel extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeSlider(taskLabel(), 0, 350);
+		return CommandTask.makeSlider(this, 0, 304);
 	}
 
-	void complete(bool success, int value)
+	void complete(int value, String code)
 	{
 		_featuredItemSize = value;
+
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "FEATURED_RESTAURANT_SIZE");
+		}
 	}
+
+	@override
+	bool doesAutocomplete() { return true; }
 
 	String apply(String code)
 	{
 		if(_featuredItemSize > 0)
 		{
-			code.replaceAll("FEATURED_RESTAURANT_SIZE", _featuredItemSize.toString() + ".0");
+			code = code.replaceAll("FEATURED_RESTAURANT_SIZE", _featuredItemSize.toString() + ".0");
 		}
 		
 		return code;
@@ -114,7 +129,7 @@ class ShowFeaturedCarousel extends CommandTask
 		{
 			ShowFeaturedCarousel c = currentQueue[last].task as ShowFeaturedCarousel;
 			currentQueue.add(new IssuedTask()..task = this
-										..value = c._featuredItemSize == 304 ? 350 : 304);
+										..value = c._featuredItemSize == 304 ? 228 : 304);
 		}
 	}
 }
@@ -125,13 +140,20 @@ class CategoryFontWeight extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeSlider(taskLabel(), 0, 350);
+		return CommandTask.makeSlider(this, 0, 350);
 	}
 
-	void complete(bool success, int value)
+	void complete(int value, String code)
 	{
 		_fontWeight = value;
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "CATEGORY_FONT_WEIGHT");
+		}
 	}
+
+	@override
+	bool doesAutocomplete() { return true; }
 
 	String getIssueCommand(int value)
 	{
@@ -140,10 +162,10 @@ class CategoryFontWeight extends CommandTask
 
 	String apply(String code)
 	{
-		code.replaceAll("CATEGORY_FONT_WEIGHT", _fontWeight.toString());
+		code = code.replaceAll("CATEGORY_FONT_WEIGHT", _fontWeight.toString());
 		if(_fontWeight != 0)
 		{
-			code.replaceAll("CategorySimple", "CategoryAligned");
+			code = code.replaceAll("CategorySimple", "CategoryAligned");
 		}
 		
 		return code;

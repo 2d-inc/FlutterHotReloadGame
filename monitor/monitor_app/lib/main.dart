@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
 import 'sound.dart';
@@ -16,10 +17,13 @@ import "dart:ui" as ui;
 import "package:flutter/scheduler.dart";
 import "server.dart";
 
-const double BACKGROUND_SCREEN_WIDTH = 1052.0;
-const double BACKGROUND_SCREEN_HEIGHT = 566.0;
-const double BACKGROUND_MARGIN_LEFT = 721.0;
-const double BACKGROUND_MARGIN_TOP = 200.0;
+const double CODE_BOX_SCREEN_WIDTH = 1052.0;
+const double CODE_BOX_SCREEN_HEIGHT = 566.0;
+const double CODE_BOX_MARGIN_LEFT = 721.0;
+const double CODE_BOX_MARGIN_TOP = 200.0;
+const double STDOUT_PADDING = 18.0;
+const double STDOUT_HEIGHT = 110.0 - STDOUT_PADDING;
+const int STDOUT_MAX_LINES = 4;
 
 Future<String> loadFileAssets(String filename) async
 {
@@ -28,14 +32,12 @@ Future<String> loadFileAssets(String filename) async
 
 class CodeBoxWidget extends LeafRenderObjectWidget
 {
-	final Offset _offset;
 	final String _contents;
 	final double _lineNumber;
 	final Highlight _highlight;
 	final int _alpha;
 
 	CodeBoxWidget(
-		this._offset, 
 		this._contents, 
 		this._lineNumber,
 		this._highlight,
@@ -45,15 +47,11 @@ class CodeBoxWidget extends LeafRenderObjectWidget
 	@override
 	RenderObject createRenderObject(BuildContext context)
 	{
-		var ro = new TextRenderObject();
-		// DEBUG on Emulators ONLY:
-		// loadFileAssets("main.dart").then(
-		// 	(String code)
-		// 	{
-		// 		print("Got ${code.split('\n').length} lines of code!");
-		// 		ro.text = code;
-		// 	}
-		// );
+		var ro = new TextRenderObject()
+			..text = this._contents
+			..scrollValue = _lineNumber
+			..highlight = this._highlight
+			..highlightAlpha = this._alpha;
 
 		return ro;
 	}
@@ -61,13 +59,11 @@ class CodeBoxWidget extends LeafRenderObjectWidget
 	@override
 	void updateRenderObject(BuildContext context, TextRenderObject renderObject) 
 	{
-		// print("UPDATE $_lineNumber");
 		renderObject
 			..text = this._contents
 			..scrollValue = _lineNumber
 			..highlight = this._highlight
-			..highlightAlpha = this._alpha
-			;
+			..highlightAlpha = this._alpha;
 	}
 }
 
@@ -86,14 +82,16 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	static const int HIGHLIGHT_ALPHA_FULL = 150;
 	static const int MAX_FLICKER_COUNT = 6;
 
-	Offset _offset;
+	double _lineOfInterest = 0.0;
 	Highlight _highlight;
 	bool _upFacing = false;
 	List<Sound> _sounds;
 	FlutterTask _flutterTask = new FlutterTask("~/Projects/BiggerLogo/logo_app");
+	GameServer _server;
 	Random _rng = new Random();
 	bool _ready = false;
 	String _contents;
+	ListQueue<String> _stdoutQueue;
 	bool _isReloading;
 
 	AnimationController _scrollController;
@@ -104,17 +102,16 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	Animation<double> _highlightAnimation;
 	AnimationStatusListener _scrollStatusListener;
 
-	int _readyCount = 0;
-
 	@override
 	initState()
 	{
 		super.initState();
-		_scrollController = new AnimationController(duration: const Duration(seconds: 1), vsync: this)
+		_scrollController = new AnimationController(duration: const Duration(milliseconds: 350), vsync: this)
 			..addListener(
 				() {
-					setState(() {
-						_offset = new Offset(_offset.dx, _scrollAnimation.value);
+					setState(() 
+					{
+						_lineOfInterest = _scrollAnimation.value;
 					});
 				}		
 		);
@@ -156,8 +153,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 				setState(
 					()
 					{
-						int row = _upFacing ? 56 : 10;
-						this._highlight = new Highlight(row, 0, 1);
 						_highlightAnimation = new Tween<double>(
 							begin: HIGHLIGHT_ALPHA_FULL.toDouble(),
 							end: 0.0
@@ -177,94 +172,9 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		super.dispose();
 	}
 
-	handleWebSocketMessage(msg) 
-	{
-		if(_isReloading || !_ready)
-		{
-			return;
-		}
-		_isReloading = true;
-		print("JUST RECEIVED: $msg");
-		if(msg is String)
-		{
-			var json = JSON.decode(msg);
-			print("I got this message ${json['message']} for this player ${json['player']}");
-			String message = json['message'];
-			switch(message)
-			{
-				case "ready":
-					{
-						_readyCount++;
-						break;
-					}
-				default:
-					break;
-			}
-		}
-		setState(() 
-		{
-			if(_contents.indexOf("FeaturedRestaurantSimple") != -1)
-			{
-				_contents = _contents.replaceAll("FeaturedRestaurantSimple", "FeaturedRestaurantAligned");
-			}
-			else if(_contents.indexOf("CategorySimple") != -1)
-			{
-				_contents = _contents.replaceAll("CategorySimple", "CategoryAligned");
-			}
-			else if(_contents.indexOf("RestaurantsHeaderSimple") != -1)
-			{
-				_contents = _contents.replaceAll("RestaurantsHeaderSimple", "RestaurantsHeaderAligned");
-			}
-			else if(_contents.indexOf("RestaurantSimple") != -1)
-			{
-				_contents = _contents.replaceAll("RestaurantSimple", "RestaurantAligned");
-			}
-			else
-			{
-				// Reset.
-				_contents = _contents.replaceAll("FeaturedRestaurantAligned", "FeaturedRestaurantSimple");
-				_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
-				_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
-				_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
-			}
-			_flutterTask.write("/lib/main.dart", _contents).then((ok)
-			{
-				// Start emulator.
-				_flutterTask.hotReload().then((ok)
-				{
-					_isReloading = false;
-				});
-			});
-		});
-	}
-
 	CodeBoxState() :
-		_offset = Offset.zero,
 		_highlight = new Highlight(0, 0, 0)
 	{
-		// HttpServer.bind(/* "192.168.1.156" */InternetAddress.LOOPBACK_IP_V4, 8080).then(
-		// 	(server) async
-		// 	{
-		// 		await for (var request in server) 
-		// 		{
-		// 			 if (WebSocketTransformer.isUpgradeRequest(request)) 
-		// 			 {
-		// 				// Upgrade a HttpRequest to a WebSocket connection.
-		// 				WebSocketTransformer.upgrade(request).then(_handleWebSocket);
-
-		// 			}
-		// 			else
-		// 			{
-		// 				request.response
-		// 				..headers.contentType = new ContentType("text", "plain", charset: "utf-8")
-		// 				..write('Hello, world')
-		// 				..close();
-		// 			}
-		// 		}
-		// 	});
-
-		new GameServer();
-
 		_flutterTask.onReady(()
 		{
 			setState(() 
@@ -273,14 +183,28 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 			});
 		});
 
-		// Read contents.
-		_flutterTask.read("/lib/main.dart").then((contents)
+		_stdoutQueue = new ListQueue<String>(STDOUT_MAX_LINES);
+
+		_flutterTask.onStdout((String line)
 		{
-			// Reset all widgets.
-			// _contents = contents.replaceAllMapped(new RegExp(r"(FeaturedRestaurantAligned)\('"), (Match m)
-			// {
-			// 	return "FeaturedRestaurantSimple('";
-			// });
+			setState(
+				()
+				{
+					String r;
+					if(_stdoutQueue.length > STDOUT_MAX_LINES - 1)
+					{
+						r = _stdoutQueue.removeFirst();
+					}
+					_stdoutQueue.addLast(line);
+					// print("Removed ${r ?? 'nothing'} and added $line");
+					// print("WILL PRINT ${_stdoutQueue.length} lines:\n%${_stdoutQueue.join('\n')}\n ENDQUEUE ====");
+				}
+			);
+		});
+
+		// Read contents.
+		_flutterTask.read("/main_template.dart").then((contents)
+		{
 			_contents = contents;
 			if(_contents != null)
 			{
@@ -288,15 +212,32 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 				_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
 				_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
 				_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
-				this._offset = new Offset(0.0, 1500.0);
 			}
 
 			_flutterTask.write("/lib/main.dart", _contents).then((ok)
 			{
 				// Start emulator.
-				_flutterTask.load("iphone").then((success)
+				_flutterTask.load('"iPhone 8"').then((success)
 				{
-					
+					_server = new GameServer(_flutterTask, _contents);
+					_server.onUpdateCode = (String code, int lineOfInterest)
+					{
+						setState(()
+						{
+							_contents = code; 
+							_highlight = new Highlight(lineOfInterest, 0, 1);
+							_scrollAnimation = new Tween<double>(
+								begin: _lineOfInterest,
+								end: lineOfInterest.toDouble()
+
+							).animate(_scrollController)
+								..addStatusListener(_scrollStatusListener);
+
+							_scrollController
+								..value = 0.0
+								..animateTo(1.0, curve: Curves.easeInOut);
+						});
+					};
 				});
 			});
 		});
@@ -310,36 +251,14 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		}
 	}
 
-	void _scrollToPosition()
-	{
-		_flutterTask.hotReload();
-		int idx = _rng.nextInt(_sounds.length);
-		_sounds[idx].play();
-
-		setState(() 
-		{
-			// TODO: debug/test only
-			_upFacing = !_upFacing;
-			final double lineOffset = _upFacing ? 1000.0 : 0.0;
-			_scrollAnimation = new Tween<double>(
-				begin: this._offset.dy,
-				end: lineOffset
-			).animate(_scrollController)
-				..addStatusListener(_scrollStatusListener);
-			_scrollController
-				..value = 0.0
-				..animateTo(1.0, curve: Curves.easeInOut);
-			this._offset = new Offset(0.0, lineOffset);
-		});
-	}
-
 	@override
 	Widget build(BuildContext context)
 	{
 		Size sz = MediaQuery.of(context).size;
 
 		Stack stack = new Stack(
-					children: [
+					children: 
+					[
 						new Container(
 							color: const Color.fromARGB(255, 0, 0, 0),
 							width: sz.width,
@@ -358,34 +277,44 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 									)
 						),
 						new Positioned(
-							left: BACKGROUND_MARGIN_LEFT,// - 500, /* TODO: remove extra margin only for simulator*/
-							top: BACKGROUND_MARGIN_TOP,
-							width: BACKGROUND_SCREEN_WIDTH,
-							height: BACKGROUND_SCREEN_HEIGHT,
+							left: CODE_BOX_MARGIN_LEFT,
+							top: CODE_BOX_MARGIN_TOP,
+							width: CODE_BOX_SCREEN_WIDTH,
+							height: CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT - STDOUT_PADDING,
 							child: new CodeBoxWidget(
-									_offset, 
 									_contents, 
-									_offset.dy, 
+									_lineOfInterest, 
 									_highlight, 
 									_highlightAlpha
 								)
+						),
+						new Positioned(
+							left: CODE_BOX_MARGIN_LEFT,
+							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT - STDOUT_PADDING,
+							width: CODE_BOX_SCREEN_WIDTH,
+							height: STDOUT_PADDING,
+							child: new Container(
+								color: Colors.white,
+								child: new Text("// STDOUT:")
+							)
+						),
+						new Positioned(
+							left: CODE_BOX_MARGIN_LEFT,
+							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT,
+							width: CODE_BOX_SCREEN_WIDTH,
+							height: STDOUT_HEIGHT,
+							child: new CodeBoxWidget(_stdoutQueue.join("\n"), 0.0, _highlight, 0)
 						)
-						],
+					],
 			);
 
 		return new Scaffold(
-			body: new Center(child: stack),
-			// TODO: remove this
-			floatingActionButton: new FloatingActionButton(
-				onPressed: _scrollToPosition,
-				tooltip: "Scroll To Another Position!",
-				child: new Icon(Icons.move_to_inbox)
-			)
+			body: new Center(child: stack)
 		);
 	}
 }
 
-class WidgetTest extends StatelessWidget
+class MonitorApp extends StatelessWidget
 {
 	@override
 	Widget build(BuildContext context)
@@ -398,7 +327,7 @@ class WidgetTest extends StatelessWidget
 
 void main()
 {
-	runApp(new WidgetTest());
+	runApp(new MonitorApp());
 }
 
 class NimaWidget extends LeafRenderObjectWidget

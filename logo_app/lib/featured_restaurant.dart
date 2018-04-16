@@ -139,7 +139,7 @@ class FeaturedCarousel extends StatefulWidget
 	_FeaturedCarouselState createState() => new _FeaturedCarouselState(data);
 }
 
-class _FeaturedCarouselState extends State<FeaturedCarousel>  with SingleTickerProviderStateMixin
+class _FeaturedCarouselState extends State<FeaturedCarousel> with SingleTickerProviderStateMixin
 {
 	AnimationController _controller;
 	Animation<double> _slideAnimation;
@@ -347,7 +347,9 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		final Canvas canvas = context.canvas;
 		canvas.save();
 		canvas.translate(_scroll * (width+ItemPadding), size.height-DetailHeight);
-    	final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+Padding, offset.dy) & new Size(width, DetailHeight), new Radius.circular(_cornerRadius));
+
+		//print("CIRC $offset.dx+$Padding, $offset.dy) & new Size($width, $DetailHeight), new Radius.circular($_cornerRadius");
+    	final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+Padding, offset.dy) & new Size(width, DetailHeight), new Radius.circular(_cornerRadius ?? 0.0));
 		canvas.drawRRect(rrect, new ui.Paint()..color = Colors.white);
 		
 		canvas.drawParagraph(_nameParagraph, new Offset(offset.dx+Padding+DetailPaddingLeft, offset.dy + DetailPaddingTop));

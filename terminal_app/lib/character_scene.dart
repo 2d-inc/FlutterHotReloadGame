@@ -7,12 +7,17 @@ import "package:flutter/scheduler.dart";
 import "package:AABB/AABB.dart";
 import "dart:math";
 
-enum TerminalSceneState
+enum CharacterState
 {
-	All,
 	Happy,
 	Upset,
 	Angry
+}
+
+enum TerminalSceneState
+{
+	All,
+	BossOnly
 }
 
 class TerminalScene extends LeafRenderObjectWidget
@@ -45,9 +50,12 @@ const double MixSpeed = 5.0;
 
 class StateMix
 {
-	TerminalSceneState state;
+	CharacterState state;
 	ActorAnimation animation;
+	ActorAnimation transitionAnimation;
+
 	double animationTime;
+	double transitionTime;
 	double mix;
 }
 
@@ -57,22 +65,22 @@ class TerminalCharacter
 	AABB _bounds;
 	ActorNode mount;
 	List<StateMix> states = new List<StateMix>();
-	TerminalSceneState state = TerminalSceneState.All;
+	CharacterState state = CharacterState.Happy;
 	TerminalSceneRenderer scene;
 	TerminalCharacter(this.scene, String filename)
 	{
 		states.add(new StateMix()
-									..state = TerminalSceneState.Happy
+									..state = CharacterState.Happy
 									..mix = 1.0
 									..animationTime = 0.0);
 
 		states.add(new StateMix()
-									..state = TerminalSceneState.Upset
+									..state = CharacterState.Upset
 									..mix = 0.0
 									..animationTime = 0.0);
 
 		states.add(new StateMix()
-									..state = TerminalSceneState.Angry
+									..state = CharacterState.Angry
 									..mix = 0.0
 									..animationTime = 0.0);
 
@@ -94,23 +102,40 @@ class TerminalCharacter
 		return false;
 	}
 
-	ActorAnimation getAnimation(TerminalSceneState state)
+	ActorAnimation getAnimation(CharacterState state)
 	{
 		String animationName;
 		switch(state)
 		{
-			case TerminalSceneState.All:
-			case TerminalSceneState.Happy:
+			case CharacterState.Happy:
 				animationName = "Happy";
 				break;
-			case TerminalSceneState.Angry:
+			case CharacterState.Angry:
 				animationName = "Angry";
 				break;
-			case TerminalSceneState.Upset:
+			case CharacterState.Upset:
 				animationName = "Upset";
 				break;
 		}
 		return actor.getAnimation(animationName);
+	}
+
+	ActorAnimation getTransitionAnimation(CharacterState state)
+	{
+		String animationName;
+		switch(state)
+		{
+			case CharacterState.Happy:
+				animationName = null;
+				break;
+			case CharacterState.Angry:
+				animationName = "Upset-Angry";
+				break;
+			case CharacterState.Upset:
+				animationName = "Happy-Upset";
+				break;
+		}
+		return animationName == null ? null : actor.getAnimation(animationName);
 	}
 
 	void load(String filename)
@@ -121,7 +146,9 @@ class TerminalCharacter
 			for(StateMix sm in states)
 			{
 				sm.animation = getAnimation(sm.state);
-				if(sm.animation != null && sm.state == TerminalSceneState.Happy)
+				sm.transitionAnimation = getTransitionAnimation(sm.state);
+				sm.transitionTime = 0.0;
+				if(sm.animation != null && sm.state == CharacterState.Happy)
 				{
 					sm.animationTime = 0.0;
 					sm.animation.apply(sm.animationTime, actor, 1.0);
@@ -140,11 +167,11 @@ class TerminalCharacter
 			return;
 		}
 
-		TerminalSceneState renderState = state;
-		if(state == TerminalSceneState.All)
-		{
-			renderState = TerminalSceneState.Happy;
-		}
+		CharacterState renderState = state;
+		// if(state == TerminalSceneState.All)
+		// {
+		// 	renderState = TerminalSceneState.Happy;
+		// }
 		for(StateMix sm in states)
 		{
 			if(sm.state != renderState)
@@ -156,11 +183,23 @@ class TerminalCharacter
 				sm.mix += elapsed*MixSpeed;
 			}
 			sm.mix = sm.mix.clamp(0.0, 1.0);
+			if(sm.mix == 0.0)
+			{
+				sm.transitionTime = 0.0;
+			}
 
 			if(sm.mix != 0 && animate)
 			{ 
-				sm.animationTime = (sm.animationTime+elapsed) % sm.animation.duration;
-				sm.animation.apply(sm.animationTime, actor, sm.mix);
+				if(sm.transitionAnimation == null || sm.transitionTime >= sm.transitionAnimation.duration)
+				{
+					sm.animationTime = (sm.animationTime+elapsed) % sm.animation.duration;
+					sm.animation.apply(sm.animationTime, actor, sm.mix);
+				}
+				else
+				{
+					sm.transitionTime = sm.transitionTime+elapsed;
+					sm.transitionAnimation.apply(sm.transitionTime, actor, sm.mix);
+				}
 			}
 		}
 
@@ -289,16 +328,12 @@ class TerminalSceneRenderer extends RenderBox
 		{
 			return;
 		}
+		if(_characterIndex != null && _characters[_characterIndex] != null)
+		{
+			_characters[_characterIndex].state = CharacterState.Happy;
+		}
 		_characterIndex = index;
 		_bubbleOffset = null;
-		if(_characters[_characterIndex] != null)
-		{
-			if(_characters[_characterIndex].recomputeBounds())
-			{
-				_characterBounds = _characters[_characterIndex].bounds;
-			}
-			_animation = _scene.getAnimation("Focus${_characterIndex+1}");
-		}
 		
 		markNeedsPaint();
 		markNeedsLayout();
@@ -362,6 +397,12 @@ class TerminalSceneRenderer extends RenderBox
 				_characterBounds = _characters[_characterIndex].bounds;
 			}
 		}
+		
+		if(_scene != null)
+		{
+			_animation = _scene.getAnimation("Spread");
+		}
+		
 
 		markNeedsPaint();
 		markNeedsLayout();
@@ -399,10 +440,11 @@ class TerminalSceneRenderer extends RenderBox
 
 		
 		TerminalCharacter boss = _characters[_characterIndex];
-		bool showOnlyBoss = _animation != null && _animationTime == _animation.duration;
+		//bool showOnlyBoss = _animation != null && _animationTime == _animation.duration;
 		
 		//boss.recomputeBounds();
 		bool focusBoss = _state != TerminalSceneState.All;
+		bool recomputeBossBounds = false;
 		
 		if(_animation != null)
 		{
@@ -416,6 +458,12 @@ class TerminalSceneRenderer extends RenderBox
 			}
 			_animationTime = _animationTime.clamp(0.0, _animation.duration);
 			_animation.apply(_animationTime, _scene, 1.0);
+
+			if(_animationTime == _animation.duration || _animationTime == 0.0)
+			{
+				_animation = null;
+			}
+			recomputeBossBounds = true;
 		}
 		if(_flicker != null)
 		{
@@ -427,18 +475,26 @@ class TerminalSceneRenderer extends RenderBox
 
 
 		DateTime now = new DateTime.now();
-		double f = 1.0-(now.difference(_startTime).inMilliseconds/_endTime.difference(_startTime).inMilliseconds).clamp(0.0, 1.0);
-		if(showOnlyBoss)
+		double f = _startTime == null ? 1.0 : 1.0-(now.difference(_startTime).inMilliseconds/_endTime.difference(_startTime).inMilliseconds).clamp(0.0, 1.0);
+		if(focusBoss)
 		{
-			boss.state = f < 0.25 ? TerminalSceneState.Angry : f < 0.6 ? TerminalSceneState.Upset : TerminalSceneState.Happy;
+			boss.state = f < 0.25 ? CharacterState.Angry : f < 0.6 ? CharacterState.Upset : CharacterState.Happy;
 		}
 		else
 		{
-			boss.state = TerminalSceneState.All;
+			boss.state = CharacterState.Happy;
 		}
 		for(TerminalCharacter character in _characters)
 		{
-			character.advance(elapsed, !showOnlyBoss || character == boss);
+			character.advance(elapsed, true);//!showOnlyBoss || character == boss);
+		}
+		// Recompute bounds while spread is in action.
+		if(recomputeBossBounds && _characters[_characterIndex] != null)
+		{
+			if(_characters[_characterIndex].recomputeBounds())
+			{
+				_characterBounds = _characters[_characterIndex].bounds;
+			}
 		}
 
 		AABB bounds = focusBoss ? (_characterBounds ?? _bounds) : _bounds;
@@ -448,7 +504,7 @@ class TerminalSceneRenderer extends RenderBox
 		{
 			bounds = new AABB.clone(bounds);
 			double realHeight = bounds[3] - bounds[1];
-			bounds[3] += realHeight * PadTop;
+			bounds[3] += max(realHeight * PadTop, _messageParagraph == null ? 0.0 : _messageParagraph.height + 100.0);
 			bounds[1] -= realHeight * PadBottom;
 			bounds[1] = max(bounds[1], _bounds[1]);
 		}
@@ -527,7 +583,7 @@ class TerminalSceneRenderer extends RenderBox
 		canvas.restore();
 		double fadeHeight = size.height*0.75;
 
-		double fadeOpacity = _animation == null ? 0.0 : (_animationTime/_animation.duration);
+		double fadeOpacity = _animation == null ? (_state == TerminalSceneState.All ? 0.0 : 1.0) : (_animationTime/_animation.duration);
 
 		canvas.drawRect(new Offset(offset.dx, offset.dy) & new Size(size.width, fadeHeight), 
 								new ui.Paint()	..shader = new ui.Gradient.linear(new Offset(0.0, offset.dy + (size.height-fadeHeight)), new Offset(0.0, offset.dy + fadeHeight), <Color>[new Color.fromARGB((100*fadeOpacity).round(), 0, 0, 0), const Color.fromARGB(0, 0, 0, 0)])
@@ -539,14 +595,14 @@ class TerminalSceneRenderer extends RenderBox
 		});
 
 		TerminalCharacter boss = _characters[_characterIndex];
-		bool showOnlyBoss = _animation != null && _animationTime == _animation.duration;
+		//bool showOnlyBoss = _animation != null && _animationTime == _animation.duration;
 		
 		for(TerminalCharacter character in _renderCharacters)
 		{
-			if(showOnlyBoss && character != boss)
-			{
-				continue;
-			}
+			// if(showOnlyBoss && character != boss)
+			// {
+			// 	continue;
+			// }
 			
 			canvas.save();		
 			if(boss != character)
@@ -569,7 +625,7 @@ class TerminalSceneRenderer extends RenderBox
 			if(talkCharacter != null)
 			{
 				talkCharacter.recomputeBounds();
-				if(showOnlyBoss)
+				if(_state != TerminalSceneState.All)
 				{
 					AABB.combine(_characterBounds, _characterBounds, talkCharacter.bounds);
 					//_characterBounds = talkCharacter.bounds;

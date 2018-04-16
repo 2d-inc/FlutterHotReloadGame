@@ -1,47 +1,76 @@
 abstract class CommandTask
 {
+    int _lineOfInterest = null;
 	String apply(String code);
-	void complete(bool success, int value);
+	void complete(int value, String code);
 	String taskType();
 	String taskLabel();
 	String getIssueCommand(int value);
 	void tryToIssue(List<IssuedTask> currentQueue);
 	Map serialize();
+    bool doesAutocomplete() { return false; }
 
-    static Map makeSlider(String title, int min, int max)
+    bool get hasLineOfInterest
+    {
+        return _lineOfInterest != null;
+    }
+
+    void findLineOfInterest(String code, String match)
+    {
+        int idx = code.indexOf(match);
+        _lineOfInterest = 0;
+        for(int i = 0; i < idx; i++)
+        {
+            if(code[i] == '\n')
+            {
+                _lineOfInterest++;
+            }
+        }
+    }
+
+    int get lineOfInterest
+    {
+        return _lineOfInterest ?? 0;
+    }
+
+    static Map makeSlider(CommandTask task, int min, int max)
     {
         return {
             "type": "GameSlider",
-            "title": title,
+            "title": task.taskLabel(),
+            "taskType": task.taskType(),
             "min": min,
             "max": max
         };
     }
 
-    static Map makeRadial(String title, int min, int max)
+    static Map makeRadial(CommandTask task, int min, int max)
     {
         return {
             "type": "GameRadial",
-            "title": title,
+            "title": task.taskLabel(),
+            "taskType": task.taskType(),
             "min": min,
             "max": max
         };
     }
 
-    static Map makeBinary(String title, List<String> options)
+    static Map makeBinary(CommandTask task, List<String> options)
     {
         return {
             "type": "GameBinaryButton",
-            "title": title,
+            "title": task.taskLabel(),
+            "taskType": task.taskType(),
             "buttons": options
         };
     }
 
-    static Map makeToggle(String title)
+    static Map makeToggle(CommandTask task)
     {
         return {
             "type": "GameToggle",
-            "title": title
+            "title": task.taskLabel(),
+            "taskType": task.taskType()
         };
     }
 }
@@ -50,7 +79,7 @@ class IssuedTask
 {
 	CommandTask task;
 	int value;
-	int expires = 20;
+	int expires = 5;
 
 	Map serialize()
 	{

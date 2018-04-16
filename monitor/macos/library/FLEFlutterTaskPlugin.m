@@ -33,7 +33,7 @@ static NSString *const kFlutterTaskChannelName = @"flutter/flutterTask";
 	NSData *message = [NSJSONSerialization dataWithJSONObject:json options:0 error:&error];
 	if (message == nil || error != nil)
 	{
-		NSLog(@"ERROR: could send platform response message: %@", error.debugDescription);
+		NSLog(@"ERROR: could not send platform response message: %@", error.debugDescription);
 		return;
 	}
 	
@@ -126,6 +126,11 @@ typedef NSMutableDictionary*(^ ApiMethod)(NSNumber*, NSDictionary*);
 					return nil;
 				}
 				NSData *data = [@"r\n" dataUsingEncoding:NSUTF8StringEncoding];
+				if(!task.task.isRunning)
+				{
+					NSLog(@"Flutter Task is no longer running.");
+					return nil;
+				}
 				[[task.inPipe fileHandleForWriting] writeData:data];
 				return nil;
 			},

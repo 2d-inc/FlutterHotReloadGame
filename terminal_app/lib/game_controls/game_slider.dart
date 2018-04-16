@@ -2,39 +2,83 @@ import "package:flutter/material.dart";
 import "dart:ui" as ui;
 import "dart:math";
 import "game_colors.dart";
+import "game_command_widget.dart";
+import "game_radial.dart";
 
-class GameSlider extends StatefulWidget 
+class GameSlider extends StatefulWidget implements GameCommand
 {
-	GameSlider({Key key, this.value = 40, this.min = 0, this.max = 200}) : super(key: key);
-	GameSlider.make(Map params) : value = params['min'], min = params['min'], max = params['max'];
+	//GameSlider({Key key, this.value = 40, this.min = 0, this.max = 200}) : super(key: key);
+	GameSlider.make(this.issueCommand, this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
+
+	GameSlider.fromRadial(GameRadial radial) :
+		issueCommand = radial.issueCommand,
+		taskType = radial.taskType,
+		value = radial.value, min = radial.min, max = radial.max;
 
 	final int value;
 	final int min;
 	final int max;
+	final String taskType;
+	final IssueCommandCallback issueCommand;
 
 	@override
 	_GameSliderState createState() => new _GameSliderState(value, min, max);
 }
 
-class _GameSliderState extends State<GameSlider>
+class _GameSliderState extends State<GameSlider> with SingleTickerProviderStateMixin
 {
 	int value = 0;
 	final int minValue;
 	final int maxValue;
+	
+	AnimationController _controller;
+	Animation<double> _valueAnimation;
 
 	_GameSliderState(this.value, this.minValue, this.maxValue);
+	int targetValue = 0;
 	
 	void valueChanged(double v)
 	{
-		setState(()
+		int target = (minValue + (v * 4).round() * ((maxValue-minValue)/4)).round();
+		if(targetValue == target)
 		{
-			value = (minValue + v * (maxValue-minValue)).round();
-		});
+			return;
+		}
+		targetValue = target;
+		_valueAnimation = new Tween<double>
+		(
+			begin: value.toDouble(),
+			end: targetValue.toDouble()
+		).animate(_controller);
+	
+		_controller
+			..value = 0.0
+			//..fling(velocity: 0.01);
+			..animateTo(1.0, curve:Curves.easeInOut);
+
+
+		// setState(()
+		// {
+		// 	value = (minValue + v * (maxValue-minValue)).round();
+		// });
+	}
+
+	void commitValueChange()
+	{
+		widget.issueCommand(widget.taskType, targetValue);
 	}
 
 	initState() 
 	{
     	super.initState();
+		_controller = new AnimationController(duration: const Duration(milliseconds:200), vsync: this);
+		_controller.addListener(()
+		{
+			setState(()
+			{
+				value = _valueAnimation.value.round();
+			});
+		});
 	}
 
 	@override
@@ -47,35 +91,36 @@ class _GameSliderState extends State<GameSlider>
 					new Container(
 						// margin:
 						child:new Text(value.toString(), 
-							style: const TextStyle(color: const Color.fromARGB(255, 167, 230, 237), 
-							fontFamily: "Inconsolata", 
-							fontWeight: FontWeight.bold, 
-							fontSize: 18.0, 
-							decoration: TextDecoration.none)
+							style: const TextStyle(color: GameColors.white,
+								fontFamily: "Inconsolata", 
+								fontWeight: FontWeight.w700, 
+								fontSize: 36.0, 
+								decoration: TextDecoration.none
+							)
 						)
 					),
 					new Container(
-						margin: const EdgeInsets.symmetric(vertical: 32.0),
+						margin: const EdgeInsets.symmetric(vertical: 20.0),
 						child: new Row(children:<Widget>[
 							new Container(
 								margin: new EdgeInsets.only(right: 10.0), 
 								child: new Text(
 									minValue.toString(), 
-									style: const TextStyle(color: const Color.fromARGB(69, 167, 230, 237), 
+									style: const TextStyle(color: GameColors.highValueContent, 
 									fontFamily: "Inconsolata", 
-									fontWeight: FontWeight.bold, 
-									fontSize: 14.0, 
+									fontWeight: FontWeight.w700, 
+									fontSize: 16.0, 
 									decoration: TextDecoration.none)
 								)
 							),
-							new Expanded(child: new NotchedSlider((value-minValue)/(maxValue-minValue), valueChanged)),
+							new Expanded(child: new NotchedSlider((value-minValue)/(maxValue-minValue), valueChanged, commitValueChange)),
 							new Container(
 								margin: new EdgeInsets.only(left: 10.0), 
 								child:new Text(maxValue.toString(), 
-									style: const TextStyle(color: const Color.fromARGB(69, 167, 230, 237), 
+									style: const TextStyle(color: GameColors.highValueContent, 
 									fontFamily: "Inconsolata", 
-									fontWeight: FontWeight.bold, 
-									fontSize: 14.0, 
+									fontWeight: FontWeight.w700, 
+									fontSize: 16.0, 
 									decoration: TextDecoration.none)
 								)
 							),
@@ -91,10 +136,11 @@ typedef void ValueChangeCallback(double value);
 
 class NotchedSlider extends StatefulWidget 
 {
-	NotchedSlider(this.value, this.valueChanged, {Key key}) : super(key: key);
+	NotchedSlider(this.value, this.valueChanged, this.commitValue, {Key key}) : super(key: key);
 
 	final double value;
 	final ValueChangeCallback valueChanged;
+	final VoidCallback commitValue;
 
 	@override
 	_NotchedSliderState createState() => new _NotchedSliderState();
@@ -130,6 +176,11 @@ class _NotchedSliderState extends State<NotchedSlider>
 		Offset local = ro.globalToLocal(details.globalPosition);
 		widget.valueChanged(min(1.0, max(0.0, local.dx/context.size.width)));
 	}
+
+	void dragEnd(DragEndDetails details)
+	{
+		widget.commitValue();
+	}
 	
 	@override
 	Widget build(BuildContext context) 
@@ -137,6 +188,7 @@ class _NotchedSliderState extends State<NotchedSlider>
 		return new GestureDetector(
 			onHorizontalDragStart: dragStart,
 			onHorizontalDragUpdate: dragUpdate,
+			onHorizontalDragEnd: dragEnd,
 			child: new Container(
 				child:new GameSliderNotches(widget.value)
 			)
@@ -217,10 +269,31 @@ class GameSliderNotchesRenderObject extends RenderBox
 		double dx = 0.0;
 		Size notchSize = new Size(notchWidth, size.height);
 		int notchesHighlit = (value * numNotches).round();
-		for(int i = 0; i < numNotches; i++)
+
+		for(int i = 0; i < notchesHighlit - 1; i++)
+		{
+			final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+dx, offset.dy) & notchSize, const Radius.circular(2.0));
+			canvas.drawRRect(rrect, new ui.Paint()..color = GameColors.highValueContent);
+			dx += notchWidth + spacing;
+		}
+
+		if(notchesHighlit != 0)
+		{
+			final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+dx, offset.dy) & notchSize, const Radius.circular(2.0));
+			canvas.drawRRect(rrect, new ui.Paint()..color = GameColors.highValueContent);
+
+			int extraSpace = 8;
+			Size selectedSize = new Size(notchSize.width + extraSpace, notchSize.height + extraSpace);
+			final RRect selectedNotch = new RRect.fromRectAndRadius(new Offset(offset.dx+dx - extraSpace/2, offset.dy - extraSpace/2) & selectedSize, const Radius.circular(6.0));
+			canvas.drawRRect(selectedNotch, new ui.Paint()..color = GameColors.white..style = PaintingStyle.stroke..strokeWidth = 2.0);
+
+			dx += notchWidth + spacing;
+		}
+
+		for(int i = notchesHighlit + 1; i <= numNotches; i++)
 		{
     		final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+dx, offset.dy) & notchSize, const Radius.circular(2.0));
-			canvas.drawRRect(rrect, new ui.Paint()..color = i < notchesHighlit ? GameColors.highValueContent : GameColors.lowValueContent);
+			canvas.drawRRect(rrect, new ui.Paint()..color = GameColors.lowValueContent);
 			dx += notchWidth + spacing;
 		}
 	}

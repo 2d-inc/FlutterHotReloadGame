@@ -11,25 +11,25 @@ class AddIconATask extends CommandTask
 	
 	Map serialize()
 	{
-		return CommandTask.makeBinary(taskLabel(), options);
+		return CommandTask.makeBinary(this, options);
 	}
 
-	void complete(bool success, int value)
+	void complete(int value, String code)
 	{
-		if(success)
+		switch(value)
 		{
-			switch(value)
-			{
-				case 0:
-					_hasPizza = true;
-					break;
-				case 1:
-					_hasBurger = true;
-					break;
-				case 2:
-					_hasDessert = true;
-					break;
-			}
+			case 0:
+				_hasPizza = true;
+				findLineOfInterest(code, "PIZZA_ICON");
+				break;
+			case 1:
+				_hasBurger = true;
+				findLineOfInterest(code, "BURGER_ICON");
+				break;
+			case 2:
+				_hasDessert = true;
+				findLineOfInterest(code, "DESSERT_ICON");
+				break;
 		}
 	}
 
@@ -41,9 +41,9 @@ class AddIconATask extends CommandTask
 
 	String apply(String code)
 	{
-		code.replaceAll("\"PIZZA_ICON\"", _hasPizza ? "\"assets/flares/PizzaIcon\"" : "null");
-		code.replaceAll("\"BURGER_ICON\"", _hasBurger ? "\"assets/flares/BurgerIcon\"" : "null");
-		code.replaceAll("\"DESSERT_ICON\"", _hasDessert ? "\"assets/flares/DessertIcon\"" : "null");
+		code = code.replaceAll("\"PIZZA_ICON\"", _hasPizza ? "\"assets/flares/PizzaIcon\"" : "null");
+		code = code.replaceAll("\"BURGER_ICON\"", _hasBurger ? "\"assets/flares/BurgerIcon\"" : "null");
+		code = code.replaceAll("\"DESSERT_ICON\"", _hasDessert ? "\"assets/flares/DessertIcon\"" : "null");
 		return code;
 	}
 
@@ -107,7 +107,7 @@ class AddIconBTask extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeBinary(taskLabel(), options);
+		return CommandTask.makeBinary(this, options);
 	}
 
 	String getIssueCommand(int value)
@@ -116,26 +116,26 @@ class AddIconBTask extends CommandTask
 		return "ADD $name ICON!";
 	}
 
-	void complete(bool success, int value)
+	void complete(int value, String code)
 	{
-		if(success)
+		switch(value)
 		{
-			switch(value)
-			{
-				case 0:
-					_hasSushi = true;
-					break;
-				case 1:
-					_hasNoodles = true;
-					break;
-			}
+			case 0:
+				_hasSushi = true;
+				findLineOfInterest(code, "SUSHI_ICON");
+				break;
+			case 1:
+				_hasNoodles = true;
+				findLineOfInterest(code, "NOODLES_ICON");
+				break;
 		}
+		
 	}
 
 	String apply(String code)
 	{
-		code.replaceAll("\"SUSHI_ICON\"", _hasSushi ? "\"assets/flares/SushiIcon\"" : "null");
-		code.replaceAll("\"NOODLES_ICON\"", _hasNoodles ? "\"assets/flares/NoodlesIcon\"" : "null");
+		code = code.replaceAll("\"SUSHI_ICON\"", _hasSushi ? "\"assets/flares/SushiIcon\"" : "null");
+		code = code.replaceAll("\"NOODLES_ICON\"", _hasNoodles ? "\"assets/flares/NoodlesIcon\"" : "null");
 		return code;
 	}
 

@@ -4,7 +4,7 @@ import "icon_tasks.dart";
 import "corner_radius_tasks.dart";
 import "replace_widget_tasks.dart";
 
-const int NumGameTasks = 20;
+const int NumGameTasks = 10;
 
 class TaskList
 {
@@ -28,6 +28,11 @@ class TaskList
 		buildIssueList();
 	}
 
+	bool get isEmpty
+	{
+		return _toIssue.length == 0;
+	}
+	
 	IssuedTask nextTask(List<CommandTask> avoid)
 	{
 		if(_toIssue.length == 0)

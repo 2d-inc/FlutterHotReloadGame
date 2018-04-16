@@ -121,7 +121,7 @@ class CommandTimerRenderer extends RenderBox
 		final Canvas canvas = context.canvas;
 
 		DateTime now = new DateTime.now();
-		double f = (now.difference(_startTime).inMilliseconds/_endTime.difference(_startTime).inMilliseconds).clamp(0.0, 1.0);
+		double f = _endTime == null ? 1.0 : (now.difference(_startTime).inMilliseconds/_endTime.difference(_startTime).inMilliseconds).clamp(0.0, 1.0);
 		double fi = 1.0-f;
 
 		double dx = offset.dx;
@@ -152,7 +152,7 @@ class CommandTimerRenderer extends RenderBox
 		dx += IconSize + Padding;
 		width -= IconSize + Padding;
 
-		String valueLabel = formatDuration(_endTime.difference(now));
+		String valueLabel = _endTime == null ? "N/A" : formatDuration(_endTime.difference(now));
 		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
 			textAlign:TextAlign.start,
 			fontFamily: "Roboto",

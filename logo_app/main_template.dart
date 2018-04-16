@@ -53,7 +53,7 @@ class MyHomePage extends StatefulWidget {
 	_MyHomePageState createState() => new _MyHomePageState();
 }
 
-const featuredRestaurantSize = 304.0;
+const featuredRestaurantSize = FEATURED_RESTAURANT_SIZE;
 
 class _MyHomePageState extends State<MyHomePage> {
 	@override

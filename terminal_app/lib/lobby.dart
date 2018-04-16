@@ -10,8 +10,9 @@ class LobbyWidget extends StatelessWidget
     final double _opacity;
     final bool _ready;
     final List<bool> _arePlayersReady;
+    final bool canBeReady;
 
-    const LobbyWidget(this._ready, this._arePlayersReady, this._opacity, this._onReady, this._onStart, { Key key  } ) : super(key: key);
+    const LobbyWidget(this.canBeReady, this._ready, this._arePlayersReady, this._opacity, this._onReady, this._onStart, { Key key  } ) : super(key: key);
 
     @override
     Widget build(BuildContext context)
@@ -39,10 +40,10 @@ class LobbyWidget extends StatelessWidget
                             new Expanded(child: new Container()),
                             // Buttons
                             new Column(
-                                children:
+                                children: 
                                 [
-                                    new PanelButton(_ready ? "SET TO NOT READY" : "SET TO READY", 18.0, 1.3, null, _onReady),
-                                    new PanelButton("START", 18.0, 1.3, const EdgeInsets.only(top:10.0), _onStart, isAccented: canStart, isEnabled: canStart)
+                                    new PanelButton(_ready ? "SET TO NOT READY" : "SET TO READY", 18.0, 1.3, null, _onReady, isEnabled: canBeReady),
+                                    new PanelButton("START", 18.0, 1.3, const EdgeInsets.only(top:10.0), _onStart, isAccented: canStart, isEnabled: canStart && canBeReady)
                                 ],
                             )
 

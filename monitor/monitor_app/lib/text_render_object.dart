@@ -63,9 +63,10 @@ class TextRenderObject extends RenderBox
 			);
 
 		ui.ParagraphBuilder pb = new ui.ParagraphBuilder(codeStyle);
-		pb.addText("Loading...");
+		
 		ui.Paragraph singleLine = pb.build()..layout(new ui.ParagraphConstraints(width: double.maxFinite));
 		this._lineHeight = singleLine.height;
+		pb.addText("Loading...");
 	}
 
 	@override
@@ -105,7 +106,7 @@ class TextRenderObject extends RenderBox
 		String actualText = _text ?? "Loading...";
 		List<String> lines = actualText.split('\n');
 
-		int currentLineNum = this.topLineNumber;
+		int currentLineNum = this.topLineNumber.clamp(0, lines.length - 1);
 		double maxHeight = size.height;
 		double currentHeight = 0.0;
 
@@ -175,14 +176,21 @@ class TextRenderObject extends RenderBox
 		}
 	}
 
-	set scrollValue(double value)
+	set scrollValue(double lineNumber)
 	{
-		value = max(value, 0.0);
+		lineNumber = max(lineNumber, 0.0);
 
-		if(this._lineScrollOffset != value)
+		if(this._lineScrollOffset != lineNumber)
 		{
 			double max = (_maxLines-1) * _lineHeight;
-			this._lineScrollOffset = min(max, value);
+
+			// calcualte offset by line number and center of screen.
+			double offset = lineNumber * _lineHeight;
+
+			offset -= size.height/2.0; // go down to center of screen
+			offset += _lineHeight/2.0; // go back up by half of the line
+
+			this._lineScrollOffset = min(max, offset);
 
 			markNeedsLayout();
 			markNeedsPaint();
