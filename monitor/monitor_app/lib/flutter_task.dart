@@ -4,6 +4,8 @@ import "package:flutter/services.dart";
 import "dart:convert";
 import "dart:collection";
 
+typedef void StringCallback(String element); 
+
 class FlutterTask
 {
 	static int _next_id = 0;
@@ -12,6 +14,7 @@ class FlutterTask
 	String _path;
 	VoidCallback _readyHandler;
 	VoidCallback _reloadedHandler;
+	StringCallback _outputHandler;
 	bool _ready = false;
 
 	static final platform = const BasicMessageChannel("flutter/flutterTask", const JSONMessageCodec())..setMessageHandler(onPlatformMessage);
@@ -31,6 +34,11 @@ class FlutterTask
 	void onReload(VoidCallback callback) 
 	{
 		_reloadedHandler = callback;
+	}
+
+	void onStdout(StringCallback callback)
+	{
+		_outputHandler = callback;
 	}
 
 	static Future<dynamic> onPlatformMessage(dynamic data) async
@@ -62,6 +70,15 @@ class FlutterTask
 
 	onReceivedLine(String line)
 	{
+		if(_outputHandler != null && line.trim().isNotEmpty)
+		{
+			List<String> lines = line.trim().split('\n');
+			for(String l in lines) 
+			{
+				_outputHandler(l);
+			}
+		}
+
 		if(!_ready && line.indexOf("To hot reload your app on the fly, press \"r\".") != -1)
 		{
 			_ready = true;

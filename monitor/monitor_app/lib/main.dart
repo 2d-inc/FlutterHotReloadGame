@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
 import 'sound.dart';
@@ -16,10 +17,13 @@ import "dart:ui" as ui;
 import "package:flutter/scheduler.dart";
 import "server.dart";
 
-const double BACKGROUND_SCREEN_WIDTH = 1052.0;
-const double BACKGROUND_SCREEN_HEIGHT = 566.0;
-const double BACKGROUND_MARGIN_LEFT = 721.0;
-const double BACKGROUND_MARGIN_TOP = 200.0;
+const double CODE_BOX_SCREEN_WIDTH = 1052.0;
+const double CODE_BOX_SCREEN_HEIGHT = 566.0;
+const double CODE_BOX_MARGIN_LEFT = 721.0;
+const double CODE_BOX_MARGIN_TOP = 200.0;
+const double STDOUT_PADDING = 18.0;
+const double STDOUT_HEIGHT = 110.0 - STDOUT_PADDING;
+const int STDOUT_MAX_LINES = 4;
 
 Future<String> loadFileAssets(String filename) async
 {
@@ -87,6 +91,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	Random _rng = new Random();
 	bool _ready = false;
 	String _contents;
+	ListQueue<String> _stdoutQueue;
 	bool _isReloading;
 
 	AnimationController _scrollController;
@@ -178,6 +183,25 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 			});
 		});
 
+		_stdoutQueue = new ListQueue<String>(STDOUT_MAX_LINES);
+
+		_flutterTask.onStdout((String line)
+		{
+			setState(
+				()
+				{
+					String r;
+					if(_stdoutQueue.length > STDOUT_MAX_LINES - 1)
+					{
+						r = _stdoutQueue.removeFirst();
+					}
+					_stdoutQueue.addLast(line);
+					// print("Removed ${r ?? 'nothing'} and added $line");
+					// print("WILL PRINT ${_stdoutQueue.length} lines:\n%${_stdoutQueue.join('\n')}\n ENDQUEUE ====");
+				}
+			);
+		});
+
 		// Read contents.
 		_flutterTask.read("/main_template.dart").then((contents)
 		{
@@ -233,7 +257,8 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		Size sz = MediaQuery.of(context).size;
 
 		Stack stack = new Stack(
-					children: [
+					children: 
+					[
 						new Container(
 							color: const Color.fromARGB(255, 0, 0, 0),
 							width: sz.width,
@@ -252,18 +277,35 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 									)
 						),
 						new Positioned(
-							left: BACKGROUND_MARGIN_LEFT,// - 500, /* TODO: remove extra margin only for simulator*/
-							top: BACKGROUND_MARGIN_TOP,
-							width: BACKGROUND_SCREEN_WIDTH,
-							height: BACKGROUND_SCREEN_HEIGHT,
+							left: CODE_BOX_MARGIN_LEFT,
+							top: CODE_BOX_MARGIN_TOP,
+							width: CODE_BOX_SCREEN_WIDTH,
+							height: CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT - STDOUT_PADDING,
 							child: new CodeBoxWidget(
 									_contents, 
 									_lineOfInterest, 
 									_highlight, 
 									_highlightAlpha
 								)
+						),
+						new Positioned(
+							left: CODE_BOX_MARGIN_LEFT,
+							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT - STDOUT_PADDING,
+							width: CODE_BOX_SCREEN_WIDTH,
+							height: STDOUT_PADDING,
+							child: new Container(
+								color: Colors.white,
+								child: new Text("// STDOUT:")
+							)
+						),
+						new Positioned(
+							left: CODE_BOX_MARGIN_LEFT,
+							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT,
+							width: CODE_BOX_SCREEN_WIDTH,
+							height: STDOUT_HEIGHT,
+							child: new CodeBoxWidget(_stdoutQueue.join("\n"), 0.0, _highlight, 0)
 						)
-						],
+					],
 			);
 
 		return new Scaffold(
