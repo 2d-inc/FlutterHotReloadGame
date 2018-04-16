@@ -106,7 +106,7 @@ class TextRenderObject extends RenderBox
 		String actualText = _text ?? "Loading...";
 		List<String> lines = actualText.split('\n');
 
-		int currentLineNum = this.topLineNumber.clamp(0, lines.length-1);
+		int currentLineNum = this.topLineNumber.clamp(0, lines.length - 1);
 		double maxHeight = size.height;
 		double currentHeight = 0.0;
 

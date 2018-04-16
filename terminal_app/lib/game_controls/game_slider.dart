@@ -91,24 +91,25 @@ class _GameSliderState extends State<GameSlider> with SingleTickerProviderStateM
 					new Container(
 						// margin:
 						child:new Text(value.toString(), 
-							style: const TextStyle(color: const Color.fromARGB(255, 167, 230, 237), 
-							fontFamily: "Inconsolata", 
-							fontWeight: FontWeight.bold, 
-							fontSize: 18.0, 
-							decoration: TextDecoration.none)
+							style: const TextStyle(color: GameColors.white,
+								fontFamily: "Inconsolata", 
+								fontWeight: FontWeight.w700, 
+								fontSize: 36.0, 
+								decoration: TextDecoration.none
+							)
 						)
 					),
 					new Container(
-						margin: const EdgeInsets.symmetric(vertical: 32.0),
+						margin: const EdgeInsets.symmetric(vertical: 20.0),
 						child: new Row(children:<Widget>[
 							new Container(
 								margin: new EdgeInsets.only(right: 10.0), 
 								child: new Text(
 									minValue.toString(), 
-									style: const TextStyle(color: const Color.fromARGB(69, 167, 230, 237), 
+									style: const TextStyle(color: GameColors.highValueContent, 
 									fontFamily: "Inconsolata", 
-									fontWeight: FontWeight.bold, 
-									fontSize: 14.0, 
+									fontWeight: FontWeight.w700, 
+									fontSize: 16.0, 
 									decoration: TextDecoration.none)
 								)
 							),
@@ -116,10 +117,10 @@ class _GameSliderState extends State<GameSlider> with SingleTickerProviderStateM
 							new Container(
 								margin: new EdgeInsets.only(left: 10.0), 
 								child:new Text(maxValue.toString(), 
-									style: const TextStyle(color: const Color.fromARGB(69, 167, 230, 237), 
+									style: const TextStyle(color: GameColors.highValueContent, 
 									fontFamily: "Inconsolata", 
-									fontWeight: FontWeight.bold, 
-									fontSize: 14.0, 
+									fontWeight: FontWeight.w700, 
+									fontSize: 16.0, 
 									decoration: TextDecoration.none)
 								)
 							),
@@ -268,10 +269,31 @@ class GameSliderNotchesRenderObject extends RenderBox
 		double dx = 0.0;
 		Size notchSize = new Size(notchWidth, size.height);
 		int notchesHighlit = (value * numNotches).round();
-		for(int i = 0; i < numNotches; i++)
+
+		for(int i = 0; i < notchesHighlit - 1; i++)
+		{
+			final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+dx, offset.dy) & notchSize, const Radius.circular(2.0));
+			canvas.drawRRect(rrect, new ui.Paint()..color = GameColors.highValueContent);
+			dx += notchWidth + spacing;
+		}
+
+		if(notchesHighlit != 0)
+		{
+			final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+dx, offset.dy) & notchSize, const Radius.circular(2.0));
+			canvas.drawRRect(rrect, new ui.Paint()..color = GameColors.highValueContent);
+
+			int extraSpace = 8;
+			Size selectedSize = new Size(notchSize.width + extraSpace, notchSize.height + extraSpace);
+			final RRect selectedNotch = new RRect.fromRectAndRadius(new Offset(offset.dx+dx - extraSpace/2, offset.dy - extraSpace/2) & selectedSize, const Radius.circular(6.0));
+			canvas.drawRRect(selectedNotch, new ui.Paint()..color = GameColors.white..style = PaintingStyle.stroke..strokeWidth = 2.0);
+
+			dx += notchWidth + spacing;
+		}
+
+		for(int i = notchesHighlit + 1; i <= numNotches; i++)
 		{
     		final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+dx, offset.dy) & notchSize, const Radius.circular(2.0));
-			canvas.drawRRect(rrect, new ui.Paint()..color = i < notchesHighlit ? GameColors.highValueContent : GameColors.lowValueContent);
+			canvas.drawRRect(rrect, new ui.Paint()..color = GameColors.lowValueContent);
 			dx += notchWidth + spacing;
 		}
 	}

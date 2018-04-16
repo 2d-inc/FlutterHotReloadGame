@@ -207,9 +207,9 @@ class GameRadialNotchesRenderObject extends RenderBox
 		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
 			textAlign:TextAlign.start,
 			fontFamily: "Inconsolata",
-			fontSize: 18.0,
+			fontSize: 36.0,
 			fontWeight: FontWeight.w700
-		))..pushStyle(new ui.TextStyle(color:GameColors.highValueContent));
+		))..pushStyle(new ui.TextStyle(color:GameColors.white));
 		builder.addText(valueLabel);
 		_valueParagraph = builder.build();
 
@@ -223,8 +223,9 @@ class GameRadialNotchesRenderObject extends RenderBox
 			ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
 				textAlign:TextAlign.start,
 				fontFamily: "Inconsolata",
-				fontSize: 14.0
-			))..pushStyle(new ui.TextStyle(color:GameColors.lowValueContent));
+				fontWeight: FontWeight.w700,
+				fontSize: 16.0
+			))..pushStyle(new ui.TextStyle(color:GameColors.highValueContent));
 			builder.addText(tickLabel);
 			ui.Paragraph tickParagraph = builder.build();
 			tickParagraph.layout(new ui.ParagraphConstraints(width: size.width));
@@ -283,19 +284,19 @@ class GameRadialNotchesRenderObject extends RenderBox
 
 			canvas.drawLine(p1, p2, tickPaint);
 		}
-		canvas.drawArc(arcPaintOffset & arcPaintSize, startAngle, sweep, false, new ui.Paint()..color = GameColors.lowValueContent..strokeWidth = 5.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
-		canvas.drawArc(arcPaintOffset & arcPaintSize, startAngle, sweep*value, false, new ui.Paint()..color = GameColors.highValueContent..strokeWidth = 5.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
+		canvas.drawArc(arcPaintOffset & arcPaintSize, startAngle, sweep, false, new ui.Paint()..color = GameColors.lowValueContent..strokeWidth = 10.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
+		canvas.drawArc(arcPaintOffset & arcPaintSize, startAngle, sweep*value, false, new ui.Paint()..color = GameColors.highValueContent..strokeWidth = 10.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
 
 		
-		ui.Paint arrowPaint = new ui.Paint()..color = GameColors.highValueContent..strokeWidth = 1.0..style=PaintingStyle.stroke;
+		ui.Paint arrowPaint = new ui.Paint()..color = GameColors.midValueContent..strokeWidth = 1.0..style=PaintingStyle.stroke;
 		canvas.drawParagraph(_valueParagraph, new Offset(center.dx - _valueLabelSize.width/2.0, center.dy - _valueLabelSize.height/2.0));
 		canvas.save();
-		canvas.translate(center.dx, center.dy - 20.0);
+		canvas.translate(center.dx, center.dy - 30.0);
 		canvas.drawPath(_arrowPath, arrowPaint);
 		canvas.restore();
 		canvas.save();
 		
-		canvas.translate(center.dx, center.dy + 20.0);
+		canvas.translate(center.dx, center.dy + 30.0);
 		canvas.scale(1.0, -1.0);
 		canvas.drawPath(_arrowPath, arrowPaint);
 		canvas.restore();

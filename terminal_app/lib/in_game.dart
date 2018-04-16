@@ -122,7 +122,6 @@ class InGame extends StatelessWidget
 			Widget w = next['widget'];
 			if(w is GameRadial)
 			{
-				print("TOO SMALL TO FIT RADIAL!");
 				w = new GameSlider.fromRadial(w);
 			}
 			grid.add(new Positioned(
@@ -186,13 +185,15 @@ class GameBinaryButton extends StatelessWidget implements GameCommand
 			buttons.add(
 				new Expanded(
 					child:
-						new PanelButton(_labels[i], 12.0, 0.9, 
-							isTall ? const EdgeInsets.only(bottom: 10.0) : const EdgeInsets.only(right:10.0, bottom: 26.0), 
-			() 
-			{
-				issueCommand(taskType, i);
-				/* TODO: */
-			})));
+						new PanelButton(_labels[i], 16.0, 1.1, 
+							isTall ? const EdgeInsets.only(bottom: 10.0) : const EdgeInsets.only(right:10.0, bottom: 10.0), 
+					() 
+					{
+						issueCommand(taskType, i);
+						/* TODO: */
+					}, isAccented: true)
+				)
+			);
 		}
 
 		return buttons.length > 2 ? new Column(children: buttons) : Row(children: buttons);
