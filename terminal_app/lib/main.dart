@@ -14,8 +14,6 @@ import "dart:math";
 
 void main() 
 {
-	// Hide UI top and bottom bar
-	SystemChrome.setEnabledSystemUIOverlays([]);
 	runApp(new MyApp());
 }
 
@@ -325,11 +323,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	final TextEditingController _ipInputController = new TextEditingController();
 
-	_onScreenTap(PointerDownEvent ev)
-	{
-
-	}
-
 	void _issueCommand(String taskType, int value)
 	{
 		print("SEND COMMAND $taskType $value");
@@ -339,7 +332,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	@override
 	Widget build(BuildContext context) 
 	{
-		
+		// Hide Sofkteys&Status bar
+		SystemChrome.setEnabledSystemUIOverlays([]);
 		return new Listener(
 			onPointerDown: 
 				(PointerDownEvent ev)
@@ -497,6 +491,14 @@ class WebSocketClient
 
 	WebSocketClient(this._terminal)
 	{
+		if(Platform.isAndroid)
+		{
+			address = "10.0.2.2";
+		}
+		else
+		{
+			address = InternetAddress.LOOPBACK_IP_V4.address;
+		}
 		connect();
 	}
 
@@ -558,18 +560,6 @@ class WebSocketClient
 	connect()
 	{
 		assert(_socket == null);
-		String address;
-		if(Platform.isAndroid)
-		{
-			//address = "10.0.2.2";
-			address = "10.0.2.2";
-			address = "10.76.253.124";
-		}
-		else
-		{
-			address = InternetAddress.LOOPBACK_IP_V4.address;
-		}
-		// address = "192.168.1.156";
 		print("Attempting connection to ws://" + address + ":8080/ws");
 		WebSocket.connect("ws://" + address + ":8080/ws").then
 		(
