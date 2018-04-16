@@ -170,28 +170,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	CodeBoxState() :
 		_highlight = new Highlight(0, 0, 0)
 	{
-		// HttpServer.bind(/* "192.168.1.156" */InternetAddress.LOOPBACK_IP_V4, 8080).then(
-		// 	(server) async
-		// 	{
-		// 		await for (var request in server) 
-		// 		{
-		// 			 if (WebSocketTransformer.isUpgradeRequest(request)) 
-		// 			 {
-		// 				// Upgrade a HttpRequest to a WebSocket connection.
-		// 				WebSocketTransformer.upgrade(request).then(_handleWebSocket);
-
-		// 			}
-		// 			else
-		// 			{
-		// 				request.response
-		// 				..headers.contentType = new ContentType("text", "plain", charset: "utf-8")
-		// 				..write('Hello, world')
-		// 				..close();
-		// 			}
-		// 		}
-		// 	});
-
-
 		_flutterTask.onReady(()
 		{
 			setState(() 
@@ -294,7 +272,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	}
 }
 
-class WidgetTest extends StatelessWidget
+class MonitorApp extends StatelessWidget
 {
 	@override
 	Widget build(BuildContext context)
@@ -307,7 +285,7 @@ class WidgetTest extends StatelessWidget
 
 void main()
 {
-	runApp(new WidgetTest());
+	runApp(new MonitorApp());
 }
 
 class NimaWidget extends LeafRenderObjectWidget

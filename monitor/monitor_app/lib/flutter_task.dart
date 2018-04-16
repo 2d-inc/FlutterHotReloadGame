@@ -72,7 +72,6 @@ class FlutterTask
 		}
 		else if(line.indexOf(new RegExp(r"Reloaded [0-9]+ of [0-9]+ libraries in [0-9,]+ms.")) != -1)
 		{
-			print("RELOAD!");
 			if(_reloadedHandler != null)
 			{
 				_reloadedHandler();

@@ -174,7 +174,7 @@ class GameClient
     {
         assert(_sendTaskTime == null);
         _currentTask = _server.getNextTask(this);
-        print("ASSIGNED TASK $_currentTask to $_idx");
+        //print("ASSIGNED TASK $_currentTask to $_idx");
         _taskStatus = _currentTask == null ? TaskStatus.noMore : TaskStatus.inProgress;
         _sendTaskTime = null;
         if(delaySend)
@@ -266,7 +266,6 @@ class GameServer
     FlutterTask _flutterTask;
     TaskList _taskList;
     List<GameClient> _clients = new List<GameClient>();
-    double _lastFrameTime = 0.0;
     bool _inGame = false;
     bool _isHotReloading = false;
     bool _waitingToHotReload = false;
@@ -279,28 +278,23 @@ class GameServer
     GameServer(this._flutterTask, this._template)
     {
         SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
+        SchedulerBinding.instance.scheduleForcedFrame();
         connect();
     }
 
     void beginFrame(Duration timeStamp) 
 	{
-		final double t = timeStamp.inMicroseconds / Duration.microsecondsPerMillisecond / 1000.0;
-		
-		if(_lastFrameTime == 0)
-		{
-			_lastFrameTime = t;
-			SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
-			// hack to circumvent not being enable to initialize lastFrameTime to a starting timeStamp (maybe it's just the date?)
-			// Is the FrameCallback supposed to pass elapsed time since last frame? timeStamp seems to behave more like a date
-			return;
-		}
-
         if(_inGame)
         {
             gameLoop();
         }
 
-        SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
+        if(!SchedulerBinding.instance.framesEnabled)
+        {
+            print("TEST MESSAGE: FRAMES WON'T FIRE");
+        }
+        SchedulerBinding.instance.scheduleFrameCallback(beginFrame, rescheduling:true);
+        SchedulerBinding.instance.scheduleForcedFrame();
     }
 
     void connect()
