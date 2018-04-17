@@ -333,9 +333,9 @@ class GameServer
 
     void connect()
     {
-        HttpServer.bind("10.76.253.124", 8080)
+        // HttpServer.bind("10.76.253.124", 8080)
         //String address = "192.168.1.156";
-        //HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080)
+        HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080)
             .then((server) async
             {
                 print("Serving at ${server.address}, ${server.port}");
@@ -547,75 +547,5 @@ class GameServer
         GameClient client = new GameClient(this, socket, _clients.length);
         _clients.add(client);
         sendReadyState();
-    }
-
-    List<Map> generateCommands()
-    {
-        List<Map> clientCommands = [];
-        var random = new Random();
-        List<CommandTypes> allCommands = CommandTypes.values;
-        // TODO: compute the best fit for the commands
-        for(int i = 0; i < 4; i++)
-        {
-            int index = random.nextInt(allCommands.length);
-            Map currentCommand;
-            CommandTypes ct = allCommands[index];
-            switch(ct)
-            {
-                // TODO: randomize parameters values
-                case CommandTypes.binary:
-                    currentCommand = _makeBinary("DATA CONNECTION", [ "BODY TEXT", "HEADLINE" ]);
-                    break;
-                case CommandTypes.radial:
-                    currentCommand = _makeRadial("MARGIN", 0, 40);
-                    break;
-                case CommandTypes.slider:
-                    currentCommand = _makeSlider("HEIGHT", 0, 200);
-                    break;
-                default:
-                    print("UNKOWN COMMAND ${ct}");
-                    break;
-            }
-            clientCommands.add(currentCommand);
-        }
-
-        return clientCommands;
-    }
-
-    static Map _makeSlider(String title, int min, int max)
-    {
-        return {
-            "type": "GameSlider",
-            "title": title,
-            "min": min,
-            "max": max
-        };
-    }
-
-    static Map _makeRadial(String title, int min, int max)
-    {
-        return {
-            "type": "GameRadial",
-            "title": title,
-            "min": min,
-            "max": max
-        };
-    }
-
-    static Map _makeBinary(String title, List<String> options)
-    {
-        return {
-            "type": "GameBinaryButton",
-            "title": title,
-            "buttons": options
-        };
-    }
-
-    static Map _makeToggle(String title)
-    {
-        return {
-            "type": "GameToggle",
-            "title": title
-        };
     }
 }
