@@ -19,7 +19,7 @@ import "server.dart";
 import "monitor_scene.dart";
 import "tasks/command_tasks.dart";
 
-const double STDOUT_PADDING = 18.0;
+const double STDOUT_PADDING = 41.0;
 const double STDOUT_HEIGHT = 110.0 - STDOUT_PADDING;
 const int STDOUT_MAX_LINES = 4;
 
@@ -359,10 +359,42 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							left: CODE_BOX_MARGIN_LEFT,
 							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT - STDOUT_PADDING,
 							width: CODE_BOX_SCREEN_WIDTH,
+							height: STDOUT_HEIGHT + STDOUT_PADDING,
+							child: new Container
+							(
+								color: const Color.fromARGB(18, 255, 159, 159),
+								child: new Column
+								(
+									crossAxisAlignment: CrossAxisAlignment.start,
+									mainAxisSize: MainAxisSize.max,
+									children: <Widget>
+									[
+										new Container
+										(
+											width: double.infinity,
+											color: const Color.fromARGB(18, 255, 159, 159),
+											padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
+											child: new Text("STDOUT:", style: new TextStyle(color: new Color.fromARGB(128, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
+										),
+										new Expanded(child:new Container
+										(
+											padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
+											child: new Text("Syncing files to iPhone 8...", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
+										))
+
+									],
+								)
+							)
+						)
+						/*!hasMonitorCoordinates ? new Container() : new Positioned(
+							left: CODE_BOX_MARGIN_LEFT,
+							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT - STDOUT_PADDING,
+							width: CODE_BOX_SCREEN_WIDTH,
 							height: STDOUT_PADDING,
 							child: new Container(
-								color: Colors.white,
-								child: new Text("// STDOUT:")
+								color: const Color.fromARGB(18, 255, 159, 159),
+								padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
+								child: new Text("STDOUT:", style: new TextStyle(color: new Color.fromARGB(128, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
 							)
 						),
 						!hasMonitorCoordinates ? new Container() : new Positioned(
@@ -371,7 +403,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							width: CODE_BOX_SCREEN_WIDTH,
 							height: STDOUT_HEIGHT,
 							child: new CodeBoxWidget(_stdoutQueue.join("\n"), 0.0, _highlight, 0)
-						)
+						)*/
 					],
 			);
 

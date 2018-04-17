@@ -36,6 +36,8 @@ flutter:
   - family: Inconsolata
     fonts:
       - asset: assets/fonts/Inconsolata-Regular.ttf
+      - asset: assets/fonts/Inconsolata-Bold.ttf
+        weight: 700
 
   assets:
     - assets/button1.mp3
