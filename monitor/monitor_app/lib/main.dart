@@ -18,6 +18,7 @@ import "package:flutter/scheduler.dart";
 import "server.dart";
 import "monitor_scene.dart";
 import "tasks/command_tasks.dart";
+import "stdout_display.dart";
 
 const double STDOUT_PADDING = 41.0;
 const double STDOUT_HEIGHT = 110.0 - STDOUT_PADDING;
@@ -208,7 +209,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 				()
 				{
 					String r;
-					if(_stdoutQueue.length > STDOUT_MAX_LINES - 1)
+					while(_stdoutQueue.length > STDOUT_MAX_LINES - 1)
 					{
 						r = _stdoutQueue.removeFirst();
 					}
@@ -379,7 +380,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 										new Expanded(child:new Container
 										(
 											padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
-											child: new Text("Syncing files to iPhone 8...", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
+											child: StdoutDisplay(_stdoutQueue.join("\n"))//new Text("Syncing files to iPhone 8...", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
 										))
 
 									],
