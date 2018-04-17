@@ -16,11 +16,9 @@ import "package:flutter/animation.dart";
 import "dart:ui" as ui;
 import "package:flutter/scheduler.dart";
 import "server.dart";
+import "monitor_scene.dart";
+import "tasks/command_tasks.dart";
 
-const double CODE_BOX_SCREEN_WIDTH = 1052.0;
-const double CODE_BOX_SCREEN_HEIGHT = 566.0;
-const double CODE_BOX_MARGIN_LEFT = 721.0;
-const double CODE_BOX_MARGIN_TOP = 200.0;
 const double STDOUT_PADDING = 18.0;
 const double STDOUT_HEIGHT = 110.0 - STDOUT_PADDING;
 const int STDOUT_MAX_LINES = 4;
@@ -102,10 +100,29 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	Animation<double> _highlightAnimation;
 	AnimationStatusListener _scrollStatusListener;
 
+	Offset _monitorTopLeft;
+	Offset _monitorBottomRight;
+	DateTime _startTaskTime;
+	DateTime _failTaskTime;
+	DateTime _waitMessageTime;
+	int _characterIndex = 0;
+	String _characterMessage;
+	IssuedTask _currentDisplayTask = null;
+	void showLobby()
+	{
+		_characterIndex = 0;
+		_characterMessage = "WAITING FOR 2 PLAYERS!";
+		_startTaskTime = null;
+		_failTaskTime = null;
+	}
+
 	@override
 	initState()
 	{
 		super.initState();
+
+		showLobby();
+
 		_scrollController = new AnimationController(duration: const Duration(milliseconds: 350), vsync: this)
 			..addListener(
 				() {
@@ -220,6 +237,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 				_flutterTask.load('"iPhone 8"').then((success)
 				{
 					_server = new GameServer(_flutterTask, _contents);
+					
 					_server.onUpdateCode = (String code, int lineOfInterest)
 					{
 						setState(()
@@ -236,6 +254,44 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							_scrollController
 								..value = 0.0
 								..animateTo(1.0, curve: Curves.easeInOut);
+						});
+					};
+
+					_server.onTaskIssued = (IssuedTask task, DateTime failTime)
+					{
+						if((_failTaskTime == null || new DateTime.now().isAfter(_failTaskTime)) && (_waitMessageTime == null || new DateTime.now().isAfter(_waitMessageTime)))
+						{
+							setState(()
+							{
+								_characterIndex = new Random().nextInt(4);
+								_characterMessage = task.task.getIssueCommand(task.value);
+								_startTaskTime = new DateTime.now();
+								_currentDisplayTask = task;
+								_failTaskTime = failTime;
+							});
+						}
+					};
+
+					_server.onTaskCompleted = (IssuedTask task, DateTime failTime, String message)
+					{
+						if(_currentDisplayTask == task)
+						{
+							setState(()
+							{
+								_characterMessage = message;
+								_startTaskTime = null;
+								_currentDisplayTask = task;
+								_failTaskTime = null;
+								_waitMessageTime = new DateTime.now().add(const Duration(seconds: 2));
+							});
+						}
+					};
+
+					_server.onGameOverCallback = ()
+					{
+						setState(()
+						{
+							showLobby();
 						});
 					};
 				});
@@ -256,6 +312,13 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	{
 		Size sz = MediaQuery.of(context).size;
 
+		final bool hasMonitorCoordinates = _monitorTopLeft != null && _monitorBottomRight != null;
+
+		final double CODE_BOX_SCREEN_WIDTH = hasMonitorCoordinates ? _monitorBottomRight.dx - _monitorTopLeft.dx : 0.0;
+		final double CODE_BOX_SCREEN_HEIGHT = hasMonitorCoordinates ? _monitorBottomRight.dy - _monitorTopLeft.dy : 0.0;
+		final double CODE_BOX_MARGIN_LEFT = hasMonitorCoordinates ? _monitorTopLeft.dx : 0.0;
+		final double CODE_BOX_MARGIN_TOP = hasMonitorCoordinates ? _monitorTopLeft.dy : 0.0;
+
 		Stack stack = new Stack(
 					children: 
 					[
@@ -266,17 +329,21 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							child: new Stack(
 										children: 
 										[
-											new Image.asset(
-												"/assets/images/tv_background.png",
-												bundle: rootBundle,
-												width: sz.width,
-												height: sz.height
-											),
-											// new NimaWidget("/assets/nima/NPC1/NPC1")
+											new MonitorScene(state:MonitorSceneState.BossOnly, characterIndex: _characterIndex, message:_characterMessage, startTime: _startTaskTime, endTime:_failTaskTime, monitorExtentsCallback:(Offset topLeft, Offset bottomRight)
+											{
+												if(_monitorTopLeft != topLeft || _monitorBottomRight != bottomRight)
+												{
+													setState(() 
+													{
+														_monitorTopLeft = topLeft;
+														_monitorBottomRight = bottomRight;
+													});
+												}	
+											})
 										]
 									)
 						),
-						new Positioned(
+						!hasMonitorCoordinates ? new Container() : new Positioned(
 							left: CODE_BOX_MARGIN_LEFT,
 							top: CODE_BOX_MARGIN_TOP,
 							width: CODE_BOX_SCREEN_WIDTH,
@@ -288,7 +355,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 									_highlightAlpha
 								)
 						),
-						new Positioned(
+						!hasMonitorCoordinates ? new Container() : new Positioned(
 							left: CODE_BOX_MARGIN_LEFT,
 							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT - STDOUT_PADDING,
 							width: CODE_BOX_SCREEN_WIDTH,
@@ -298,7 +365,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 								child: new Text("// STDOUT:")
 							)
 						),
-						new Positioned(
+						!hasMonitorCoordinates ? new Container() : new Positioned(
 							left: CODE_BOX_MARGIN_LEFT,
 							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT,
 							width: CODE_BOX_SCREEN_WIDTH,

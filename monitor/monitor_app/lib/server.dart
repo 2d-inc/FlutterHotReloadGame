@@ -10,7 +10,32 @@ import 'flutter_task.dart';
 
 enum CommandTypes { slider, radial, binary }
 enum TaskStatus { complete, inProgress, failed, noMore }
+
 typedef void UpdateCodeCallback(String code, int line);
+typedef void OnTaskIssuedCallback(IssuedTask task, DateTime failTime);
+typedef void OnTaskCompletedCallback(IssuedTask task, DateTime failTime, String message);
+
+List<String> completedMessages = <String>
+[
+    "Nicely done!",
+    "Looking good!",
+    "Like a glove!",
+    "Exactly what I wanted!",
+    "You're a star!",
+    "Home run!",
+    "You're my favorite!",
+    "Keep it up!"
+];
+
+List<String> failedMessages = <String>
+[
+    "You're dead to me!",
+    "Get out of my sight!",
+    "Look at what you've done!",
+    "Are you even listening to me?!",
+    "Hello? Hello?! Anybody home?!",
+    "This is a disgrace."
+];
 
 class GameClient
 {
@@ -100,11 +125,14 @@ class GameClient
 
     void _completeTask()
     {
+        String message = completedMessages[new Random().nextInt(completedMessages.length)];
+
+        _server.onTaskCompleted(_currentTask, _failTaskTime, message);
         _server.completeTask(_currentTask);
         _taskStatus = TaskStatus.complete;
         _currentTask = null;
         _failTaskTime = null;
-        _sendJSONMessage("taskComplete", "Like a glove!");
+        _sendJSONMessage("taskComplete", message);
     }
 
     void _sendTask()
@@ -133,7 +161,8 @@ class GameClient
         }
         _taskStatus = TaskStatus.failed;
         _currentTask = null;
-        _sendJSONMessage("taskFail", "You're dead to me!" );
+
+        _sendJSONMessage("taskFail", failedMessages[new Random().nextInt(failedMessages.length)]);
     }
 
     get isReady => _isReady;
@@ -190,6 +219,8 @@ class GameClient
         {
             int expiry = _currentTask.expires;
             _failTaskTime = new DateTime.now().add(new Duration(seconds:delaySend ? expiry + timeBetweenTasks.inSeconds : expiry));
+
+            _server.onTaskIssued(_currentTask, _failTaskTime);
         }
     }
 
@@ -272,6 +303,9 @@ class GameServer
     String _template;
     int _lineOfInterest = 0;
     UpdateCodeCallback onUpdateCode;
+    OnTaskIssuedCallback onTaskIssued;
+    OnTaskCompletedCallback onTaskCompleted;
+    VoidCallback onGameOverCallback;
 
     Map<String, CommandTask> _completedTasks;
 
@@ -454,6 +488,7 @@ class GameServer
         {
             gc.gameOver();
         }
+        onGameOverCallback();
 
         sendReadyState();
     }

@@ -70,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
 				children: <Widget>[
 					featuredRestaurantSize > 10 ? new Container(
 						height:featuredRestaurantSize,
-						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: CAROUSEL_CORNER_RADIUS,),
+						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: 30.0,),
 					) : 
 					new Column(
 						crossAxisAlignment: CrossAxisAlignment.start,
