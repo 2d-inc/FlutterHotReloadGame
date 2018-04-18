@@ -155,10 +155,6 @@ class GameClient
 
     void _failTask()
     {
-        if(_currentTask.task.doesAutocomplete())
-        {
-            _server.completeTask(_currentTask);
-        }
         _taskStatus = TaskStatus.failed;
         _currentTask = null;
 
@@ -265,10 +261,14 @@ class GameClient
             return false;
         }
         
-        if(_currentTask.task.taskType() == type && _currentTask.value == value)
+        if(_currentTask.task.taskType() == type)
         {
-            _completeTask();
-            return true;
+            _currentTask.task.setCurrentValue(value);
+            if(_currentTask.value == value)
+            {
+                _completeTask();
+                return true;
+            }
         }
 
         return false;
@@ -335,7 +335,8 @@ class GameServer
     {
         // HttpServer.bind("10.76.253.124", 8080)
         //String address = "192.168.1.156";
-        HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080)
+        HttpServer.bind("10.76.253.124", 8080)
+        //HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080)
             .then((server) async
             {
                 print("Serving at ${server.address}, ${server.port}");
@@ -407,7 +408,7 @@ class GameServer
         }
 
         // Build the full list.
-        _taskList = new TaskList();
+        _taskList = new TaskList(numClientsReady);
         List<CommandTask> taskTypes = new List<CommandTask>.from(_taskList.toAssign);
         _completedTasks = new Map<String, CommandTask>();
         
@@ -501,6 +502,9 @@ class GameServer
             _lineOfInterest = it.task.lineOfInterest;
         }
         _completedTasks[it.task.taskType()] = it.task;
+
+        _template = _taskList.completeTask(_template);
+
         hotReload();
     }
 

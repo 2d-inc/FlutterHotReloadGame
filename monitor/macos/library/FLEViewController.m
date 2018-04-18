@@ -251,7 +251,8 @@ static bool HeadlessOnMakeResourceCurrent(FLEViewController *controller) { retur
         .open_gl.clear_current = (BoolCallback)HeadlessOnClearCurrent,
         .open_gl.present = (BoolCallback)HeadlessOnPresent,
         .open_gl.fbo_callback = (UIntCallback)HeadlessOnFBO,
-        .open_gl.make_resource_current = (BoolCallback)HeadlessOnMakeResourceCurrent};
+        .open_gl.make_resource_current = (BoolCallback)HeadlessOnMakeResourceCurrent
+    };
     return config;
   } else {
     const FlutterRendererConfig config = {
@@ -261,7 +262,9 @@ static bool HeadlessOnMakeResourceCurrent(FLEViewController *controller) { retur
         .open_gl.clear_current = (BoolCallback)OnClearCurrent,
         .open_gl.present = (BoolCallback)OnPresent,
         .open_gl.fbo_callback = (UIntCallback)OnFBO,
-        .open_gl.make_resource_current = (BoolCallback)OnMakeResourceCurrent};
+        .open_gl.make_resource_current = (BoolCallback)OnMakeResourceCurrent
+        
+    };
     return config;
   }
 }

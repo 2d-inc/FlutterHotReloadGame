@@ -1,6 +1,5 @@
 import "dart:math";
 import "command_tasks.dart";
-import "replace_widget_tasks.dart";
 
 class ListCornerRadius extends CommandTask
 {
@@ -41,33 +40,32 @@ class ListCornerRadius extends CommandTask
 		return "Set List Corner Radius";
 	}
 
-	bool doesAutoApply()
-	{
-		return true;
-	}
-
-	void tryToIssue(List<IssuedTask> currentQueue)
+	IssuedTask issue()
 	{
 		Random rand = new Random();
-		switch(rand.nextInt(3))
+		int v = value;
+		while(v == value)
 		{
-			case 0:
-				currentQueue.add(new IssuedTask()..task = this
-													..value = 0);
-				break;
-			case 1:
-				currentQueue.add(new IssuedTask()..task = this
-													..value = 15);
-				break;
-			case 2:
-				currentQueue.add(new IssuedTask()..task = this
-													..value = 60);
-				break;
+			switch(rand.nextInt(3))
+			{
+				case 0:
+					v = 0;
+					break;
+				case 1:
+					v = 15;
+					break;
+				case 2:
+					v = 60;
+					break;
+			}
 		}
+		return new IssuedTask()
+								..task = this
+								..value = v;
 	}
 }
 
-class CarouselCornerRadius extends CommandTask
+class FeaturedCornerRadius extends CommandTask
 {
 	int _cornerRadius = 0;
 
@@ -81,62 +79,122 @@ class CarouselCornerRadius extends CommandTask
 		_cornerRadius = value;
 		if(!hasLineOfInterest)
 		{
-			findLineOfInterest(code, "CAROUSEL_CORNER_RADIUS");
+			findLineOfInterest(code, "FEATURED_CORNER_RADIUS");
 		}
 	}
 	
 	String getIssueCommand(int value)
 	{
-		return "SET CAROUSEL CORNER RADIUS TO $value";
+		return "SET FEATURED CORNER RADIUS TO $value";
 	}
 
 	String apply(String code)
 	{
-		code = code.replaceAll("CAROUSEL_CORNER_RADIUS", _cornerRadius.toString() + ".0");
+		code = code.replaceAll("FEATURED_CORNER_RADIUS", _cornerRadius.toString() + ".0");
 		return code;
 	}
 
 	String taskType()
 	{
-		return "CarouselRadius";
+		return "FeaturedRadius";
 	}
 
 	String taskLabel()
 	{
-		return "Set Carousel Corner Radius";
+		return "Set Featured Corner Radius";
 	}
 
-	bool doesAutoApply()
+	IssuedTask issue()
 	{
-		return true;
-	}
-
-	void tryToIssue(List<IssuedTask> currentQueue)
-	{
-		// We can only set the corner radius if the styling of the carousel has been set.
-		int index = currentQueue.indexWhere((IssuedTask t)
-		{	
-			return t.task is ShowFeaturedCarousel;
-		});
-		if(index == -1)
-		{
-			return;
-		}
 		Random rand = new Random();
-		switch(rand.nextInt(3))
+		int v = value;
+		while(v == value)
 		{
-			case 0:
-				currentQueue.add(new IssuedTask()..task = this
-													..value = 8);
-				break;
-			case 1:
-				currentQueue.add(new IssuedTask()..task = this
-													..value = 15);
-				break;
-			case 2:
-				currentQueue.add(new IssuedTask()..task = this
-													..value = 30);
-				break;
+			switch(rand.nextInt(3))
+			{
+				case 0:
+					v = 8;
+					break;
+				case 1:
+					v = 15;
+					break;
+				case 2:
+					v = 30;
+					break;
+			}
 		}
+		return new IssuedTask()
+								..task = this
+								..value = v;
+	}
+}
+
+class AppPadding extends CommandTask
+{
+	int _padding = 20;
+
+	Map serialize()
+	{
+		return CommandTask.makeRadial(this, 0, 60);
+	}
+
+	void complete(int value, String code)
+	{
+		_padding = value;
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "APP_PADDING");
+		}
+	}
+	
+	String getIssueCommand(int value)
+	{
+		return "SET PADDING TO $value";
+	}
+
+	String apply(String code)
+	{
+		code = code.replaceAll("APP_PADDING", _padding.toString() + ".0");
+		return code;
+	}
+
+	String taskType()
+	{
+		return "AppPadding";
+	}
+
+	String taskLabel()
+	{
+		return "Set Padding";
+	}
+
+	IssuedTask issue()
+	{
+		Random rand = new Random();
+		int v = value;
+		while(v == value)
+		{
+			switch(rand.nextInt(5))
+			{
+				case 0:
+					v = 15;
+					break;
+				case 1:
+					v = 30;
+					break;
+				case 2:
+					v = 45;
+					break;
+				case 3:
+					v = 60;
+					break;
+				case 4:
+					v = 0;
+					break;
+			}
+		}
+		return new IssuedTask()
+								..task = this
+								..value = v;
 	}
 }

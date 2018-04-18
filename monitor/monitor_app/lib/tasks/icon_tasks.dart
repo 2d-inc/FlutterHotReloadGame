@@ -57,12 +57,7 @@ class AddIconATask extends CommandTask
 		return "Add Icon";
 	}
 
-	bool doesAutoApply()
-	{
-		return true;
-	}
-
-	void tryToIssue(List<IssuedTask> currentQueue)
+	IssuedTask issue()
 	{
 		for(int i = 0; i < 10; i++)
 		{
@@ -70,31 +65,30 @@ class AddIconATask extends CommandTask
 			switch(rand.nextInt(3))
 			{
 				case 0:
-					if(currentQueue.indexWhere((IssuedTask t) { return t.task is AddIconATask && t.value == 0; }) > -1)
+					if(!_hasPizza)
 					{
-						continue;
+						return new IssuedTask()..task = this
+												..value = 0;
 					}
-					currentQueue.add(new IssuedTask()..task = this
-													..value = 0);
-					return;
+					break;
 				case 1:
-					if(currentQueue.indexWhere((IssuedTask t) { return t.task is AddIconATask && t.value == 1; }) > -1)
+					if(!_hasBurger)
 					{
-						continue;
+						return new IssuedTask()..task = this
+												..value = 1;
 					}
-					currentQueue.add(new IssuedTask()..task = this
-													..value = 1);
-					return;
+					break;
 				case 2:
-					if(currentQueue.indexWhere((IssuedTask t) { return t.task is AddIconATask && t.value == 2; }) > -1)
+					if(!_hasDessert)
 					{
-						continue;
+						return new IssuedTask()..task = this
+												..value = 21;
 					}
-					currentQueue.add(new IssuedTask()..task = this
-													..value = 2);
-					return;
+					break;
 			}
 		}
+
+		return null;
 	}
 }
 
@@ -149,12 +143,7 @@ class AddIconBTask extends CommandTask
 		return "Add Icon";
 	}
 
-	bool doesAutoApply()
-	{
-		return true;
-	}
-
-	void tryToIssue(List<IssuedTask> currentQueue)
+	IssuedTask issue()
 	{
 		for(int i = 0; i < 10; i++)
 		{
@@ -162,22 +151,132 @@ class AddIconBTask extends CommandTask
 			switch(rand.nextInt(2))
 			{
 				case 0:
-					if(currentQueue.indexWhere((IssuedTask t) { return t.task is AddIconBTask && t.value == 0; }) > -1)
+					if(!_hasSushi)
 					{
-						continue;
+						return new IssuedTask()..task = this
+												..value = 0;
 					}
-					currentQueue.add(new IssuedTask()..task = this
-													..value = 0);
-					return;
+					break;
 				case 1:
-					if(currentQueue.indexWhere((IssuedTask t) { return t.task is AddIconBTask && t.value == 1; }) > -1)
+					if(!_hasNoodles)
 					{
-						continue;
+						return new IssuedTask()..task = this
+												..value = 1;
 					}
-					currentQueue.add(new IssuedTask()..task = this
-													..value = 1);
-					return;
+					break;
 			}
 		}
+		return null;
+	}
+}
+
+
+class SetBackgroundColor extends CommandTask
+{
+	List<String> options = ["WHITE", "GREY", "GREENISH"];
+	List<String> colors = ["Colors.white", "Color.fromARGB(255, 242, 243, 246)", "Color.fromARGB(255, 200, 243, 200)"];
+	int _colorIdx = 0;
+	Map serialize()
+	{
+		return CommandTask.makeBinary(this, options);
+	}
+
+	void complete(int value, String code)
+	{
+		_colorIdx = value;
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "BACKGROUND_COLOR");
+		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		String name = options[value];
+		return "SET BACKGROUND COLOR TO $name!";
+	}
+
+	String apply(String code)
+	{
+		return code.replaceAll("\"BACKGROUND_COLOR\"", colors[_colorIdx]);
+	}
+
+	String taskType()
+	{
+		return "IconA";
+	}
+
+	String taskLabel()
+	{
+		return "Add Icon";
+	}
+
+	IssuedTask issue()
+	{
+		Random rand = new Random();
+		int v = value;
+		while(v == value)
+		{
+			v = rand.nextInt(3);
+		}
+
+		return new IssuedTask()
+								..task = this
+								..value = v;
+	}
+}
+
+class CarouselIcons extends CommandTask
+{
+	List<String> options = ["HIDDEN", "STATIC", "ANIMATED"];
+	List<String> values = ["IconType.hidden", "IconType.still", "IconType.animated"];
+	int _valueIdx = 0;
+	Map serialize()
+	{
+		return CommandTask.makeBinary(this, options);
+	}
+
+	void complete(int value, String code)
+	{
+		_valueIdx = value;
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "CAROUSEL_ICON_TYPE");
+		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		String name = options[value];
+		return "SET CAROUSEL ICONS TO $name!";
+	}
+
+	String apply(String code)
+	{
+		return code.replaceAll("\"CAROUSEL_ICON_TYPE\"", values[_valueIdx]);
+	}
+
+	String taskType()
+	{
+		return "CarouselIconType";
+	}
+
+	String taskLabel()
+	{
+		return "Set Carousel Icons";
+	}
+
+	IssuedTask issue()
+	{
+		Random rand = new Random();
+		int v = value;
+		while(v == value)
+		{
+			v = rand.nextInt(3);
+		}
+
+		return new IssuedTask()
+								..task = this
+								..value = v;
 	}
 }

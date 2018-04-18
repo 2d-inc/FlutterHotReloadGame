@@ -1,14 +1,18 @@
 abstract class CommandTask
 {
-    int _lineOfInterest = null;
+    int value;
+    int _lineOfInterest;
 	String apply(String code);
 	void complete(int value, String code);
+    void setCurrentValue(int value)
+    {
+        this.value = value;
+    }
 	String taskType();
 	String taskLabel();
 	String getIssueCommand(int value);
-	void tryToIssue(List<IssuedTask> currentQueue);
+	IssuedTask issue();
 	Map serialize();
-    bool doesAutocomplete() { return false; }
 
     bool get hasLineOfInterest
     {

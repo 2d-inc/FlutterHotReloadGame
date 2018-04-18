@@ -5,8 +5,23 @@ import "package:flare/flare.dart" as flr;
 import "dart:typed_data";
 import "package:flutter/scheduler.dart";
 
-const double CAROUSEL_CORNER_RADIUS = 10.0;
+const double FEATURED_CORNER_RADIUS = 0.0;
 const double FEATURED_RESTAURANT_SIZE = 0.0;
+const double APP_PADDING = 20.0;
+const String PIZZA_ICON = null;
+const String BURGER_ICON = null;
+const String DESSERT_ICON = null;
+
+const Color BACKGROUND_COLOR = Colors.white;
+
+enum IconType
+{
+	hidden,
+	still,
+	animated
+}
+
+const CAROUSEL_ICON_TYPE = IconType.hidden;
 
 class FeaturedRestaurantSimple extends StatelessWidget
 {
@@ -14,13 +29,17 @@ class FeaturedRestaurantSimple extends StatelessWidget
 	{
 		Key key,
 		this.description,
-		this.deliveryTime
+		this.deliveryTime,
+		this.cornerRadius,
+		this.iconType
 	}) : assert(name != null),
 			super(key: key);
 	
 	final String name;
 	final String description;
 	final int deliveryTime;
+	final double cornerRadius;
+	final IconType iconType;
 	
 	Widget build(BuildContext context) 
 	{
@@ -39,6 +58,7 @@ class FeaturedRestaurantSimple extends StatelessWidget
 									color: Colors.black,
 									width: 1.0,
 								),
+								borderRadius: new BorderRadius.circular(cornerRadius)
 							)
 						)
 					),
@@ -62,13 +82,17 @@ class FeaturedRestaurantAligned extends StatelessWidget
 	{
 		Key key,
 		this.description,
-		this.deliveryTime
+		this.deliveryTime,
+		this.cornerRadius,
+		this.iconType
 	}) : assert(name != null),
 			super(key: key);
 	
 	final String name;
 	final String description;
 	final int deliveryTime;
+	final double cornerRadius;
+	final IconType iconType;
 	
 	Widget build(BuildContext context) 
 	{
@@ -87,6 +111,7 @@ class FeaturedRestaurantAligned extends StatelessWidget
 									color: Colors.black,
 									width: 1.0,
 								),
+								borderRadius: new BorderRadius.circular(cornerRadius)
 							)
 						)
 					),
@@ -118,7 +143,7 @@ class FeaturedRestaurantData
 	final int deliveryTime;
 	final Color color;
 	final String flare;
-
+	
 	const FeaturedRestaurantData(this.name,
 		{
 			this.description,
@@ -130,10 +155,11 @@ class FeaturedRestaurantData
 
 class FeaturedCarousel extends StatefulWidget 
 {
-	FeaturedCarousel({Key key, this.data, this.cornerRadius}) : super(key: key);
+	FeaturedCarousel({Key key, this.data, this.cornerRadius, this.iconType}) : super(key: key);
 
 	final List<FeaturedRestaurantData> data;
 	final double cornerRadius;
+	final IconType iconType;
 
 	@override
 	_FeaturedCarouselState createState() => new _FeaturedCarouselState(data);
@@ -212,7 +238,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with SingleTickerPr
 			}
 			FeaturedRestaurantData restaurant = data[visibleIdx+i];
 			//visibleHeros.add(new RepaintBoundary(child:new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare)));
-			visibleHeros.add(new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare));
+			visibleHeros.add(new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare, iconType:widget.iconType));
 			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i, deliveryTime: restaurant.deliveryTime, cornerRadius:widget.cornerRadius));
 		}
 
@@ -473,13 +499,15 @@ class RestaurantHero extends LeafRenderObjectWidget
 	final Color color;
 	final String flare;
 	final double scroll;
+	final IconType iconType;
 
 	RestaurantHero(
 		{
 			Key key, 
 			this.color,
 			this.flare,
-			this.scroll = 0.0
+			this.scroll = 0.0,
+			this.iconType
 		}): super(key: key);
 
 	@override
@@ -488,7 +516,8 @@ class RestaurantHero extends LeafRenderObjectWidget
 		return new RestaurantHeroRenderObject(
 					color:color,
 					flare:flare,
-					scroll:scroll);
+					scroll:scroll,
+					iconType:iconType);
 	}
 
 	@override
@@ -496,7 +525,8 @@ class RestaurantHero extends LeafRenderObjectWidget
 	{
 		renderObject..color = color
 					..flare = flare
-					..scroll = scroll;
+					..scroll = scroll
+					..iconType = iconType;
 	}
 
 	@override
@@ -518,6 +548,7 @@ class RestaurantHeroRenderObject extends RenderBox
 	double _animationTime = 0.0;
 	double _lastFrameTime = 0.0;
 	bool _isPlaying = false;
+	IconType _iconType = IconType.hidden;
 
 	set isPlaying(bool play)
 	{
@@ -553,7 +584,11 @@ class RestaurantHeroRenderObject extends RenderBox
 		
 		if(_actor != null)
 		{
-			_animationTime += elapsed;
+			if(_iconType == IconType.animated)
+			{
+				_animationTime += elapsed;
+			}
+			
 			if(_animation != null)
 			{
 				_animation.apply(_animationTime%_animation.duration, _actor, 1.0);
@@ -572,12 +607,14 @@ class RestaurantHeroRenderObject extends RenderBox
 		{
 			Color color,
 			String flare,
-			double scroll = 0.0
+			double scroll = 0.0,
+			IconType iconType
 		})
 	{
 		_color = color;	
 		this.flare = flare;	
 		_scroll = scroll;
+		this.iconType = iconType;
 	}
 
 	@override
@@ -626,7 +663,7 @@ class RestaurantHeroRenderObject extends RenderBox
 
 		const double verticalOffset = -75.0;
 		
-		if(_actor != null)
+		if(_actor != null && _iconType != IconType.hidden)
 		{
 			canvas.save();
 			canvas.translate(_scroll * (width+ItemPadding), 0.0);
@@ -634,6 +671,25 @@ class RestaurantHeroRenderObject extends RenderBox
 			_actor.draw(canvas);
 			canvas.restore();
 		}
+	}
+
+	IconType get iconType
+	{
+		return _iconType;
+	}
+
+	set iconType(IconType type)
+	{
+		if(_iconType == type)
+		{
+			return;
+		}
+		_iconType = type;
+		if(type == IconType.still)
+		{
+			_animationTime = 0.0;
+		}
+		markNeedsPaint();
 	}
 
 	Color get color

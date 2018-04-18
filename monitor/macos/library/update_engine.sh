@@ -81,3 +81,9 @@ if [[ "${LAST_DOWNLOAD_VERSION}" != "${FLUTTER_EMBEDDER_SHA}" ]]; then
 else
   echo "${FRAMEWORK_FILENAME} version '${FLUTTER_EMBEDDER_SHA}' already present."
 fi
+
+#
+#https://storage.cloud.google.com/flutter_infra/flutter/0c09bf03d1dcde1a6c8cfaa2102949abac7757cd/darwin-x64/FlutterEmbedder.framework.zip
+
+
+#https://storage.cloud.google.com/flutter_infra/flutter/76cb311d9c33720dcd19274228b39ecdbad8d9af/darwin-x64/FlutterEmbedder.framework.zip
