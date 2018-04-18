@@ -13,15 +13,6 @@ class MyApp extends StatelessWidget {
 		return new MaterialApp(
 			title: 'Flutter Demo',
 			theme: new ThemeData(
-				// This is the theme of your application.
-				//
-				// Try running your application with "flutter run". You'll see the
-				// application has a blue toolbar. Then, without quitting the app, try
-				// changing the primarySwatch below to Colors.green and then invoke
-				// "hot reload" (press "r" in the console where you ran "flutter run",
-				// or press Run > Flutter Hot Reload in IntelliJ). Notice that the
-				// counter didn't reset back to zero; the application is not restarted.
-				primarySwatch: Colors.blue,
 			),
 			home: new MyHomePage(title: 'Flutter Demo Home Page'),
 		);
@@ -38,29 +29,20 @@ List<FeaturedRestaurantData> featuredRestaurants = <FeaturedRestaurantData>[
 class MyHomePage extends StatefulWidget {
 	MyHomePage({Key key, this.title}) : super(key: key);
 
-	// This widget is the home page of your application. It is stateful, meaning
-	// that it has a State object (defined below) that contains fields that affect
-	// how it looks.
-
-	// This class is the configuration for the state. It holds the values (in this
-	// case the title) provided by the parent (in this case the App widget) and
-	// used by the build method of the State. Fields in a Widget subclass are
-	// always marked "final".
-
 	final String title;
 
 	@override
 	_MyHomePageState createState() => new _MyHomePageState();
 }
 
-const featuredRestaurantSize = 304.0;
-
 class _MyHomePageState extends State<MyHomePage> {
 	@override
 	Widget build(BuildContext context) {
-		const Color backgroundColor = const Color.fromARGB(255, 242, 243, 246);// 
+
+		const double featuredRestaurantSize = 304.0;
+		
 		return new Container(
-			decoration:new BoxDecoration(color: backgroundColor),
+			decoration:new BoxDecoration(color: BACKGROUND_COLOR),
 			child:
 			new Stack(
 				children:<Widget>[
@@ -70,14 +52,14 @@ class _MyHomePageState extends State<MyHomePage> {
 				children: <Widget>[
 					featuredRestaurantSize > 10 ? new Container(
 						height:featuredRestaurantSize,
-						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: 30.0,),
+						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: 30.0, iconType:IconType.still),
 					) : 
 					new Column(
 						crossAxisAlignment: CrossAxisAlignment.start,
 						children: <Widget>
 						[
 							new Container(
-								padding:const EdgeInsets.fromLTRB(20.0, 15.0, 0.0, 10.0),
+								padding:const EdgeInsets.fromLTRB(45.0, 15.0, 0.0, 10.0),
 								child:new Text("Featured", 
 									style:const TextStyle(fontSize:13.0,color:Colors.black, decoration: TextDecoration.none)),
 							),
@@ -85,12 +67,12 @@ class _MyHomePageState extends State<MyHomePage> {
 								height:210.0,
 								child:new ListView(
 									shrinkWrap: true,
-									padding:const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
+									padding:const EdgeInsets.fromLTRB(45.0, 0.0, 0.0, 0.0),
 									scrollDirection: Axis.horizontal,
 									children: <Widget> [
-										const FeaturedRestaurantSimple('Pizzeria Delfina', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15),
-										const FeaturedRestaurantSimple('Bushido Izakaya', description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime:32),
-										const FeaturedRestaurantSimple('Umami Burgers', description: "Umami Burgers serves burgers, fries...", deliveryTime:45)
+										const FeaturedRestaurantAligned('Pizza Place', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15, cornerRadius:30.0),
+										const FeaturedRestaurantAligned('Sushi Overload', description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime:32, cornerRadius:30.0),
+										const FeaturedRestaurantAligned('Burger Paradise', description: "Umami Burgers serves burgers, fries...", deliveryTime:45, cornerRadius:30.0)
 									]
 								)
 							)
@@ -100,30 +82,26 @@ class _MyHomePageState extends State<MyHomePage> {
 						height:133.0,
 						child:new ListView(
 							shrinkWrap: true,
-							padding:const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
+							padding:const EdgeInsets.fromLTRB(45.0, 0.0, 0.0, 0.0),
 							scrollDirection: Axis.horizontal,
 							children: <Widget> [
-								const CategorySimple('Pizza', flare:"assets/flares/PizzaIcon"),
-								const CategorySimple('Burgers', flare:"assets/flares/BurgerIcon"),
-								const CategorySimple('Dessert'),
-								const CategorySimple('Sushi'),
-								const CategorySimple('Chinese'),
+								const CategoryDesigned('Pizza', flare:PIZZA_ICON),
+								const CategoryDesigned('Burgers', flare:BURGER_ICON),
+								const CategoryDesigned('Dessert', flare:DESSERT_ICON),
+								const CategoryDesigned('Sushi'),
+								const CategoryDesigned('Chinese'),
 							]
 						)
 					),
-					new RestaurantsHeaderSimple(),
-					/*const RestaurantSimple('Curry Up Now', description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
-					const RestaurantSimple('Sprout Cafe', description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2),
-					const RestaurantSimple('Asian Box', description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2),
-					const RestaurantSimple('pokeLove', description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2),*/
-					const RestaurantSimple('Indian Food', cornerRadius:LIST_CORNER_RADIUS, description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/samosa.jpg"),
-					const RestaurantSimple('Fancy Cafe', cornerRadius:LIST_CORNER_RADIUS, description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/cafe.jpg"),
-					const RestaurantSimple('Asian Fare', cornerRadius:LIST_CORNER_RADIUS, description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg"),
-					const RestaurantSimple('Fresh from Hawaii', cornerRadius:LIST_CORNER_RADIUS, description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg"),
+					new RestaurantsHeaderDesigned(),
+					const ListRestaurantDesigned('Indian Food', cornerRadius:15.0, description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/samosa.jpg"),
+					const ListRestaurantDesigned('Fancy Cafe', cornerRadius:15.0, description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/cafe.jpg"),
+					const ListRestaurantDesigned('Asian Fare', cornerRadius:15.0, description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg"),
+					const ListRestaurantDesigned('Fresh from Hawaii', cornerRadius:15.0, description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg"),
 				],
 			),
-			new Container(padding:const EdgeInsets.fromLTRB(20.0, 30.0, 0.0, 0.0), alignment: Alignment.topLeft, child:new Flare("assets/flares/MenuIcon")),
-			new Container(padding:const EdgeInsets.fromLTRB(0.0, 30.0, 20.0, 0.0), alignment: Alignment.topRight, child:new Flare("assets/flares/SearchIcon"))
+			new Container(padding:const EdgeInsets.fromLTRB(45.0, 30.0, 0.0, 0.0), alignment: Alignment.topLeft, child:new Flare("assets/flares/MenuIcon")),
+			new Container(padding:const EdgeInsets.fromLTRB(0.0, 30.0, 45.0, 0.0), alignment: Alignment.topRight, child:new Flare("assets/flares/SearchIcon"))
 			])
 		);
 	}

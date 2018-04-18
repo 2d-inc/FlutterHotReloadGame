@@ -41,9 +41,9 @@ class AddIconATask extends CommandTask
 
 	String apply(String code)
 	{
-		code = code.replaceAll("\"PIZZA_ICON\"", _hasPizza ? "\"assets/flares/PizzaIcon\"" : "null");
-		code = code.replaceAll("\"BURGER_ICON\"", _hasBurger ? "\"assets/flares/BurgerIcon\"" : "null");
-		code = code.replaceAll("\"DESSERT_ICON\"", _hasDessert ? "\"assets/flares/DessertIcon\"" : "null");
+		code = code.replaceAll("PIZZA_ICON", _hasPizza ? "\"assets/flares/PizzaIcon\"" : "null");
+		code = code.replaceAll("BURGER_ICON", _hasBurger ? "\"assets/flares/BurgerIcon\"" : "null");
+		code = code.replaceAll("DESSERT_ICON", _hasDessert ? "\"assets/flares/DessertIcon\"" : "null");
 		return code;
 	}
 
@@ -82,7 +82,7 @@ class AddIconATask extends CommandTask
 					if(!_hasDessert)
 					{
 						return new IssuedTask()..task = this
-												..value = 21;
+												..value = 2;
 					}
 					break;
 			}
@@ -128,8 +128,8 @@ class AddIconBTask extends CommandTask
 
 	String apply(String code)
 	{
-		code = code.replaceAll("\"SUSHI_ICON\"", _hasSushi ? "\"assets/flares/SushiIcon\"" : "null");
-		code = code.replaceAll("\"NOODLES_ICON\"", _hasNoodles ? "\"assets/flares/NoodlesIcon\"" : "null");
+		code = code.replaceAll("SUSHI_ICON", _hasSushi ? "\"assets/flares/SushiIcon\"" : "null");
+		code = code.replaceAll("NOODLES_ICON", _hasNoodles ? "\"assets/flares/NoodlesIcon\"" : "null");
 		return code;
 	}
 
@@ -198,7 +198,7 @@ class SetBackgroundColor extends CommandTask
 
 	String apply(String code)
 	{
-		return code.replaceAll("\"BACKGROUND_COLOR\"", colors[_colorIdx]);
+		return code.replaceAll("BACKGROUND_COLOR", colors[_colorIdx]);
 	}
 
 	String taskType()
@@ -253,7 +253,7 @@ class CarouselIcons extends CommandTask
 
 	String apply(String code)
 	{
-		return code.replaceAll("\"CAROUSEL_ICON_TYPE\"", values[_valueIdx]);
+		return code.replaceAll("CAROUSEL_ICON_TYPE", values[_valueIdx]);
 	}
 
 	String taskType()

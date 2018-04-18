@@ -35,7 +35,7 @@ class InGame extends StatelessWidget
 			int p2 = e2['priority'];
 			return p2-p1;
 		});
-		for(int i = 0; i < 5; i++)
+		for(int i = 0; i < _gridDescription.length; i++)
 		{
 			var description = _gridDescription[i % _gridDescription.length];
 			int priority = 0;

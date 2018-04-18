@@ -113,7 +113,7 @@ class FeaturedCornerRadius extends CommandTask
 			switch(rand.nextInt(3))
 			{
 				case 0:
-					v = 8;
+					v = 7;
 					break;
 				case 1:
 					v = 15;
@@ -190,6 +190,73 @@ class AppPadding extends CommandTask
 					break;
 				case 4:
 					v = 0;
+					break;
+			}
+		}
+		return new IssuedTask()
+								..task = this
+								..value = v;
+	}
+}
+
+class FontSizeCommand extends CommandTask
+{
+	Map serialize()
+	{
+		return CommandTask.makeRadial(this, 8, 20);
+	}
+
+	void complete(int value, String code)
+	{
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "MAIN_FONT_SIZE");
+		}
+	}
+	
+	String getIssueCommand(int value)
+	{
+		return "SET FEATURED CORNER RADIUS TO $value";
+	}
+
+	String apply(String code)
+	{
+		code = code.replaceAll("MAIN_FONT_SIZE", value.toString() + ".0");
+		return code;
+	}
+
+	String taskType()
+	{
+		return "FontSize";
+	}
+
+	String taskLabel()
+	{
+		return "Set Font Size";
+	}
+
+	IssuedTask issue()
+	{
+		Random rand = new Random();
+		int v = value;
+		while(v == value)
+		{
+			switch(rand.nextInt(5))
+			{
+				case 0:
+					v = 8;
+					break;
+				case 1:
+					v = 11;
+					break;
+				case 2:
+					v = 14;
+					break;
+				case 3:
+					v = 17;
+					break;
+				case 4:
+					v = 20;
 					break;
 			}
 		}

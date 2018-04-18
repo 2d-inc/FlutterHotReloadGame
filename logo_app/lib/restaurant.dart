@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import "dart:math";
 import "dart:ui" as ui;
 
-const double LIST_CORNER_RADIUS = 10.0;
+const double LIST_CORNER_RADIUS = 0.0;
 
 class RestaurantsHeaderSimple extends StatelessWidget
 {
@@ -48,9 +48,9 @@ class RestaurantsHeaderDesigned extends StatelessWidget
 	}
 }
 
-class RestaurantSimple extends StatelessWidget
+class ListRestaurantSimple extends StatelessWidget
 {
-	const RestaurantSimple(this.name, 
+	const ListRestaurantSimple(this.name, 
 	{
 		Key key,
 		this.description,
@@ -86,6 +86,7 @@ class RestaurantSimple extends StatelessWidget
 									color: Colors.black,
 									width: 1.0,
 								),
+								borderRadius: new BorderRadius.circular(cornerRadius)
 							)
 						)
 					),
@@ -108,9 +109,9 @@ class RestaurantSimple extends StatelessWidget
 	}
 }
 
-class RestaurantAligned extends StatelessWidget
+class ListRestaurantAligned extends StatelessWidget
 {
-	const RestaurantAligned(this.name, 
+	const ListRestaurantAligned(this.name, 
 	{
 		Key key,
 		this.description,
@@ -146,6 +147,7 @@ class RestaurantAligned extends StatelessWidget
 									color: Colors.black,
 									width: 1.0,
 								),
+								borderRadius: new BorderRadius.circular(cornerRadius)
 							)
 						)
 					),
@@ -183,9 +185,9 @@ class RestaurantAligned extends StatelessWidget
 	}
 }
 
-class RestaurantDesigned extends StatelessWidget
+class ListRestaurantDesigned extends StatelessWidget
 {
-	const RestaurantDesigned(this.name, 
+	const ListRestaurantDesigned(this.name, 
 	{
 		Key key,
 		this.description,

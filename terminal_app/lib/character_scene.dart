@@ -368,8 +368,7 @@ class TerminalSceneRenderer extends RenderBox
 		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
 			textAlign:TextAlign.start,
 			fontFamily: "Inconsolata",
-			fontSize: 30.0,
-			lineHeight: 30.0
+			fontSize: 30.0
 		))..pushStyle(new ui.TextStyle(color:const Color.fromARGB(255, 0, 92, 103)));
 		builder.addText(valueLabel);
 		_messageParagraph = builder.build();

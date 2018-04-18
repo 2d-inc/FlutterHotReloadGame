@@ -408,7 +408,7 @@ class MonitorSceneRenderer extends RenderBox
 			textAlign:TextAlign.start,
 			fontFamily: "Inconsolata",
 			fontSize: 30.0,
-			lineHeight: 30.0
+			//lineHeight: 30.0
 		))..pushStyle(new ui.TextStyle(color:const Color.fromARGB(255, 0, 92, 103)));
 		builder.addText(valueLabel);
 		_messageParagraph = builder.build();

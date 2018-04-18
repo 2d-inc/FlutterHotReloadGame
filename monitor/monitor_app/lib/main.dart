@@ -23,6 +23,8 @@ import "stdout_display.dart";
 const double STDOUT_PADDING = 41.0;
 const double STDOUT_HEIGHT = 110.0 - STDOUT_PADDING;
 const int STDOUT_MAX_LINES = 4;
+const String targetDevice = '"iPhone 8"';
+const String logoAppLocation = "~/Projects/BiggerLogo/logo_app";
 
 Future<String> loadFileAssets(String filename) async
 {
@@ -83,15 +85,14 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 
 	double _lineOfInterest = 0.0;
 	Highlight _highlight;
-	bool _upFacing = false;
 	List<Sound> _sounds;
-	FlutterTask _flutterTask = new FlutterTask("~/Projects/BiggerLogo/logo_app");
+	FlutterTask _flutterTask;
 	GameServer _server;
-	Random _rng = new Random();
 	bool _ready = false;
+	bool _allowReinit = false;
 	String _contents;
 	ListQueue<String> _stdoutQueue;
-	bool _isReloading;
+	IssuedTask _currentDisplayTask;
 
 	AnimationController _scrollController;
 	AnimationController _highlightController;
@@ -108,7 +109,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	DateTime _waitMessageTime;
 	int _characterIndex = 0;
 	String _characterMessage;
-	IssuedTask _currentDisplayTask = null;
+
 	void showLobby()
 	{
 		_characterIndex = 0;
@@ -190,9 +191,17 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		super.dispose();
 	}
 
-	CodeBoxState() :
-		_highlight = new Highlight(-1, 0, 0)
+	initFlutterTask()
 	{
+		_ready = false;
+		_allowReinit = false;
+		if(_flutterTask != null)
+		{
+			_flutterTask.onReady(null);
+			_flutterTask.onStdout(null);
+			_flutterTask.terminate();
+		}
+		_flutterTask = new FlutterTask(logoAppLocation);
 		_flutterTask.onReady(()
 		{
 			setState(() 
@@ -200,43 +209,37 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 				_ready = true;
 			});
 		});
-
-		_stdoutQueue = new ListQueue<String>(STDOUT_MAX_LINES);
-
 		_flutterTask.onStdout((String line)
 		{
-			setState(
-				()
+			setState(()
 				{
-					String r;
 					while(_stdoutQueue.length > STDOUT_MAX_LINES - 1)
 					{
-						r = _stdoutQueue.removeFirst();
+						_stdoutQueue.removeFirst();
 					}
 					_stdoutQueue.addLast(line);
-					// print("Removed ${r ?? 'nothing'} and added $line");
-					// print("WILL PRINT ${_stdoutQueue.length} lines:\n%${_stdoutQueue.join('\n')}\n ENDQUEUE ====");
 				}
 			);
 		});
+	}
 
+	CodeBoxState() :
+		_highlight = new Highlight(-1, 0, 0)
+	{
+		initFlutterTask();
+
+		_stdoutQueue = new ListQueue<String>(STDOUT_MAX_LINES);
 		// Read contents.
 		_flutterTask.read("/main_template.dart").then((contents)
 		{
 			_contents = contents;
-			if(_contents != null)
-			{
-				_contents = _contents.replaceAll("FeaturedRestaurantAligned", "FeaturedRestaurantSimple");
-				_contents = _contents.replaceAll("CategoryAligned", "CategorySimple");
-				_contents = _contents.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderSimple");
-				_contents = _contents.replaceAll("RestaurantAligned", "RestaurantSimple");
-			}
 
 			_flutterTask.write("/lib/main.dart", _contents).then((ok)
 			{
 				// Start emulator.
-				_flutterTask.load('"iPhone 8"').then((success)
+				_flutterTask.load(targetDevice).then((success)
 				{
+					_allowReinit = true;
 					_server = new GameServer(_flutterTask, _contents);
 					
 					_server.onUpdateCode = (String code, int lineOfInterest)
@@ -377,34 +380,47 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 											padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
 											child: new Text("STDOUT:", style: new TextStyle(color: new Color.fromARGB(128, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
 										),
-										new Expanded(child:new Container
-										(
-											padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
-											child: StdoutDisplay(_stdoutQueue.join("\n"))//new Text("Syncing files to iPhone 8...", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
-										))
+										new Expanded(
+											child:new Row(
 
+												children:<Widget>[
+													new Expanded(child:new Container
+													(
+														padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
+														child: StdoutDisplay(_stdoutQueue.join("\n"))//new Text("Syncing files to iPhone 8...", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
+													)),
+													new Container(
+														padding: const EdgeInsets.all(15.0),
+														child:new FlatButton(
+															
+															color: const Color.fromRGBO(255, 255, 255, 0.5),
+															disabledColor: const Color.fromRGBO(255, 255, 255, 0.2),
+															disabledTextColor: const Color.fromRGBO(255, 255, 255, 0.5),
+															child:new Text("run", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none)),
+															onPressed:!_allowReinit ? null : ()
+															{
+																if(_server != null)
+																{
+																	_server.flutterTask = null;
+
+																	initFlutterTask();
+
+																	_flutterTask.load(targetDevice).then((success)
+																	{
+																		_allowReinit = true;
+																		_server.flutterTask = _flutterTask;
+																	});
+																}
+															}
+														)
+													)
+												]
+											)
+										)
 									],
 								)
 							)
-						)
-						/*!hasMonitorCoordinates ? new Container() : new Positioned(
-							left: CODE_BOX_MARGIN_LEFT,
-							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT - STDOUT_PADDING,
-							width: CODE_BOX_SCREEN_WIDTH,
-							height: STDOUT_PADDING,
-							child: new Container(
-								color: const Color.fromARGB(18, 255, 159, 159),
-								padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
-								child: new Text("STDOUT:", style: new TextStyle(color: new Color.fromARGB(128, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
-							)
 						),
-						!hasMonitorCoordinates ? new Container() : new Positioned(
-							left: CODE_BOX_MARGIN_LEFT,
-							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT,
-							width: CODE_BOX_SCREEN_WIDTH,
-							height: STDOUT_HEIGHT,
-							child: new CodeBoxWidget(_stdoutQueue.join("\n"), 0.0, _highlight, 0)
-						)*/
 					],
 			);
 

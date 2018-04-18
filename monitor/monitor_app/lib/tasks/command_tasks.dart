@@ -1,6 +1,6 @@
 abstract class CommandTask
 {
-    int value;
+    int value = 0;
     int _lineOfInterest;
 	String apply(String code);
 	void complete(int value, String code);

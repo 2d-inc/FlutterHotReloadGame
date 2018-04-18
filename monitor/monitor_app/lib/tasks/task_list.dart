@@ -12,6 +12,7 @@ class TaskList
 {
 	List<CommandTask> _available = <CommandTask>
 	[
+		new FontSizeCommand(),
 		new ListCornerRadius(),
 		new FeaturedCornerRadius(),
 		new AppPadding(),
@@ -20,6 +21,7 @@ class TaskList
 
 	List<CommandTask> toAssign = <CommandTask>
 	[
+		new FontSizeCommand(),
 		new ListCornerRadius(),
 		new FeaturedCornerRadius(),
 		new AppPadding(),
@@ -33,6 +35,7 @@ class TaskList
 	int _tasksAssigned = 0;
 	int _completionsPerUpdate = 0;
 	int _appliedUpdateIndex = -1;
+	Random _rand = new Random();
 
 	List<CodeUpdateStep> _automaticUpdates = <CodeUpdateStep>
 	[
@@ -56,7 +59,7 @@ class TaskList
 		},
 		(String code, List<CommandTask> availableTasks)
 		{
-			return code.replaceAll("RestaurantSimple", "RestaurantAligned");
+			return code.replaceAll("ListRestaurantSimple", "ListRestaurantAligned");
 		},
 		(String code, List<CommandTask> availableTasks)
 		{
@@ -69,7 +72,7 @@ class TaskList
 		(String code, List<CommandTask> availableTasks)
 		{
 			availableTasks.add(new CarouselIcons());
-			return code.replaceAll("RestaurantAligned", "RestaurantDesigned");
+			return code.replaceAll("ListRestaurantAligned", "ListRestaurantDesigned");
 		}
 	];
 	
@@ -98,32 +101,37 @@ class TaskList
 
 	IssuedTask nextTask(List<CommandTask> avoid)
 	{
+		if(isEmpty)
+		{
+			return null;
+		}
 		//List<String> avoidTypes = avoid.map((CommandTask task) { return task.taskType(); });
 		for(int sanity = 0; sanity < 100; sanity++)
 		{
-			List<String> avoidTypes = new List<String>();
-			for(CommandTask task in avoid)
+			List<CommandTask> valid = new List<CommandTask>();
+			for(CommandTask task in _available)
 			{
-				avoidTypes.add(task.taskType());
+				CommandTask first = avoid.firstWhere((CommandTask check)
+				{
+					return check.taskType() == task.taskType();
+				}, orElse:()=>null);
+				
+				if(first == null)
+				{
+					valid.add(task);
+				}
 			}
-			
-			CommandTask firstValid = _available.firstWhere((CommandTask possibleTask)
+			CommandTask chosenTask = valid[_rand.nextInt(valid.length)];
+			IssuedTask issuedTask = chosenTask.issue();
+			if(issuedTask != null)
 			{
-				return !avoidTypes.contains(possibleTask.taskType());
-			}, orElse: () { return null; });
-			if(firstValid != null)
+				_tasksAssigned++;
+				return issuedTask;
+			}
+			else
 			{
-				IssuedTask issuedTask = firstValid.issue();
-				if(issuedTask != null)
-				{
-					_tasksAssigned++;
-					return issuedTask;
-				}
-				else
-				{
-					// Could not issue this command, remove it from the list.
-					_available.remove(firstValid);
-				}
+				// Could not issue this command, remove it from the list.
+				_available.remove(chosenTask);
 			}
 		}
 		return null;

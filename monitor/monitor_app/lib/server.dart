@@ -309,11 +309,30 @@ class GameServer
 
     Map<String, CommandTask> _completedTasks;
 
-    GameServer(this._flutterTask, this._template)
+    GameServer(FlutterTask flutterTask, this._template)
     {
+        this.flutterTask = flutterTask;
         SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
         SchedulerBinding.instance.scheduleForcedFrame();
         connect();
+    }
+
+    FlutterTask get flutterTask
+    {
+        return _flutterTask;
+    }
+
+    set flutterTask(FlutterTask task)
+    {
+        _flutterTask = task;
+        if(task != null)
+        {
+            if(_waitingToHotReload)
+            {
+                _waitingToHotReload = false;
+                hotReload();
+            }
+        }
     }
 
     void beginFrame(Duration timeStamp) 
@@ -415,6 +434,7 @@ class GameServer
         // Todo: change back to this logic.
         int perClient = (taskTypes.length/max(1,numClientsReady)).ceil();
         //int perClient = 2;
+        print("PER CLIENT $perClient");
         hotReload();
 
         // tell every client the game has started and what their commands are...
@@ -510,7 +530,7 @@ class GameServer
 
     void hotReload()
     {
-        if(_isHotReloading)
+        if(_isHotReloading || _flutterTask == null)
         {
             _waitingToHotReload = true;
             return;
