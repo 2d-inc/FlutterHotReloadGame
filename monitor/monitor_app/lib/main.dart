@@ -78,7 +78,7 @@ class CodeBox extends StatefulWidget
 
 class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 {
-	static const int HIGHLIGHT_ALPHA_FULL = 150;
+	static const int HIGHLIGHT_ALPHA_FULL = 56;
 	static const int MAX_FLICKER_COUNT = 6;
 
 	double _lineOfInterest = 0.0;
@@ -191,7 +191,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	}
 
 	CodeBoxState() :
-		_highlight = new Highlight(0, 0, 0)
+		_highlight = new Highlight(-1, 0, 0)
 	{
 		_flutterTask.onReady(()
 		{
