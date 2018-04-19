@@ -203,7 +203,7 @@ class FontSizeCommand extends CommandTask
 {
 	Map serialize()
 	{
-		return CommandTask.makeRadial(this, 8, 20);
+		return CommandTask.makeRadial(this, 10, 18);
 	}
 
 	void complete(int value, String code)
@@ -216,7 +216,7 @@ class FontSizeCommand extends CommandTask
 	
 	String getIssueCommand(int value)
 	{
-		return "SET FEATURED CORNER RADIUS TO $value";
+		return "SET FONT SIZE TO $value";
 	}
 
 	String apply(String code)
@@ -244,19 +244,19 @@ class FontSizeCommand extends CommandTask
 			switch(rand.nextInt(5))
 			{
 				case 0:
-					v = 8;
+					v = 10;
 					break;
 				case 1:
-					v = 11;
+					v = 12;
 					break;
 				case 2:
 					v = 14;
 					break;
 				case 3:
-					v = 17;
+					v = 16;
 					break;
 				case 4:
-					v = 20;
+					v = 18;
 					break;
 			}
 		}

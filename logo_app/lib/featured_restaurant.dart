@@ -21,7 +21,8 @@ enum IconType
 	animated
 }
 
-const CAROUSEL_ICON_TYPE = IconType.hidden;
+const IconType CAROUSEL_ICON_TYPE = IconType.hidden;
+const double MAIN_FONT_SIZE = 11.0;
 
 class FeaturedRestaurantSimple extends StatelessWidget
 {
@@ -31,7 +32,8 @@ class FeaturedRestaurantSimple extends StatelessWidget
 		this.description,
 		this.deliveryTime,
 		this.cornerRadius,
-		this.iconType
+		this.iconType,
+		this.fontSize
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -40,7 +42,8 @@ class FeaturedRestaurantSimple extends StatelessWidget
 	final int deliveryTime;
 	final double cornerRadius;
 	final IconType iconType;
-	
+	final double fontSize;
+
 	Widget build(BuildContext context) 
 	{
 		return new Container(
@@ -69,7 +72,7 @@ class FeaturedRestaurantSimple extends StatelessWidget
 					),
 					new Text(description, 
 						maxLines: 3,
-						style:const TextStyle(fontSize:11.0,color:Colors.black, decoration: TextDecoration.none)),
+						style:new TextStyle(fontSize:fontSize,color:Colors.black, decoration: TextDecoration.none)),
 				]
 			)
 		);
@@ -84,7 +87,8 @@ class FeaturedRestaurantAligned extends StatelessWidget
 		this.description,
 		this.deliveryTime,
 		this.cornerRadius,
-		this.iconType
+		this.iconType,
+		this.fontSize
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -93,6 +97,7 @@ class FeaturedRestaurantAligned extends StatelessWidget
 	final int deliveryTime;
 	final double cornerRadius;
 	final IconType iconType;
+	final double fontSize;
 	
 	Widget build(BuildContext context) 
 	{
@@ -129,7 +134,7 @@ class FeaturedRestaurantAligned extends StatelessWidget
 					),
 					new Text(description, 
 						maxLines: 3,
-						style:const TextStyle(fontSize:12.0,color:Colors.grey, decoration: TextDecoration.none)),
+						style:new TextStyle(fontSize:fontSize,color:Colors.grey, decoration: TextDecoration.none)),
 				]
 			)
 		);
@@ -155,11 +160,13 @@ class FeaturedRestaurantData
 
 class FeaturedCarousel extends StatefulWidget 
 {
-	FeaturedCarousel({Key key, this.data, this.cornerRadius, this.iconType}) : super(key: key);
+	FeaturedCarousel({Key key, this.data, this.cornerRadius, this.iconType, this.fontSize, this.padding}) : super(key: key);
 
 	final List<FeaturedRestaurantData> data;
 	final double cornerRadius;
 	final IconType iconType;
+	final double fontSize;
+	final double padding;
 
 	@override
 	_FeaturedCarouselState createState() => new _FeaturedCarouselState(data);
@@ -239,7 +246,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with SingleTickerPr
 			FeaturedRestaurantData restaurant = data[visibleIdx+i];
 			//visibleHeros.add(new RepaintBoundary(child:new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare)));
 			visibleHeros.add(new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare, iconType:widget.iconType));
-			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i, deliveryTime: restaurant.deliveryTime, cornerRadius:widget.cornerRadius));
+			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i, deliveryTime: restaurant.deliveryTime, cornerRadius:widget.cornerRadius, fontSize:widget.fontSize, padding:widget.padding));
 		}
 
 		if(visibleDetails.length == 0)
@@ -266,6 +273,8 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 	final int deliveryTime;
 	final double scroll;
 	final double cornerRadius;
+	final double fontSize;
+	final double padding;
 
 	FeaturedRestaurantDetail(this.name,
 		{
@@ -273,7 +282,9 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 			this.description,
 			this.deliveryTime,
 			this.scroll = 0.0,
-			this.cornerRadius
+			this.cornerRadius,
+			this.fontSize,
+			this.padding
 		}): super(key: key);
 
 	@override
@@ -283,7 +294,9 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 					description:description,
 					deliveryTime:deliveryTime,
 					scroll:scroll,
-					cornerRadius:cornerRadius);
+					cornerRadius:cornerRadius,
+					fontSize:fontSize,
+					padding:padding);
 	}
 
 	@override
@@ -293,7 +306,9 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 					..description = description
 					..deliveryTime = deliveryTime
 					..scroll = scroll
-					..cornerRadius = cornerRadius;
+					..cornerRadius = cornerRadius
+					..fontSize = fontSize
+					..padding = padding;
 	}
 }
 const double Padding = 20.0;
@@ -313,6 +328,8 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 	int _deliveryTime;
 	double _scroll;
 	double _cornerRadius;
+	double _fontSize;
+	double _padding;
 
 	ui.Paragraph _nameParagraph;
 	ui.Paragraph _timeParagraph;
@@ -325,13 +342,17 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 			String description = "",
 			int deliveryTime = 0,
 			double scroll = 0.0,
-			double cornerRadius = 0.0
+			double cornerRadius = 0.0,
+			double fontSize = 11.0,
+			double padding = 15.0
 		})
 	{
+		this.fontSize = fontSize;
 		this.name = name;
 		this.description = description;	
 		this.deliveryTime = deliveryTime;
 		this.cornerRadius = _cornerRadius;
+		this.padding = padding;
 		_scroll = scroll;
 	}
 
@@ -369,18 +390,19 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 	@override
 	void paint(PaintingContext context, Offset offset)
 	{
-		final double width = size.width - Padding*2;
+		final double renderPadding = (_padding ?? 10.0) + 5;
+		final double width = size.width - renderPadding*2;
 		final Canvas canvas = context.canvas;
 		canvas.save();
 		canvas.translate(_scroll * (width+ItemPadding), size.height-DetailHeight);
 
 		//print("CIRC $offset.dx+$Padding, $offset.dy) & new Size($width, $DetailHeight), new Radius.circular($_cornerRadius");
-    	final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+Padding, offset.dy) & new Size(width, DetailHeight), new Radius.circular(_cornerRadius ?? 0.0));
+    	final RRect rrect = new RRect.fromRectAndRadius(new Offset(offset.dx+renderPadding, offset.dy) & new Size(width, DetailHeight), new Radius.circular(_cornerRadius ?? 0.0));
 		canvas.drawRRect(rrect, new ui.Paint()..color = Colors.white);
 		
-		canvas.drawParagraph(_nameParagraph, new Offset(offset.dx+Padding+DetailPaddingLeft, offset.dy + DetailPaddingTop));
-		canvas.drawParagraph(_timeParagraph, new Offset(offset.dx+Padding+width-DetailPaddingLeft - _actualTimeWidth, offset.dy + TimePaddingTop));
-		canvas.drawParagraph(_descriptionParagraph, new Offset(offset.dx+Padding+DetailPaddingLeft, offset.dy + DescriptionPaddingTop));
+		canvas.drawParagraph(_nameParagraph, new Offset(offset.dx+renderPadding+DetailPaddingLeft, offset.dy + DetailPaddingTop));
+		canvas.drawParagraph(_timeParagraph, new Offset(offset.dx+renderPadding+width-DetailPaddingLeft - _actualTimeWidth, offset.dy + TimePaddingTop));
+		canvas.drawParagraph(_descriptionParagraph, new Offset(offset.dx+renderPadding+DetailPaddingLeft, offset.dy + DescriptionPaddingTop));
 		
 		canvas.restore();
 	}
@@ -416,6 +438,19 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		return _description;
 	}
 
+	void updateDescription()
+	{
+		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
+			textAlign:TextAlign.start,
+			fontFamily: "Roboto",
+			fontSize: _fontSize,
+			maxLines: 2,
+			ellipsis: "..."
+		))..pushStyle(new ui.TextStyle(color:new Color.fromARGB(102, 48, 44, 72)));
+		builder.addText(_description);
+		_descriptionParagraph = builder.build();
+	}
+
 	set description(String value)
 	{
 		if(_description == value)
@@ -424,15 +459,7 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		}
 		_description = value ?? "";
 
-		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
-			textAlign:TextAlign.start,
-			fontFamily: "Roboto",
-			fontSize: 15.0,
-			maxLines: 2,
-			ellipsis: "..."
-		))..pushStyle(new ui.TextStyle(color:new Color.fromARGB(102, 48, 44, 72)));
-		builder.addText(_description);
-		_descriptionParagraph = builder.build();
+		updateDescription();
 
 		markNeedsLayout();
 		markNeedsPaint();
@@ -463,6 +490,21 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		markNeedsPaint();
 	}
 	
+	double get padding
+	{
+		return _padding;
+	}
+
+	set padding(double value)
+	{
+		if(_padding == value)
+		{
+			return;
+		}
+		_padding = value;
+		markNeedsPaint();
+	}
+
 	double get scroll
 	{
 		return _scroll;
@@ -490,6 +532,23 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 			return;
 		}
 		_cornerRadius = value;
+		markNeedsPaint();
+	}
+	
+	double get fontSize
+	{
+		return _fontSize;
+	}
+
+	set fontSize(double value)
+	{
+		if(_fontSize == value)
+		{
+			return;
+		}
+		_fontSize = value;
+		updateDescription();
+		markNeedsLayout();
 		markNeedsPaint();
 	}
 }

@@ -3,8 +3,7 @@ import "command_tasks.dart";
 import "icon_tasks.dart";
 import "corner_radius_tasks.dart";
 
-const int NumGameTasks = 10;
-const int AutomaticUpdateSteps = 3;
+const int NumGameTasks = 30;
 
 typedef String CodeUpdateStep(String code, List<CommandTask> availableTasks);
 

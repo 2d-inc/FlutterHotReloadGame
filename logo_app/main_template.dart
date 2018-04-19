@@ -52,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
 				children: <Widget>[
 					featuredRestaurantSize > 10 ? new Container(
 						height:featuredRestaurantSize,
-						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: FEATURED_CORNER_RADIUS, iconType:CAROUSEL_ICON_TYPE),
+						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: FEATURED_CORNER_RADIUS, iconType:CAROUSEL_ICON_TYPE, fontSize:MAIN_FONT_SIZE),
 					) : 
 					new Column(
 						crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,9 +70,9 @@ class _MyHomePageState extends State<MyHomePage> {
 									padding:const EdgeInsets.fromLTRB(APP_PADDING, 0.0, 0.0, 0.0),
 									scrollDirection: Axis.horizontal,
 									children: <Widget> [
-										const FeaturedRestaurantSimple('Pizza Place', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15, cornerRadius:FEATURED_CORNER_RADIUS),
-										const FeaturedRestaurantSimple('Sushi Overload', description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime:32, cornerRadius:FEATURED_CORNER_RADIUS),
-										const FeaturedRestaurantSimple('Burger Paradise', description: "Umami Burgers serves burgers, fries...", deliveryTime:45, cornerRadius:FEATURED_CORNER_RADIUS)
+										const FeaturedRestaurantSimple('Pizza Place', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15, cornerRadius:FEATURED_CORNER_RADIUS, fontSize:MAIN_FONT_SIZE),
+										const FeaturedRestaurantSimple('Sushi Overload', description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime:32, cornerRadius:FEATURED_CORNER_RADIUS, fontSize:MAIN_FONT_SIZE),
+										const FeaturedRestaurantSimple('Burger Paradise', description: "Umami Burgers serves burgers, fries...", deliveryTime:45, cornerRadius:FEATURED_CORNER_RADIUS, fontSize:MAIN_FONT_SIZE)
 									]
 								)
 							)
@@ -85,19 +85,19 @@ class _MyHomePageState extends State<MyHomePage> {
 							padding:const EdgeInsets.fromLTRB(APP_PADDING, 0.0, 0.0, 0.0),
 							scrollDirection: Axis.horizontal,
 							children: <Widget> [
-								const CategorySimple('Pizza', flare:PIZZA_ICON),
-								const CategorySimple('Burgers', flare:BURGER_ICON),
-								const CategorySimple('Dessert', flare:DESSERT_ICON),
-								const CategorySimple('Sushi'),
-								const CategorySimple('Chinese'),
+								const CategorySimple('Pizza', flare:PIZZA_ICON, fontSize:MAIN_FONT_SIZE),
+								const CategorySimple('Burgers', flare:BURGER_ICON, fontSize:MAIN_FONT_SIZE),
+								const CategorySimple('Dessert', flare:DESSERT_ICON, fontSize:MAIN_FONT_SIZE),
+								const CategorySimple('Sushi', fontSize:MAIN_FONT_SIZE),
+								const CategorySimple('Chinese', fontSize:MAIN_FONT_SIZE),
 							]
 						)
 					),
 					new RestaurantsHeaderSimple(),
-					const ListRestaurantSimple('Indian Food', cornerRadius:LIST_CORNER_RADIUS, description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/samosa.jpg"),
-					const ListRestaurantSimple('Fancy Cafe', cornerRadius:LIST_CORNER_RADIUS, description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/cafe.jpg"),
-					const ListRestaurantSimple('Asian Fare', cornerRadius:LIST_CORNER_RADIUS, description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg"),
-					const ListRestaurantSimple('Fresh from Hawaii', cornerRadius:LIST_CORNER_RADIUS, description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg"),
+					const ListRestaurantSimple('Indian Food', cornerRadius:LIST_CORNER_RADIUS, description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/samosa.jpg", padding:APP_PADDING),
+					const ListRestaurantSimple('Fancy Cafe', cornerRadius:LIST_CORNER_RADIUS, description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/cafe.jpg", padding:APP_PADDING),
+					const ListRestaurantSimple('Asian Fare', cornerRadius:LIST_CORNER_RADIUS, description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg", padding:APP_PADDING),
+					const ListRestaurantSimple('Fresh from Hawaii', cornerRadius:LIST_CORNER_RADIUS, description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg", padding:APP_PADDING),
 				],
 			),
 			new Container(padding:const EdgeInsets.fromLTRB(APP_PADDING, 30.0, 0.0, 0.0), alignment: Alignment.topLeft, child:new Flare("assets/flares/MenuIcon")),

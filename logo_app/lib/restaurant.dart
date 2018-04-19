@@ -58,7 +58,8 @@ class ListRestaurantSimple extends StatelessWidget
 		this.deliveryTime,
 		this.rating,
 		this.img,
-		this.cornerRadius
+		this.cornerRadius,
+		this.padding
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -69,11 +70,12 @@ class ListRestaurantSimple extends StatelessWidget
 	final int rating;
 	final String img;
 	final double cornerRadius;
+	final double padding;
 	
 	Widget build(BuildContext context) 
 	{
 		return new Container(
-			padding:const EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 10.0),
+			padding:new EdgeInsets.fromLTRB(padding, 0.0, 0.0, 10.0),
 			child: new Column(
 				crossAxisAlignment: CrossAxisAlignment.start,
 				children: <Widget>[
@@ -119,7 +121,8 @@ class ListRestaurantAligned extends StatelessWidget
 		this.deliveryTime,
 		this.rating,
 		this.img,
-		this.cornerRadius
+		this.cornerRadius,
+		this.padding
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -130,11 +133,12 @@ class ListRestaurantAligned extends StatelessWidget
 	final int deliveryTime;
 	final int rating;
 	final double cornerRadius;
-	
+	final double padding;
+
 	Widget build(BuildContext context) 
 	{
 		return new Container(
-			padding:const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 10.0),
+			padding:new EdgeInsets.fromLTRB(padding, 0.0, 0.0, 10.0),
 			child: new Row(
 				crossAxisAlignment: CrossAxisAlignment.start,
 				children: <Widget>[
@@ -195,7 +199,8 @@ class ListRestaurantDesigned extends StatelessWidget
 		this.deliveryTime,
 		this.rating,
 		this.img,
-		this.cornerRadius = 10.0
+		this.cornerRadius = 10.0,
+		this.padding
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -206,11 +211,12 @@ class ListRestaurantDesigned extends StatelessWidget
 	final int deliveryTime;
 	final int rating;
 	final double cornerRadius;
+	final double padding;
 	
 	Widget build(BuildContext context) 
 	{
 		return new Container(
-			padding:const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 20.0),
+			padding:new EdgeInsets.fromLTRB(padding, 0.0, 20.0, 20.0),
 			child:new Container(
 				decoration: new BoxDecoration(
 					color:Colors.white, 

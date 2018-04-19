@@ -83,7 +83,7 @@ class IssuedTask
 {
 	CommandTask task;
 	int value;
-	int expires = 5;
+	int expires = 15;
 
 	Map serialize()
 	{

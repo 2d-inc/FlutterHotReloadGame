@@ -52,14 +52,14 @@ class _MyHomePageState extends State<MyHomePage> {
 				children: <Widget>[
 					featuredRestaurantSize > 10 ? new Container(
 						height:featuredRestaurantSize,
-						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: 30.0, iconType:IconType.still),
+						child:new FeaturedCarousel(data:featuredRestaurants, cornerRadius: FEATURED_CORNER_RADIUS, iconType:CAROUSEL_ICON_TYPE, fontSize:14.0),
 					) : 
 					new Column(
 						crossAxisAlignment: CrossAxisAlignment.start,
 						children: <Widget>
 						[
 							new Container(
-								padding:const EdgeInsets.fromLTRB(45.0, 15.0, 0.0, 10.0),
+								padding:const EdgeInsets.fromLTRB(60.0, 15.0, 0.0, 10.0),
 								child:new Text("Featured", 
 									style:const TextStyle(fontSize:13.0,color:Colors.black, decoration: TextDecoration.none)),
 							),
@@ -67,12 +67,12 @@ class _MyHomePageState extends State<MyHomePage> {
 								height:210.0,
 								child:new ListView(
 									shrinkWrap: true,
-									padding:const EdgeInsets.fromLTRB(45.0, 0.0, 0.0, 0.0),
+									padding:const EdgeInsets.fromLTRB(60.0, 0.0, 0.0, 0.0),
 									scrollDirection: Axis.horizontal,
 									children: <Widget> [
-										const FeaturedRestaurantAligned('Pizza Place', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15, cornerRadius:30.0),
-										const FeaturedRestaurantAligned('Sushi Overload', description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime:32, cornerRadius:30.0),
-										const FeaturedRestaurantAligned('Burger Paradise', description: "Umami Burgers serves burgers, fries...", deliveryTime:45, cornerRadius:30.0)
+										const FeaturedRestaurantAligned('Pizza Place', description: "This energetic, farmers-to-table restaurant serves up Neopolitan-inspired pizza and gelato.", deliveryTime:15, cornerRadius:FEATURED_CORNER_RADIUS, fontSize:14.0),
+										const FeaturedRestaurantAligned('Sushi Overload', description: "Impeccable Japanese flavors with a contemporary flair.", deliveryTime:32, cornerRadius:FEATURED_CORNER_RADIUS, fontSize:14.0),
+										const FeaturedRestaurantAligned('Burger Paradise', description: "Umami Burgers serves burgers, fries...", deliveryTime:45, cornerRadius:FEATURED_CORNER_RADIUS, fontSize:14.0)
 									]
 								)
 							)
@@ -82,26 +82,26 @@ class _MyHomePageState extends State<MyHomePage> {
 						height:133.0,
 						child:new ListView(
 							shrinkWrap: true,
-							padding:const EdgeInsets.fromLTRB(45.0, 0.0, 0.0, 0.0),
+							padding:const EdgeInsets.fromLTRB(60.0, 0.0, 0.0, 0.0),
 							scrollDirection: Axis.horizontal,
 							children: <Widget> [
-								const CategoryDesigned('Pizza', flare:PIZZA_ICON),
-								const CategoryDesigned('Burgers', flare:BURGER_ICON),
-								const CategoryDesigned('Dessert', flare:DESSERT_ICON),
-								const CategoryDesigned('Sushi'),
-								const CategoryDesigned('Chinese'),
+								const CategoryDesigned('Pizza', flare:PIZZA_ICON, fontSize:14.0),
+								const CategoryDesigned('Burgers', flare:BURGER_ICON, fontSize:14.0),
+								const CategoryDesigned('Dessert', flare:DESSERT_ICON, fontSize:14.0),
+								const CategoryDesigned('Sushi', fontSize:14.0),
+								const CategoryDesigned('Chinese', fontSize:14.0),
 							]
 						)
 					),
 					new RestaurantsHeaderDesigned(),
-					const ListRestaurantDesigned('Indian Food', cornerRadius:15.0, description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/samosa.jpg"),
-					const ListRestaurantDesigned('Fancy Cafe', cornerRadius:15.0, description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/cafe.jpg"),
-					const ListRestaurantDesigned('Asian Fare', cornerRadius:15.0, description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg"),
-					const ListRestaurantDesigned('Fresh from Hawaii', cornerRadius:15.0, description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg"),
+					const ListRestaurantDesigned('Indian Food', cornerRadius:LIST_CORNER_RADIUS, description:"Indian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/samosa.jpg", padding:60.0),
+					const ListRestaurantDesigned('Fancy Cafe', cornerRadius:LIST_CORNER_RADIUS, description:"Salads", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/cafe.jpg", padding:60.0),
+					const ListRestaurantDesigned('Asian Fare', cornerRadius:LIST_CORNER_RADIUS, description:"Fresh Sustainable Asian Street Food", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/pizza.jpg", padding:60.0),
+					const ListRestaurantDesigned('Fresh from Hawaii', cornerRadius:LIST_CORNER_RADIUS, description:"Hawaiian", deliveryTime: 29, rating: 9, dollarSigns: 2, img:"assets/images/poke.jpg", padding:60.0),
 				],
 			),
-			new Container(padding:const EdgeInsets.fromLTRB(45.0, 30.0, 0.0, 0.0), alignment: Alignment.topLeft, child:new Flare("assets/flares/MenuIcon")),
-			new Container(padding:const EdgeInsets.fromLTRB(0.0, 30.0, 45.0, 0.0), alignment: Alignment.topRight, child:new Flare("assets/flares/SearchIcon"))
+			new Container(padding:const EdgeInsets.fromLTRB(60.0, 30.0, 0.0, 0.0), alignment: Alignment.topLeft, child:new Flare("assets/flares/MenuIcon")),
+			new Container(padding:const EdgeInsets.fromLTRB(0.0, 30.0, 60.0, 0.0), alignment: Alignment.topRight, child:new Flare("assets/flares/SearchIcon"))
 			])
 		);
 	}

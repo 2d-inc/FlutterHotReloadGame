@@ -6,12 +6,14 @@ class CategorySimple extends StatelessWidget
 	const CategorySimple(this.name, 
 	{
 		Key key,
-		this.flare
+		this.flare,
+		this.fontSize
 	}) : assert(name != null),
 			super(key: key);
 
 	final String name;
 	final String flare;
+	final double fontSize;
 
 	Widget build(BuildContext context) 
 	{
@@ -35,7 +37,7 @@ class CategorySimple extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
 						child:new Text("Category", 
-							style:const TextStyle(fontSize:11.0,color:Colors.black, decoration: TextDecoration.none))
+							style:new TextStyle(fontSize:fontSize,color:Colors.black, decoration: TextDecoration.none))
 					)
 				]
 			)
@@ -48,12 +50,14 @@ class CategoryAligned extends StatelessWidget
 	const CategoryAligned(this.name, 
 	{
 		Key key,
-		this.flare
+		this.flare,
+		this.fontSize
 	}) : assert(name != null),
 			super(key: key);
 
 	final String name;
 	final String flare;
+	final double fontSize;
 
 	Widget build(BuildContext context) 
 	{
@@ -77,7 +81,7 @@ class CategoryAligned extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
 						child:new Text(name, 
-							style:const TextStyle(fontSize:12.0,color:Colors.grey, decoration: TextDecoration.none))
+							style:new TextStyle(fontSize:fontSize,color:Colors.grey, decoration: TextDecoration.none))
 					)
 				]
 			)
@@ -90,12 +94,14 @@ class CategoryDesigned extends StatelessWidget
 	const CategoryDesigned(this.name, 
 	{
 		Key key,
-		this.flare
+		this.flare,
+		this.fontSize
 	}) : assert(name != null),
 			super(key: key);
 
 	final String name;
 	final String flare;
+	final double fontSize;
 
 	Widget build(BuildContext context) 
 	{
@@ -116,7 +122,7 @@ class CategoryDesigned extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
 						child:new Text(name, 
-							style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(255, 158, 164, 184), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
+							style:new TextStyle(fontSize:fontSize, fontFamily:"Roboto", color:const Color.fromARGB(255, 158, 164, 184), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
 					)
 				]
 			)
