@@ -19,6 +19,7 @@ import "server.dart";
 import "monitor_scene.dart";
 import "tasks/command_tasks.dart";
 import "stdout_display.dart";
+import "flare_widget.dart";
 
 const double STDOUT_PADDING = 41.0;
 const double STDOUT_HEIGHT = 110.0 - STDOUT_PADDING;
@@ -108,6 +109,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	DateTime _failTaskTime;
 	DateTime _waitMessageTime;
 	int _characterIndex = 0;
+	int _lives = 0;
 	String _characterMessage;
 
 	void showLobby()
@@ -242,6 +244,13 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 					_allowReinit = true;
 					_server = new GameServer(_flutterTask, _contents);
 					
+					_server.onLivesUpdated = ()
+					{
+						setState(()
+						{
+							_lives = _server.lives;
+						});
+					};
 					_server.onUpdateCode = (String code, int lineOfInterest)
 					{
 						setState(()
@@ -347,6 +356,25 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 										]
 									)
 						),
+						new Container(margin:const EdgeInsets.only(left:50.0, top:20.0), child:
+						new Column(
+							crossAxisAlignment: CrossAxisAlignment.start,
+							children:<Widget>
+							[
+								new Container(margin:const EdgeInsets.only(bottom:7.0), child:Text("LIVES", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Roboto", fontSize: 19.0, decoration: TextDecoration.none))),
+								new Row
+								(
+									children: <Widget>
+									[
+										new Container(margin:const EdgeInsets.only(right:10.0), child:new Flare("assets/flares/Heart", _lives < 1)),
+										new Container(margin:const EdgeInsets.only(right:10.0), child:new Flare("assets/flares/Heart", _lives < 2)),
+										new Container(margin:const EdgeInsets.only(right:10.0), child:new Flare("assets/flares/Heart", _lives < 3)),
+										new Container(margin:const EdgeInsets.only(right:10.0), child:new Flare("assets/flares/Heart", _lives < 4)),
+										new Container(margin:const EdgeInsets.only(right:10.0), child:new Flare("assets/flares/Heart", _lives < 5)),
+									]
+								)
+							]))
+						,
 						!hasMonitorCoordinates ? new Container() : new Positioned(
 							left: CODE_BOX_MARGIN_LEFT,
 							top: CODE_BOX_MARGIN_TOP,

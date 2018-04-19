@@ -155,6 +155,7 @@ class GameClient
 
     void _failTask()
     {
+        _server.failTask(_currentTask);
         _taskStatus = TaskStatus.failed;
         _currentTask = null;
 
@@ -306,6 +307,8 @@ class GameServer
     OnTaskIssuedCallback onTaskIssued;
     OnTaskCompletedCallback onTaskCompleted;
     VoidCallback onGameOverCallback;
+    VoidCallback onLivesUpdated;
+    int _lives = 0;
 
     Map<String, CommandTask> _completedTasks;
 
@@ -315,6 +318,11 @@ class GameServer
         SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
         SchedulerBinding.instance.scheduleForcedFrame();
         connect();
+    }
+
+    int get lives
+    {
+        return _lives;
     }
 
     FlutterTask get flutterTask
@@ -413,6 +421,11 @@ class GameServer
 
     onClientStartChanged(GameClient client)
     {
+        _lives = 5;
+        if(onLivesUpdated != null)
+        {
+            onLivesUpdated();
+        }
         int numClientsReady = readyCount;
 
         if(numClientsReady < 2)
@@ -494,7 +507,7 @@ class GameServer
             playersLeft++;
         }
 
-        if(playersLeft < 2 || (!someoneHasTask && _taskList.isEmpty))
+        if(_lives <= 0 || playersLeft < 2 || (!someoneHasTask && _taskList.isEmpty))
         {
             onGameOver();
         }
@@ -526,6 +539,15 @@ class GameServer
         _template = _taskList.completeTask(_template);
 
         hotReload();
+    }
+
+    void failTask(IssuedTask it)
+    {
+        _lives--;
+        if(onLivesUpdated != null)
+        {
+            onLivesUpdated();
+        }
     }
 
     void hotReload()
