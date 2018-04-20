@@ -7,9 +7,10 @@ enum PlayerStatus { READY, NOT_READY }
 
 class PlayerListWidget extends StatefulWidget 
 {
+    final bool isInGame;
     final List<bool> _arePlayersReady;
 
-    PlayerListWidget(this._arePlayersReady, {Key key}) : super(key: key);
+    PlayerListWidget(this.isInGame, this._arePlayersReady, {Key key}) : super(key: key);
 
 	@override
 	PlayerListState createState() => new PlayerListState();
@@ -23,7 +24,7 @@ class PlayerListState extends State<PlayerListWidget>
         List<TableRow> c = new List<TableRow>(widget._arePlayersReady.length);
         for(int i = 0; i < c.length; i++)
         {
-            c[i] = (new PlayerRow("Player ${i+1}", widget._arePlayersReady[i]));
+            c[i] = (new PlayerRow("Player ${i+1}", widget.isInGame, widget._arePlayersReady[i]));
         }
 
         return new Table(
@@ -91,7 +92,7 @@ class PlayerRow extends TableRow
         }
     };
 
-    PlayerRow(String name, bool readyStatus, { Key k, Decoration dec })
+    PlayerRow(String name, bool isInGame, bool readyStatus, { Key k, Decoration dec })
         : super(
             key: k,
             decoration: dec,
@@ -109,7 +110,7 @@ class PlayerRow extends TableRow
                     alignment: Alignment.centerRight,
                     child:
                     new Text(
-                        READY_MAP[readyStatus]["text"], // Text string
+                        readyStatus && isInGame ? "IN GAME" : READY_MAP[readyStatus]["text"], // Text string
                         style: new TextStyle(color: READY_MAP[readyStatus]["color"], fontFamily: "Inconsolata", fontWeight: READY_MAP[readyStatus]["weight"], fontSize: 18.0, decoration: TextDecoration.none)
                     )
                 ),

@@ -159,10 +159,11 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		});
 	}
 
-	void setGameStatus(bool isServerInGame, bool isClientInGame)
+	void setGameStatus(bool isServerInGame, bool isClientInGame, bool doesServerThinkImReady)
 	{
 		setState(() 
 		{
+			_isReady = doesServerThinkImReady;
 			// we can only mark ready if the server isn't already in a game.
 			_canBeReady = !isServerInGame;
 			if(_isPlaying && !isClientInGame)
@@ -218,6 +219,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 		setState(() 
 		{
+			_gameOver = false;
 			_isPlaying = true;
 			_sceneState = TerminalSceneState.BossOnly;
 			_sceneCharacterIndex = new Random().nextInt(4);
@@ -478,7 +480,6 @@ class WebSocketClient
 		getApplicationDocumentsDirectory().then((Directory dir)
 		{
 			File file = new File("${dir.path}/ip.txt");
-			print("WRITING IP ADDRES $_address");
 			file.writeAsStringSync(_address);
 		});
 	}
@@ -501,7 +502,6 @@ class WebSocketClient
 			try
 			{
 				String ip = file.readAsStringSync();
-				print("READ IP $ip");
 				if(_validateIpAddress(ip))
 				{
 					_address = ip;
@@ -510,7 +510,6 @@ class WebSocketClient
 			}
 			catch(FileSystemException)
 			{
-				print("EXCEPTION WHILE TRYING TO READ.");
 				connect();
 			}
 		});
@@ -613,10 +612,11 @@ class WebSocketClient
 
 						var gameActive = jsonMsg['gameActive'];
 						var inGame = jsonMsg['inGame'];
+						var isClientReady = jsonMsg['isReady'];
 						
 						if(gameActive is bool && inGame is bool)
 						{
-							_terminal.setGameStatus(gameActive, inGame);
+							_terminal.setGameStatus(gameActive, inGame, isClientReady);
 						}
 						
 						switch(msg)
@@ -686,11 +686,9 @@ class WebSocketClient
 
 bool _validateIpAddress(String ip)
 {
-	print("VALIDATING $ip");
 	List<String> values = ip.split('.');
 	if(values.length != 4)
 	{
-		print("INVALID IP");
 		return false;
 	}
 	else
@@ -700,7 +698,6 @@ bool _validateIpAddress(String ip)
 			int ipValue = int.tryParse(s) ?? -1;
 			if(ipValue < 0 || ipValue > 255)
 			{
-				print("INVALID INPUT VALUES");
 				return false;
 			}
 		}
