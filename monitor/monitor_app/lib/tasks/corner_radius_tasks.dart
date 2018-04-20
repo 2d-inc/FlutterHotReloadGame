@@ -107,7 +107,7 @@ class FeaturedCornerRadius extends CommandTask
 
 	String taskLabel()
 	{
-		return "Set Featured Item Radius";
+		return "Set Featured Radius";
 	}
 
 	IssuedTask issue()
