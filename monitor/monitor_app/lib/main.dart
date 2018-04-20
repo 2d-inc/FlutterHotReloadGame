@@ -232,7 +232,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 
 		_stdoutQueue = new ListQueue<String>(STDOUT_MAX_LINES);
 		// Read contents.
-		_flutterTask.read("/main_template.dart").then((contents)
+		_flutterTask.read("/lib/main_template.dart").then((contents)
 		{
 			_contents = contents;
 
