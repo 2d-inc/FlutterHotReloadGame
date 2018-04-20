@@ -27,7 +27,7 @@ class StdoutDisplayRenderer extends RenderBox
 {
 	String _output;
 	ui.Paragraph _outputParagraph;
-
+	TextBox _cursorBox;
 	StdoutDisplayRenderer(String output)
 	{
 		this.output = output;
@@ -69,13 +69,17 @@ class StdoutDisplayRenderer extends RenderBox
 			textAlign:TextAlign.start,
 			fontFamily: "Inconsolata",
 			fontSize: 16.0,
-			lineHeight: 18.0,
+			//lineHeight: 18.0,
 			fontWeight: FontWeight.w700
 		))..pushStyle(new ui.TextStyle(color:Colors.white));
 		builder.addText(_output);
 		_outputParagraph = builder.build();
-
 		_outputParagraph.layout(new ui.ParagraphConstraints(width: size.width));
+		if(_output.length > 0)
+		{
+			List<TextBox> boxes = _outputParagraph.getBoxesForRange(_output.length-1, _output.length);
+			_cursorBox = boxes.first;
+		}
 	}
 
 	@override
@@ -84,7 +88,15 @@ class StdoutDisplayRenderer extends RenderBox
 		final Canvas canvas = context.canvas;
 		canvas.save();
 		canvas.clipRect(offset&size);
-		canvas.drawParagraph(_outputParagraph, new Offset(offset.dx, offset.dy - _outputParagraph.height + size.height));
+		Offset pos = new Offset(offset.dx, offset.dy - _outputParagraph.height + size.height);
+		canvas.drawParagraph(_outputParagraph, pos);
+		if(_cursorBox != null)
+		{
+			DateTime t = new DateTime.now();
+			double blink = pow((1.0-(t.millisecondsSinceEpoch/1200.0)%1.0*2.0).abs(), 0.5);
+			const double boxPad = 0.0;
+			canvas.drawRect(Rect.fromLTRB(_cursorBox.left + pos.dx + boxPad, _cursorBox.top + pos.dy + boxPad, _cursorBox.right + pos.dx - boxPad, _cursorBox.bottom + pos.dy - boxPad), new Paint()..color = new Color.fromRGBO(255, 255, 255, blink)..style=PaintingStyle.fill);
+		}
 		canvas.restore();
 	}
 }
