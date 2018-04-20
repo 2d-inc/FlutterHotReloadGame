@@ -69,7 +69,6 @@ class StdoutDisplayRenderer extends RenderBox
 			textAlign:TextAlign.start,
 			fontFamily: "Inconsolata",
 			fontSize: 16.0,
-			//lineHeight: 18.0,
 			fontWeight: FontWeight.w700
 		))..pushStyle(new ui.TextStyle(color:Colors.white));
 		builder.addText(_output);
@@ -93,7 +92,7 @@ class StdoutDisplayRenderer extends RenderBox
 		if(_cursorBox != null)
 		{
 			DateTime t = new DateTime.now();
-			double blink = pow((1.0-(t.millisecondsSinceEpoch/900.0)%1.0*2.0).abs(), 0.3);
+			double blink = pow((1.0-(t.millisecondsSinceEpoch/900.0)%1.0*2.0).abs(), 0.4);
 			const double boxPad = 0.0;
 			canvas.drawRect(Rect.fromLTRB(_cursorBox.left + pos.dx + boxPad, _cursorBox.top + pos.dy + boxPad, _cursorBox.right + pos.dx - boxPad, _cursorBox.bottom + pos.dy - boxPad), new Paint()..color = new Color.fromRGBO(255, 255, 255, blink)..style=PaintingStyle.fill);
 		}
