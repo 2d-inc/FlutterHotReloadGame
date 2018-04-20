@@ -21,7 +21,7 @@ class ListCornerRadius extends CommandTask
 
 	String getIssueCommand(int value)
 	{
-		return "SET LIST CORNER RADIUS TO $value";
+		return "SET LIST RADIUS TO $value";
 	}
 	
 	String apply(String code)
@@ -37,7 +37,7 @@ class ListCornerRadius extends CommandTask
 
 	String taskLabel()
 	{
-		return "Set List Corner Radius";
+		return "Set List Radius";
 	}
 
 	IssuedTask issue()
@@ -91,7 +91,7 @@ class FeaturedCornerRadius extends CommandTask
 	
 	String getIssueCommand(int value)
 	{
-		return "SET FEATURED CORNER RADIUS TO $value";
+		return "SET FEATURED RADIUS TO $value";
 	}
 
 	String apply(String code)
@@ -107,7 +107,7 @@ class FeaturedCornerRadius extends CommandTask
 
 	String taskLabel()
 	{
-		return "Set Featured Corner Radius";
+		return "Set Featured Item Radius";
 	}
 
 	IssuedTask issue()
