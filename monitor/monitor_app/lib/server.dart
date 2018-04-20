@@ -484,7 +484,7 @@ class GameServer
         hotReload();
 
         _inGame = true;
-        
+
         // tell every client the game has started and what their commands are...
         // build list of command id to possible values
         Random rand = new Random();
@@ -619,7 +619,16 @@ class GameServer
 
     IssuedTask getNextTask(GameClient client)
     {
-        return _taskList.nextTask(client.commands);
+        List<CommandTask> avoid = new List<CommandTask>();//We actually want to allow you to get one of your own.
+        // .from(client.commands);
+        for(GameClient gc in _clients)
+        {
+            if(gc.currentTask != null)
+            {
+                avoid.add(gc.currentTask.task);
+            }
+        }
+        return _taskList.nextTask(avoid, lowerChance:client.commands);
     }
 
     _handleWebSocket(WebSocket socket)
