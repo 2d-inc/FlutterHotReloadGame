@@ -9,16 +9,9 @@ typedef String CodeUpdateStep(String code, List<CommandTask> availableTasks);
 
 class TaskList
 {
-	List<CommandTask> _available = <CommandTask>
-	[
-		new FontSizeCommand(),
-		new ListCornerRadius(),
-		new FeaturedCornerRadius(),
-		new AppPadding(),
-		new SetBackgroundColor()
-	];
+	List<CommandTask> _available = <CommandTask>[];
 
-	List<CommandTask> toAssign = <CommandTask>
+	List<CommandTask> allTasks = <CommandTask>
 	[
 		new FontSizeCommand(),
 		new ListCornerRadius(),
@@ -75,14 +68,23 @@ class TaskList
 		}
 	];
 	
-	TaskList(this._completionsPerUpdate);
+	TaskList(this._completionsPerUpdate)
+	{
+		for(CommandTask task in allTasks)
+		{
+			if(!task.isDelayed())
+			{
+				_available.add(task);
+			}
+		}
+	}
 
 	bool get isEmpty
 	{
 		return _tasksAssigned > NumGameTasks;
 	}
 	
-	completeTask(String code)
+	String completeTask(String code)
 	{
 		_tasksCompleted++;
 		int idx = _tasksCompleted ~/ _completionsPerUpdate;
@@ -98,6 +100,19 @@ class TaskList
 		return code;
 	}
 
+	CommandTask setTaskValue(String taskType, int value)
+	{
+		for(CommandTask task in allTasks)
+		{
+			if(task.taskType() == taskType)
+			{
+				task.setCurrentValue(value);
+				return task;
+			}
+		}
+		return null;
+	}
+	
 	IssuedTask nextTask(List<CommandTask> avoid, {List<CommandTask> lowerChance})
 	{
 		if(isEmpty)
@@ -175,13 +190,13 @@ class TaskList
 	// 	for(IssuedTask t in _toIssue)
 	// 	{
 	// 		String lookingForType = t.task.taskType();
-	// 		CommandTask found = toAssign.firstWhere((CommandTask t)
+	// 		CommandTask found = allTasks.firstWhere((CommandTask t)
 	// 		{
 	// 			return t.taskType() == lookingForType;
 	// 		}, orElse:(){ return null; });
 	// 		if(found == null)
 	// 		{
-	// 			toAssign.add(t.task);
+	// 			allTasks.add(t.task);
 	// 		}
 	// 	}
 	// }

@@ -278,7 +278,6 @@ class GameClient
         
         if(_currentTask.task.taskType() == type)
         {
-            _currentTask.task.setCurrentValue(value);
             if(_currentTask.value == value)
             {
                 _completeTask();
@@ -474,7 +473,7 @@ class GameServer
 
         // Build the full list.
         _taskList = new TaskList(numClientsReady);
-        List<CommandTask> taskTypes = new List<CommandTask>.from(_taskList.toAssign);
+        List<CommandTask> taskTypes = new List<CommandTask>.from(_taskList.allTasks);
         _completedTasks = new Map<String, CommandTask>();
         
         // Todo: change back to this logic.
@@ -513,6 +512,21 @@ class GameServer
         var inputValue = input['value'];
         if(inputType is String && inputValue is int)
         {
+            // Immediately set the task value and reload.
+            CommandTask task = _taskList.setTaskValue(inputType, inputValue);
+            if(task != null)
+            {
+                task.complete(inputValue, _template);
+                if(task.hasLineOfInterest)
+                {
+                    _lineOfInterest = task.lineOfInterest;
+                }
+                _completedTasks[task.taskType()] = task;
+
+                hotReload();
+            }
+
+            // Attempt to perform the task in the context of the game (determine if the task was one someone requested).
             for(var gc in _clients)
             {
                 if(gc.performTask(inputType, inputValue))
@@ -564,16 +578,10 @@ class GameServer
 
     void completeTask(IssuedTask it)
     {
-        it.task.complete(it.value, _template);
-        if(it.task.hasLineOfInterest)
-        {
-            _lineOfInterest = it.task.lineOfInterest;
-        }
-        _completedTasks[it.task.taskType()] = it.task;
+        // Assign score.
 
+        // Advance app.
         _template = _taskList.completeTask(_template);
-
-        hotReload();
     }
 
     void failTask(IssuedTask it)
