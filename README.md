@@ -1,5 +1,5 @@
 # BiggerLogo
-![Hot Reload](https://cdn.2dimensions.com/hot_reload.gif "Hot Reload")
+<img width="350" alt="portfolio_view" src="https://github.com/2d-inc/BiggerLogo/raw/master/hot_reload.gif">
 
 ## Building
 The Monitor App builds on OSX via XCode. Please read the [instructions](https://github.com/2d-inc/BiggerLogo/wiki/Building).
