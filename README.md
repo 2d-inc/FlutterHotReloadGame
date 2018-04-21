@@ -1,4 +1,6 @@
 # BiggerLogo
+## Building
+The Monitor App builds on OSX via XCode. Please read the [instructions](https://github.com/2d-inc/BiggerLogo/wiki/Building).
 
 ## Server
 The server code is located in [/monitor/monitor_app/lib/server.dart](https://github.com/2d-inc/BiggerLogo/blob/master/monitor/monitor_app/lib/server.dart).
