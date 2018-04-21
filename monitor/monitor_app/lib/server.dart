@@ -45,6 +45,7 @@ class GameClient
 
     bool _isReady = false;
     bool _isInGame = false;
+    bool _markedStart = false;
     List<CommandTask> _commands = [];
 
     IssuedTask _currentTask;
@@ -53,10 +54,8 @@ class GameClient
     DateTime _failTaskTime;
     int _idx;
 
-    bool get isInGame
-    {
-        return _isInGame;
-    }
+    bool get isInGame => _isInGame;
+    bool get markedStart => _markedStart;
 
     GameClient(GameServer server, WebSocket socket, this._idx)
     {
@@ -84,11 +83,16 @@ class GameClient
             {
                 case "ready":
                     _isReady = jsonMsg['payload'];
+                    if(!_isReady)
+                    {
+                        _markedStart = false;
+                    }
                     print("PLAYER READY? ${_isReady}");
                     _server.sendReadyState();
                     break;
                 case "startGame":
                     print("READY TO START");
+                    _markedStart = true;
                     _server.onClientStartChanged(this);
                     break;
                 case "clientInput":
@@ -111,6 +115,7 @@ class GameClient
     {
         _isInGame = false;
         _isReady = false;
+        _markedStart = false;
         _taskStatus = null;
         _currentTask = null;
         _sendTaskTime = null;
@@ -187,13 +192,22 @@ class GameClient
         return _commands;
     }
 
-    startGame()
+    startGame(List<CommandTask> tasks)
     {
-        _isInGame = _isReady;
+        _markedStart = true;
+        _isReady = true;
+        _isInGame = true;
+
+        this.commands = tasks;
         _taskStatus = TaskStatus.complete;
         _currentTask = null;
 
         _assignTask(false);
+    }
+
+    waitGame()
+    {
+        _sendJSONMessage("wait", true);  
     }
 
     void _assignTask(bool delaySend)
@@ -264,7 +278,6 @@ class GameClient
         
         if(_currentTask.task.taskType() == type)
         {
-            _currentTask.task.setCurrentValue(value);
             if(_currentTask.value == value)
             {
                 _completeTask();
@@ -286,7 +299,8 @@ class GameClient
             "message": msg,
             "payload": payload,
             "gameActive":_server._inGame,
-            "inGame":_isInGame
+            "inGame":_isInGame,
+            "isReady":_isReady
         });
         _socket.add(message);
     }
@@ -362,8 +376,8 @@ class GameServer
     {
         // HttpServer.bind("10.76.253.124", 8080)
         //String address = "192.168.1.156";
-        HttpServer.bind("10.76.253.124", 8080)
-        //HttpServer.bind(InternetAddress.LOOPBACK_IP_V4, 8080)
+        //HttpServer.bind("10.76.253.124", 8080)
+        HttpServer.bind(InternetAddress.ANY_IP_V4, 8080)
             .then((server) async
             {
                 print("Serving at ${server.address}, ${server.port}");
@@ -419,8 +433,26 @@ class GameServer
             });
     }
 
+    bool get allReadyToStart
+    {
+        return _clients.fold<bool>(readyCount >= 2, 
+            (bool currentlyReady, GameClient client) 
+            { 
+                if(client.isReady && !client.markedStart)
+                {
+                    currentlyReady = false;
+                }
+                return currentlyReady; 
+            });
+    }
+
     onClientStartChanged(GameClient client)
     {
+        if(!allReadyToStart)
+        {
+            return;
+        }
+        
         _lives = 5;
         if(onLivesUpdated != null)
         {
@@ -441,7 +473,7 @@ class GameServer
 
         // Build the full list.
         _taskList = new TaskList(numClientsReady);
-        List<CommandTask> taskTypes = new List<CommandTask>.from(_taskList.toAssign);
+        List<CommandTask> taskTypes = new List<CommandTask>.from(_taskList.allTasks);
         _completedTasks = new Map<String, CommandTask>();
         
         // Todo: change back to this logic.
@@ -450,6 +482,8 @@ class GameServer
         print("PER CLIENT $perClient");
         hotReload();
 
+        _inGame = true;
+
         // tell every client the game has started and what their commands are...
         // build list of command id to possible values
         Random rand = new Random();
@@ -457,6 +491,7 @@ class GameServer
         {
             if(!gc.isReady)
             {
+                gc.waitGame();
                 continue;
             }
 
@@ -465,11 +500,10 @@ class GameServer
             {
                 tasksForClient.add(taskTypes.removeAt(rand.nextInt(taskTypes.length)));
             }
-            gc.commands = tasksForClient;
-
-            gc.startGame();
+            
+            gc.startGame(tasksForClient);
+            
         }
-        _inGame = true;
     }
 
     onClientInput(Map input)
@@ -478,6 +512,21 @@ class GameServer
         var inputValue = input['value'];
         if(inputType is String && inputValue is int)
         {
+            // Immediately set the task value and reload.
+            CommandTask task = _taskList.setTaskValue(inputType, inputValue);
+            if(task != null)
+            {
+                task.complete(inputValue, _template);
+                if(task.hasLineOfInterest)
+                {
+                    _lineOfInterest = task.lineOfInterest;
+                }
+                _completedTasks[task.taskType()] = task;
+
+                hotReload();
+            }
+
+            // Attempt to perform the task in the context of the game (determine if the task was one someone requested).
             for(var gc in _clients)
             {
                 if(gc.performTask(inputType, inputValue))
@@ -529,16 +578,10 @@ class GameServer
 
     void completeTask(IssuedTask it)
     {
-        it.task.complete(it.value, _template);
-        if(it.task.hasLineOfInterest)
-        {
-            _lineOfInterest = it.task.lineOfInterest;
-        }
-        _completedTasks[it.task.taskType()] = it.task;
+        // Assign score.
 
+        // Advance app.
         _template = _taskList.completeTask(_template);
-
-        hotReload();
     }
 
     void failTask(IssuedTask it)
@@ -584,7 +627,16 @@ class GameServer
 
     IssuedTask getNextTask(GameClient client)
     {
-        return _taskList.nextTask(client.commands);
+        List<CommandTask> avoid = new List<CommandTask>();//We actually want to allow you to get one of your own.
+        // .from(client.commands);
+        for(GameClient gc in _clients)
+        {
+            if(gc.currentTask != null)
+            {
+                avoid.add(gc.currentTask.task);
+            }
+        }
+        return _taskList.nextTask(avoid, lowerChance:client.commands);
     }
 
     _handleWebSocket(WebSocket socket)

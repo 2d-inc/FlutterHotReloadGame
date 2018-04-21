@@ -21,7 +21,7 @@ class ListCornerRadius extends CommandTask
 
 	String getIssueCommand(int value)
 	{
-		return "SET LIST CORNER RADIUS TO $value";
+		return "SET LIST RADIUS TO $value";
 	}
 	
 	String apply(String code)
@@ -37,7 +37,7 @@ class ListCornerRadius extends CommandTask
 
 	String taskLabel()
 	{
-		return "Set List Corner Radius";
+		return "Set List Radius";
 	}
 
 	IssuedTask issue()
@@ -47,7 +47,7 @@ class ListCornerRadius extends CommandTask
 		while(v == value)
 		{
 			switch(rand.nextInt(3))
-			{
+			{	
 				case 0:
 					v = 0;
 					break;
@@ -55,6 +55,12 @@ class ListCornerRadius extends CommandTask
 					v = 15;
 					break;
 				case 2:
+					v = 30;
+					break;
+				case 3:
+					v = 45;
+					break;
+				case 4:
 					v = 60;
 					break;
 			}
@@ -85,7 +91,7 @@ class FeaturedCornerRadius extends CommandTask
 	
 	String getIssueCommand(int value)
 	{
-		return "SET FEATURED CORNER RADIUS TO $value";
+		return "SET FEATURED RADIUS TO $value";
 	}
 
 	String apply(String code)
@@ -101,7 +107,7 @@ class FeaturedCornerRadius extends CommandTask
 
 	String taskLabel()
 	{
-		return "Set Featured Corner Radius";
+		return "Set Featured Radius";
 	}
 
 	IssuedTask issue()
@@ -110,15 +116,21 @@ class FeaturedCornerRadius extends CommandTask
 		int v = value;
 		while(v == value)
 		{
-			switch(rand.nextInt(3))
+			switch(rand.nextInt(5))
 			{
 				case 0:
-					v = 7;
+					v = 0;
 					break;
 				case 1:
-					v = 15;
+					v = 8;
 					break;
 				case 2:
+					v = 15;
+					break;
+				case 3:
+					v = 23;
+					break;
+				case 4:
 					v = 30;
 					break;
 			}

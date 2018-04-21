@@ -18,6 +18,8 @@ class MonitorWindow: NSWindow {
   @IBOutlet weak var flutterViewController: FLEViewController!
 
   override func awakeFromNib() {
+	// Ignore sigpipe.
+	signal(SIGPIPE, SIG_IGN);
     let assets = NSURL.fileURL(withPath: "flutter_assets", relativeTo: Bundle.main.resourceURL)
     flutterViewController.launchEngine(
       withAssetsPath: assets,

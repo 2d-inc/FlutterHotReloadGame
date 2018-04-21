@@ -14,6 +14,8 @@ abstract class CommandTask
 	IssuedTask issue();
 	Map serialize();
 
+    bool isDelayed() { return false; }
+
     bool get hasLineOfInterest
     {
         return _lineOfInterest != null;

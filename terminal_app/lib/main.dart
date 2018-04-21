@@ -11,6 +11,7 @@ import "in_game.dart";
 import "character_scene.dart";
 import "command_timer.dart";
 import "dart:math";
+import 'package:path_provider/path_provider.dart';
 
 void main() 
 {
@@ -158,10 +159,11 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		});
 	}
 
-	void setGameStatus(bool isServerInGame, bool isClientInGame)
+	void setGameStatus(bool isServerInGame, bool isClientInGame, bool doesServerThinkImReady)
 	{
 		setState(() 
 		{
+			_isReady = doesServerThinkImReady;
 			// we can only mark ready if the server isn't already in a game.
 			_canBeReady = !isServerInGame;
 			if(_isPlaying && !isClientInGame)
@@ -217,6 +219,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 		setState(() 
 		{
+			_gameOver = false;
 			_isPlaying = true;
 			_sceneState = TerminalSceneState.BossOnly;
 			_sceneCharacterIndex = new Random().nextInt(4);
@@ -294,31 +297,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	set isReady(bool isIt)
 	{
 		setState(() => _isReady = isIt);
-	}
-
-	_validateIpAddress(String ip)
-	{
-		print("VALIDATING $ip");
-		List<String> values = _ipInputController.text.split('.');
-		if(values.length != 4)
-		{
-			print("INVALID IP");
-			return false;
-		}
-		else
-		{
-			for(String s in values)
-			{
-				int ipValue = int.parse(s, onError: (source){});
-				ipValue = ipValue ?? -1;
-				if(ipValue < 0 || ipValue > 255)
-				{
-					print("INVALID INPUT VALUES");
-					return false;
-				}
-			}
-		}
-		return true;
 	}
 
 	final TextEditingController _ipInputController = new TextEditingController();
@@ -482,25 +460,59 @@ class WebSocketClient
 	int _reconnectSeconds = ReconnectMinSeconds;
 	bool _isConnected = false;
 	VoidCallback onConnectionChanged;
-	String address;
+	String _address;
 
 	bool get isConnected
 	{
 		return _isConnected;
 	}
 
+	String get address => _address;
+	set address(String value)
+	{
+		if(value == _address)
+		{
+			return;
+		}
+		_address = value;
+		connect();
+		
+		getApplicationDocumentsDirectory().then((Directory dir)
+		{
+			File file = new File("${dir.path}/ip.txt");
+			file.writeAsStringSync(_address);
+		});
+	}
+
 	WebSocketClient(this._terminal)
 	{
 		if(Platform.isAndroid)
 		{
-			address = "10.0.2.2";
+			_address = "10.0.2.2";
 		}
 		else
 		{
-			address = InternetAddress.LOOPBACK_IP_V4.address;
+			_address = InternetAddress.LOOPBACK_IP_V4.address;
 		}
-		address = "10.76.253.124";
-		connect();
+		//address = "10.76.253.124";
+
+		getApplicationDocumentsDirectory().then((Directory dir)
+		{
+			File file = new File("${dir.path}/ip.txt");
+			try
+			{
+				String ip = file.readAsStringSync();
+				if(_validateIpAddress(ip))
+				{
+					_address = ip;
+				}
+				connect();
+			}
+			catch(FileSystemException)
+			{
+				connect();
+			}
+		});
 	}
 
     static String formatJSONMessage<T>(String msg, T payload)
@@ -560,7 +572,16 @@ class WebSocketClient
 	
 	connect()
 	{
-		assert(_socket == null);
+		if(_socket != null)
+		{
+			_socket.close().then((dynamic)
+			{
+				connect();
+			});
+			_socket = null;
+			return;
+		}
+
 		print("Attempting connection to ws://" + address + ":8080/ws");
 		WebSocket.connect("ws://" + address + ":8080/ws").then
 		(
@@ -591,10 +612,11 @@ class WebSocketClient
 
 						var gameActive = jsonMsg['gameActive'];
 						var inGame = jsonMsg['inGame'];
+						var isClientReady = jsonMsg['isReady'];
 						
 						if(gameActive is bool && inGame is bool)
 						{
-							_terminal.setGameStatus(gameActive, inGame);
+							_terminal.setGameStatus(gameActive, inGame, isClientReady);
 						}
 						
 						switch(msg)
@@ -660,4 +682,25 @@ class WebSocketClient
 			}
 		);
 	}
+}
+
+bool _validateIpAddress(String ip)
+{
+	List<String> values = ip.split('.');
+	if(values.length != 4)
+	{
+		return false;
+	}
+	else
+	{
+		for(String s in values)
+		{
+			int ipValue = int.tryParse(s) ?? -1;
+			if(ipValue < 0 || ipValue > 255)
+			{
+				return false;
+			}
+		}
+	}
+	return true;
 }

@@ -18,14 +18,30 @@ class GameRadial extends StatefulWidget implements GameCommand
 	final IssueCommandCallback issueCommand;
 
 	@override
-	_GameRadialState createState() => new _GameRadialState(value, min, max);
+	_GameRadialState createState() => new _GameRadialState(value.toDouble(), min, max);
+}
+
+const double ArrowWidth = 16.0;
+const double ArrowHeight = 10.0;
+const int NumRadialTicks = 5;
+
+const double padding = 40.0;
+const double open = 0.25;
+final double sweep = pi*2.0*(1.0-open);
+const double tickLength = 25.0;
+const double tickTextLength = 35.0;
+final double startAngle = pi/2.0+(pi*open);
+const double arrowPadding = 30.0;
+double normalizeAngle(double angle)
+{
+	return (angle+pi*2)%(pi*2);
 }
 
 class _GameRadialState extends State<GameRadial> with SingleTickerProviderStateMixin
 {
 	AnimationController _controller;
 	Animation<double> _valueAnimation;
-	int value = 0;
+	double value = 0.0;
 	final int minValue;
 	final int maxValue;
 	double accumulation = 0.0;
@@ -33,58 +49,103 @@ class _GameRadialState extends State<GameRadial> with SingleTickerProviderStateM
 
 	_GameRadialState(this.value, this.minValue, this.maxValue);
 	
-	void dragStart(DragStartDetails details)
+	int getCurrentTick()
 	{
-		//_controller.stop();
+		int closestTick = minValue;
+		double closestDiff = double.maxFinite;
+		for(int i = 0; i < NumRadialTicks; i++)
+		{
+			int tickValue = (minValue + (1.0/(NumRadialTicks-1) * i) * (maxValue-minValue)).round();
+			double diff = (tickValue-value).abs();
+			if(diff < closestDiff)
+			{
+				closestDiff = diff;
+				closestTick = i;
+			}
+		}
+		return closestTick;
 	}
 
-	void dragUpdate(DragUpdateDetails details)
+	int getCurrentTickValue()
 	{
-		//context.size
-		// RenderBox ro = context.findRenderObject();
-		// if(ro == null)
-		// {
-		// 	return;
-		// }
-		// Offset local = ro.globalToLocal(details.globalPosition);
+		int closestValue = minValue;
+		double closestDiff = double.maxFinite;
+		for(int i = 0; i < NumRadialTicks; i++)
+		{
+			int tickValue = (minValue + (1.0/(NumRadialTicks-1) * i) * (maxValue-minValue)).round();
+			double diff = (tickValue-value).abs();
+			if(diff < closestDiff)
+			{
+				closestDiff = diff;
+				closestValue = tickValue;
+			}
+		}
+		return closestValue;
+	}
 
-		accumulation = (accumulation+details.delta.dy/context.size.height).clamp(0.0, 1.0);
-		int v = (minValue + ((1.0-accumulation) * 4).round() * ((maxValue-minValue)/4)).round();
-		if(targetValue == v)
+	int getTickValue(int i)
+	{
+		return (minValue + (1.0/(NumRadialTicks-1) * i.clamp(0, NumRadialTicks-1)) * (maxValue-minValue)).round();
+	}
+
+	void dragStart(DragStartDetails details)
+	{
+		RenderBox ro = context.findRenderObject();
+		if(ro == null)
 		{
 			return;
 		}
-		targetValue = v;
+		Offset local = ro.globalToLocal(details.globalPosition);
+
+		
+		Offset pos = new Offset(padding, padding);
+		Size arcSize = new Size(ro.size.width-padding*2, ro.size.height-padding*2);
+		//final double radius = min(arcSize.width, arcSize.height)/2.0;
+		Offset center = new Offset(pos.dx + arcSize.width/2.0, pos.dy + arcSize.height/2.0);
+		Offset diff = local-center;
+		double angle = atan2(diff.dy, diff.dx);
+
+		Offset arrow1 = new Offset(center.dx, center.dy - arrowPadding - ArrowHeight/2.0);
+		Offset arrow2 = new Offset(center.dx, center.dy + arrowPadding + ArrowHeight/2.0);
+		
+		int closestValue = minValue;
+		if((arrow1-local).distance < ArrowWidth)
+		{
+			closestValue = getTickValue(getCurrentTick() + 1);
+		}
+		else if((arrow2-local).distance < ArrowWidth)
+		{
+			closestValue = getTickValue(getCurrentTick() - 1);
+		}
+		else
+		{
+			double closest = 640.0;
+			
+			for(int i = 0; i < NumRadialTicks; i++)
+			{
+				double tickAngle = startAngle + i * sweep/(NumRadialTicks-1);
+				double diff = (normalizeAngle(tickAngle)-normalizeAngle(angle)).abs();
+				if(diff < closest)
+				{
+					closestValue = (minValue + (1.0/(NumRadialTicks-1) * i) * (maxValue-minValue)).round();
+					closest = diff;
+				}
+			}
+		}
 
 		
 		_valueAnimation = new Tween<double>
 		(
 			begin: value.toDouble(),
-			end: targetValue.toDouble()
+			end: closestValue.toDouble()
 		).animate(_controller);
-	
+
 		_controller
 			..value = 0.0
-			//..fling(velocity: 0.01);
 			..animateTo(1.0, curve:Curves.easeInOut);
 
-		// setState(()
-		// {
-		// 	value = min(maxValue, max(minValue, (value - (details.delta.dy/context.size.height) * (maxValue-minValue)).round()));
-		// });
-	}
-
-	void dragEnd(DragEndDetails details)
-	{
+		targetValue = closestValue;
 		widget.issueCommand(widget.taskType, targetValue);
-		// _slideAnimation = new Tween<double>(
-		// 	begin: scroll,
-		// 	end: -min((data.length-1).toDouble(), max(0.0, -scroll.roundToDouble()))
-		// ).animate(_controller);
-	
-		// _controller
-		// 	..value = 0.0
-		// 	..fling(velocity: details.velocity.pixelsPerSecond.distance / 1000.0);
 	}
 
 	initState() 
@@ -95,7 +156,7 @@ class _GameRadialState extends State<GameRadial> with SingleTickerProviderStateM
 		{
 			setState(()
 			{
-				value = _valueAnimation.value.round();
+				value = _valueAnimation.value;
 			});
 		});
 	}
@@ -112,8 +173,6 @@ class _GameRadialState extends State<GameRadial> with SingleTickerProviderStateM
 	{
 		return new GestureDetector(
 			onVerticalDragStart: dragStart,
-			onVerticalDragUpdate: dragUpdate,
-			onVerticalDragEnd: dragEnd,
 			child: new Container(
 				alignment:Alignment.center,
 				child:new GameRadialNotches((value-minValue)/(maxValue-minValue), minValue, maxValue)
@@ -149,10 +208,6 @@ class GameRadialNotches extends LeafRenderObjectWidget
 	}
 }
 
-const double ArrowWidth = 16.0;
-const double ArrowHeight = 10.0;
-
-const int NumRadialTicks = 5;
 class RadialTickParagraph
 {
 	ui.Paragraph paragraph;
@@ -242,17 +297,10 @@ class GameRadialNotchesRenderObject extends RenderBox
 	void paint(PaintingContext context, Offset offset)
 	{
 		final Canvas canvas = context.canvas;
-		const padding = 40.0;
-		double open = 0.25;
-		double sweep = pi*2.0*(1.0-open);
 
 		Offset pos = new Offset(padding+offset.dx, padding + offset.dy);
 		Size arcSize = new Size(size.width-padding*2, size.height-padding*2);
 
-		
-		final double startAngle = pi/2.0+(pi*open);
-		const double tickLength = 25.0;
-		const double tickTextLength = 35.0;
 		final double radius = min(arcSize.width, arcSize.height)/2.0;
 
 		final double radiusTickStart = radius-tickLength/2.0;
@@ -291,12 +339,12 @@ class GameRadialNotchesRenderObject extends RenderBox
 		ui.Paint arrowPaint = new ui.Paint()..color = GameColors.midValueContent..strokeWidth = 1.0..style=PaintingStyle.stroke;
 		canvas.drawParagraph(_valueParagraph, new Offset(center.dx - _valueLabelSize.width/2.0, center.dy - _valueLabelSize.height/2.0));
 		canvas.save();
-		canvas.translate(center.dx, center.dy - 30.0);
+		canvas.translate(center.dx, center.dy - arrowPadding);
 		canvas.drawPath(_arrowPath, arrowPaint);
 		canvas.restore();
 		canvas.save();
 		
-		canvas.translate(center.dx, center.dy + 30.0);
+		canvas.translate(center.dx, center.dy + arrowPadding);
 		canvas.scale(1.0, -1.0);
 		canvas.drawPath(_arrowPath, arrowPaint);
 		canvas.restore();

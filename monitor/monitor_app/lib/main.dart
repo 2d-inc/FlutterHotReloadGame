@@ -22,8 +22,8 @@ import "stdout_display.dart";
 import "flare_widget.dart";
 
 const double STDOUT_PADDING = 41.0;
-const double STDOUT_HEIGHT = 110.0 - STDOUT_PADDING;
-const int STDOUT_MAX_LINES = 4;
+const double STDOUT_HEIGHT = 150.0 - STDOUT_PADDING;
+const int STDOUT_MAX_LINES = 5;
 const String targetDevice = '"iPhone 8"';
 const String logoAppLocation = "~/Projects/BiggerLogo/logo_app";
 
@@ -232,7 +232,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 
 		_stdoutQueue = new ListQueue<String>(STDOUT_MAX_LINES);
 		// Read contents.
-		_flutterTask.read("/main_template.dart").then((contents)
+		_flutterTask.read("/lib/main_template.dart").then((contents)
 		{
 			_contents = contents;
 
@@ -406,7 +406,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 											width: double.infinity,
 											color: const Color.fromARGB(18, 255, 159, 159),
 											padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
-											child: new Text("STDOUT:", style: new TextStyle(color: new Color.fromARGB(128, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
+											child: new Text("TERMINAL", style: new TextStyle(color: new Color.fromARGB(128, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
 										),
 										new Expanded(
 											child:new Row(
@@ -415,7 +415,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 													new Expanded(child:new Container
 													(
 														padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
-														child: StdoutDisplay(_stdoutQueue.join("\n"))//new Text("Syncing files to iPhone 8...", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
+														child: StdoutDisplay(_stdoutQueue.join("\n") + "\n ")//new Text("Syncing files to iPhone 8...", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
 													)),
 													new Container(
 														padding: const EdgeInsets.all(15.0),

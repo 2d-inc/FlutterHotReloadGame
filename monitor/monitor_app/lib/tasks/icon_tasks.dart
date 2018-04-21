@@ -3,6 +3,9 @@ import "command_tasks.dart";
 
 class AddIconATask extends CommandTask
 {
+	@override
+	bool isDelayed() { return true; }
+
 	List<String> options = ["PIZZA", "BURGER", "DESSERT"];
 	
 	bool _hasPizza = false;
@@ -94,6 +97,9 @@ class AddIconATask extends CommandTask
 
 class AddIconBTask extends CommandTask
 {
+	@override
+	bool isDelayed() { return true; }
+	
 	List<String> options = ["SUSHI", "NOODLES"];
 	
 	bool _hasSushi = false;
@@ -228,6 +234,9 @@ class SetBackgroundColor extends CommandTask
 
 class CarouselIcons extends CommandTask
 {
+	@override
+	bool isDelayed() { return true; }
+	
 	List<String> options = ["HIDDEN", "STATIC", "ANIMATED"];
 	List<String> values = ["IconType.hidden", "IconType.still", "IconType.animated"];
 	int _valueIdx = 0;

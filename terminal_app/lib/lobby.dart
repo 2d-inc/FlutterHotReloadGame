@@ -35,7 +35,7 @@ class LobbyWidget extends StatelessWidget
                         children: 
                         [
                             // Players Row
-                            new CommandPanel(new PlayerListWidget(this._arePlayersReady)),
+                            new CommandPanel(new PlayerListWidget(!canBeReady, this._arePlayersReady)),
                             // Filler
                             new Expanded(child: new Container()),
                             // Buttons
