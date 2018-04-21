@@ -1,4 +1,6 @@
 # BiggerLogo
+## Building
+The Monitor App builds on OSX via XCode. Please read the [instructions](https://github.com/2d-inc/BiggerLogo/wiki/Building).
 
 ## Server
 The server code is located in [/monitor/monitor_app/lib/server.dart](https://github.com/2d-inc/BiggerLogo/blob/master/monitor/monitor_app/lib/server.dart).
@@ -7,4 +9,6 @@ The server code is located in [/monitor/monitor_app/lib/server.dart](https://git
 The client code is located in [/terminal_app/lib/main.dart](https://github.com/2d-inc/BiggerLogo/blob/master/terminal_app/lib/main.dart).
 
 ### IP
-The IP Address is currently hardcoded to **10.76.253.124** in both the [server](https://github.com/2d-inc/BiggerLogo/blob/620c29aee3c7af9f455af45cd47c00e030567de1/monitor/monitor_app/lib/server.dart#L365) and the [client](https://github.com/2d-inc/BiggerLogo/blob/620c29aee3c7af9f455af45cd47c00e030567de1/terminal_app/lib/main.dart#L502).
+The Monitor App binds to ANY_IP_V4 which allows it to respond to incoming requests on any available IP. This removes the requirement from binding to a specific IP address in the Monitor app.
+
+The Terminal App will store an IP address to connect to in a file and reload it when the app boots. This value can be changed by tapping three times on the top left corner of the Terminal App. Changing the IP address will force a reconnect and it will update the locally stored IP address so that it'll be available for next boot.
