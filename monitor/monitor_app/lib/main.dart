@@ -21,6 +21,7 @@ import "tasks/command_tasks.dart";
 import "stdout_display.dart";
 import "flare_widget.dart";
 import "shadow_text.dart";
+import "score.dart";
 
 const double STDOUT_PADDING = 41.0;
 const double STDOUT_HEIGHT = 150.0 - STDOUT_PADDING;
@@ -397,7 +398,8 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 										children:<Widget>
 										[
 											new Container(margin:const EdgeInsets.only(bottom:7.0), child:ShadowText("SCORE", spacing: 5.0, fontFamily: "Roboto", fontSize: 19.0)),
-											new Container(margin:const EdgeInsets.only(bottom:7.0), child:ShadowText(_score.toString(), fontFamily: "Inconsolata", fontSize: 50.0))
+											//new Container(margin:const EdgeInsets.only(bottom:7.0), child:ShadowText(_score.toString(), fontFamily: "Inconsolata", fontSize: 50.0))
+											new GameScore(_score)
 										]
 									)),
 								]
