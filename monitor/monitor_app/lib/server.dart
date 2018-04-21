@@ -7,6 +7,7 @@ import "tasks/icon_tasks.dart";
 import "tasks/command_tasks.dart";
 import "package:flutter/scheduler.dart";
 import 'flutter_task.dart';
+import "dart:ui";
 
 enum CommandTypes { slider, radial, binary }
 enum TaskStatus { complete, inProgress, failed, noMore }
@@ -36,6 +37,11 @@ List<String> failedMessages = <String>
     "Hello? Hello?! Anybody home?!",
     "This is a disgrace."
 ];
+
+const double minMultiplier = 1.0;
+const double maxMultiplier = 3.0;
+const int taskScore = 100;
+const int mistakePenalty = -150;
 
 class GameClient
 {
@@ -133,7 +139,7 @@ class GameClient
         String message = completedMessages[new Random().nextInt(completedMessages.length)];
 
         _server.onTaskCompleted(_currentTask, _failTaskTime, message);
-        _server.completeTask(_currentTask);
+        _server.completeTask(_currentTask, _failTaskTime.difference(DateTime.now()));
         _taskStatus = TaskStatus.complete;
         _currentTask = null;
         _failTaskTime = null;
@@ -322,7 +328,9 @@ class GameServer
     OnTaskCompletedCallback onTaskCompleted;
     VoidCallback onGameOverCallback;
     VoidCallback onLivesUpdated;
+    VoidCallback onScoreChanged;
     int _lives = 0;
+    int _score = 0;
 
     Map<String, CommandTask> _completedTasks;
 
@@ -334,10 +342,8 @@ class GameServer
         connect();
     }
 
-    int get lives
-    {
-        return _lives;
-    }
+    int get lives => _lives;
+    int get score => _score;
 
     FlutterTask get flutterTask
     {
@@ -446,6 +452,24 @@ class GameServer
             });
     }
 
+    void _setScore(int score)
+    {
+        _score = max(0, score);
+        if(onScoreChanged != null)
+        {
+            onScoreChanged();
+        }
+    }
+
+    void _setLives(int lives)
+    {
+        _lives = lives;
+        if(onLivesUpdated != null)
+        {
+            onLivesUpdated();
+        }
+    }
+
     onClientStartChanged(GameClient client)
     {
         if(!allReadyToStart)
@@ -453,11 +477,9 @@ class GameServer
             return;
         }
         
-        _lives = 5;
-        if(onLivesUpdated != null)
-        {
-            onLivesUpdated();
-        }
+        _setLives(5);
+        _setScore(0);
+
         int numClientsReady = readyCount;
 
         if(numClientsReady < 2)
@@ -526,13 +548,20 @@ class GameServer
                 hotReload();
             }
 
+            bool wasCompletion = false;
             // Attempt to perform the task in the context of the game (determine if the task was one someone requested).
             for(var gc in _clients)
             {
                 if(gc.performTask(inputType, inputValue))
                 {
+                    wasCompletion = true;
                     break;
                 }
+            }
+
+            if(!wasCompletion)
+            {
+                _setScore(_score+mistakePenalty);
             }
         }
     }
@@ -576,9 +605,14 @@ class GameServer
         sendReadyState();
     }
 
-    void completeTask(IssuedTask it)
+    void completeTask(IssuedTask it, Duration remaining)
     {
-        // Assign score.
+        // Assign score.        
+        double factor = (remaining.inSeconds/it.expires).clamp(0.0, 1.0);
+        
+        double multiplier = lerpDouble(minMultiplier, maxMultiplier, factor);
+        int scoreInc = (taskScore * multiplier).floor();
+        _setScore(_score+scoreInc);
 
         // Advance app.
         _template = _taskList.completeTask(_template);
@@ -586,11 +620,7 @@ class GameServer
 
     void failTask(IssuedTask it)
     {
-        _lives--;
-        if(onLivesUpdated != null)
-        {
-            onLivesUpdated();
-        }
+        _setLives(_lives-1);
     }
 
     void hotReload()

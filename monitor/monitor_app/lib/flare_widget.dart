@@ -162,7 +162,7 @@ class FlareRenderObject extends RenderBox
 			(bool success)
 			{
 				_actor = actor;
-				_animation = _actor.getAnimation("Dead Monitor");
+				_animation = _actor.getAnimation("Dead Terminal");
 				_animationTime = 0.0;
 				markNeedsLayout();
 				markNeedsPaint();

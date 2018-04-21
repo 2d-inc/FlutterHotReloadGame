@@ -214,7 +214,7 @@ class SetBackgroundColor extends CommandTask
 
 	String taskLabel()
 	{
-		return "Add Icon";
+		return "Background Color";
 	}
 
 	IssuedTask issue()
