@@ -174,6 +174,7 @@ class CommandTimerRenderer extends RenderBox
 
 		canvas.drawRRect(new RRect.fromRectAndRadius(barShadowOffset & new Size(width, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = new Color.fromARGB((48*_opacity.round()), 0, 19, 28));
 		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = Colors.white.withAlpha(alpha));
-		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width*fi, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = const Color.fromARGB(255, 86, 234, 246).withAlpha(alpha));
+		Color barColor = fi < 0.25 ? new Color.fromARGB(alpha, 251,33,33) : (fi < 0.6 ? new Color.fromARGB(alpha, 250, 202, 88) : new Color.fromARGB(alpha, 86, 234, 246));
+		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width*fi, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = barColor);
 	}
 }

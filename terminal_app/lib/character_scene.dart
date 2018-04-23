@@ -5,6 +5,7 @@ import "package:nima/animation/actor_animation.dart";
 import "package:nima/actor_node.dart";
 import "package:flutter/scheduler.dart";
 import "package:AABB/AABB.dart";
+import "package:nima/math/mat2d.dart";
 import "dart:math";
 
 enum CharacterState
@@ -575,7 +576,9 @@ class TerminalSceneRenderer extends RenderBox
 
 		canvas.save();		
 		canvas.clipRect(offset & size);
-		canvas.translate(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
+		Offset center = new Offset(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
+		
+		canvas.translate(center.dx, center.dy);
 		canvas.scale(scale, -scale);
 		canvas.translate(_position.dx, _position.dy);
 		_scene.draw(canvas);
@@ -588,12 +591,32 @@ class TerminalSceneRenderer extends RenderBox
 								new ui.Paint()	..shader = new ui.Gradient.linear(new Offset(0.0, offset.dy + (size.height-fadeHeight)), new Offset(0.0, offset.dy + fadeHeight), <Color>[new Color.fromARGB((100*fadeOpacity).round(), 0, 0, 0), const Color.fromARGB(0, 0, 0, 0)])
 											..style = ui.PaintingStyle.fill);
 
+
+		TerminalCharacter boss = _characters[_characterIndex];
+			
+		if(boss != null && boss.state == CharacterState.Upset)
+		{
+			Mat2D radialScaleMatrix = new Mat2D();
+			double radialScale = size.width/size.height;
+			radialScaleMatrix[0] = radialScale;
+			radialScaleMatrix[4] = radialScale*size.width/2;
+			canvas.drawRect(offset&size, new ui.Paint() ..shader = new ui.Gradient.radial(center, size.height, [ Colors.transparent, new Color.fromRGBO(250, 202, 88, 0.0), new Color.fromRGBO(250, 202, 88, 1.0) ], [0.0, 0.33, 1.0], TileMode.clamp, radialScaleMatrix.mat4));
+		}
+		else if(boss != null && boss.state == CharacterState.Angry)
+		{
+			Mat2D radialScaleMatrix = new Mat2D();
+			double radialScale = size.width/size.height;
+			radialScaleMatrix[0] = radialScale;
+			radialScaleMatrix[4] = radialScale*size.width/2;
+			canvas.drawRect(offset&size, new ui.Paint() ..shader = new ui.Gradient.radial(center, size.height, [ Colors.transparent, new Color.fromRGBO(250, 202, 88, 0.14), new Color.fromRGBO(251, 33, 33, 1.0) ], [0.0, 0.33, 1.0], TileMode.clamp, radialScaleMatrix.mat4));
+		}
+
+
 		_renderCharacters.sort((TerminalCharacter a, TerminalCharacter b)
 		{
 			return ((b.actor.root.y - a.actor.root.y) * 100.0).round();
 		});
 
-		TerminalCharacter boss = _characters[_characterIndex];
 		//bool showOnlyBoss = _animation != null && _animationTime == _animation.duration;
 		
 		for(TerminalCharacter character in _renderCharacters)
