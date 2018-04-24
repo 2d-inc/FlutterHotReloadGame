@@ -12,6 +12,7 @@ import "character_scene.dart";
 import "command_timer.dart";
 import "dart:math";
 import 'package:path_provider/path_provider.dart';
+import "flare_heart_widget.dart";
 
 void main() 
 {
@@ -70,6 +71,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	bool _isReady = false;
 	bool _gameOver = false;
 	List<bool> _arePlayersReady;
+	int _lives = 0;
 
 	List _gameCommands = [];
 
@@ -264,6 +266,14 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		});
 	}
 
+	void onLivesChanged(int value)
+	{
+		if(_lives != value)
+		{
+			setState( () => _lives = value);
+		}
+	}
+
 	void gameOver()
 	{
 		showGameOver();
@@ -436,7 +446,21 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 										new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage, startTime:_commandStartTime, endTime:_commandEndTime),
 										new Container(
 											margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
-											height: 50.0,
+											child: new Row
+											(
+												children: 
+												[
+													new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 1, opacity: _gameOpacity)),
+													new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 2, opacity: _gameOpacity)),
+													new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 3, opacity: _gameOpacity)),
+													new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 4, opacity: _gameOpacity)),
+													new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 5, opacity: _gameOpacity)),
+												],
+											)
+										),
+										new Container(
+											margin: new EdgeInsets.only(left:20.0, right:20.0, top:48.0),
+											height: 15.0,
 											child:new CommandTimer(opacity:_gameOpacity, startTime:_commandStartTime, endTime:_commandEndTime)
 										)
 									]	
@@ -643,6 +667,9 @@ class WebSocketClient
 								break;
 							case "taskComplete":
 								_terminal.onTaskComplete(payload as String);
+								break;
+							case "teamLives":
+								_terminal.onLivesChanged(payload as int);
 								break;
 							default:
 								print("UNKNOWN MESSAGE: $jsonMsg");

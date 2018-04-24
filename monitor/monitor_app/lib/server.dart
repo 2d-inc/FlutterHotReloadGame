@@ -60,6 +60,9 @@ class GameClient
     DateTime _failTaskTime;
     int _idx;
 
+    int _lives = 0;
+    
+    int get lives => _lives;
     bool get isInGame => _isInGame;
     bool get markedStart => _markedStart;
 
@@ -311,6 +314,10 @@ class GameClient
         _socket.add(message);
     }
 
+    set lives(int livesLeft)
+    {
+        _sendJSONMessage("teamLives", livesLeft);
+    }
 }
 
 class GameServer
@@ -467,6 +474,11 @@ class GameServer
         if(onLivesUpdated != null)
         {
             onLivesUpdated();
+        }
+
+        for(var gc in _clients)
+        {
+            gc.lives = lives;
         }
     }
 
