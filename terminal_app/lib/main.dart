@@ -65,7 +65,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	DateTime _commandStartTime = new DateTime.now();
 	DateTime _commandEndTime = new DateTime.now().add(const Duration(seconds:10));
 
-	WebSocketClient _client;
+	SocketClient _client;
 	bool _isConnected = false;
 	bool _canBeReady = false;
 
@@ -84,7 +84,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	initSocketClient(String uniqueId)
 	{
-		_client = new WebSocketClient(this, uniqueId);
+		_client = new SocketClient(this, uniqueId);
 		_client.onConnectionChanged = ()
 		{
 			setState(()
@@ -105,7 +105,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		Future batteryQuery = platform.invokeMethod('getBatteryLevel');
 		batteryQuery.then((percent) => setState(() => _batteryLevel = "$percent%")).
 			catchError(
-				(e) => print("Just got an error!====\n$e"), 
+				(e) => debugPrint("Just got an error!====\n$e"), 
 				test: (e) => e is FormatException
 			);
 		resetSceneMessage();
@@ -193,12 +193,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	{
 		if(!_isReady)
 		{
-			print("THIS PLAYER ISN'T READY YET");
 			return;
 		}
 		if(_isPlaying)
 		{
-			print("ALREADY PLAYING.");
 			return;
 		}
 		_randomSeed = new Random().nextInt(19890926);
@@ -348,7 +346,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 					{
 						int now = new DateTime.now().millisecondsSinceEpoch;
 						int diff = now - _lastTap;
-						print(diff);
 						if(diff < 1000)
 						{
 							_tapCount++;
@@ -435,7 +432,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,
-											child: new Text("V0.1", style: const TextStyle(color: const Color.fromARGB(255, 50, 69, 71), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 12.0, decoration: TextDecoration.none, letterSpacing: 0.9))
+											child: new Text("V0.2", style: const TextStyle(color: const Color.fromARGB(255, 50, 69, 71), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 12.0, decoration: TextDecoration.none, letterSpacing: 0.9))
 										),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 									]
@@ -445,58 +442,50 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 					),
 					new Positioned
 					(
-						left:0.0,
-						top:0.0,
-						bottom:0.0,
-						width:MediaQuery.of(context).size.width * _panelRatio,
-						child: new GestureDetector( onTap: _backToLobby, child: 
-							new Container(
-								// decoration: new BoxDecoration
-								// (
-								// 	image: new DecorationImage
-								// 	(
-								// 		image: new AssetImage("assets/images/lobby_background.png"),
-								// 		fit: BoxFit.fitHeight
-								// 	)
-								// ),
-								child:new Stack
-								(
-									children:<Widget>
-									[
-										new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage, startTime:_commandStartTime, endTime:_commandEndTime),
-										new Container(
-											margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
-											child: new Row
-											(
-												children: 
-												[
-													new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 1, opacity: _gameOpacity)),
-													new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 2, opacity: _gameOpacity)),
-													new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 3, opacity: _gameOpacity)),
-													new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 4, opacity: _gameOpacity)),
-													new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 5, opacity: _gameOpacity)),
-												],
-											)
-										),
-										new Container(
-											margin: new EdgeInsets.only(left:20.0, right:20.0, top:48.0),
-											height: 15.0,
-											child:new CommandTimer(opacity:_gameOpacity, startTime:_commandStartTime, endTime:_commandEndTime)
+						left: 0.0,
+						top: 0.0,
+						bottom: 0.0,
+						width: MediaQuery.of(context).size.width * _panelRatio,
+						child: new Container
+						(
+							child:new Stack
+							(
+								children:<Widget>
+								[
+									new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage, startTime:_commandStartTime, endTime:_commandEndTime),
+									new Container(
+										margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
+										child: new Row
+										(
+											children: 
+											[
+												new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 1, opacity: _gameOpacity)),
+												new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 2, opacity: _gameOpacity)),
+												new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 3, opacity: _gameOpacity)),
+												new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 4, opacity: _gameOpacity)),
+												new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 5, opacity: _gameOpacity)),
+											],
 										)
-									]	
-								)
+									),
+									new Container
+									(
+										margin: new EdgeInsets.only(left:20.0, right:20.0, top:48.0),
+										height: 15.0,
+										child:new CommandTimer(opacity:_gameOpacity, startTime:_commandStartTime, endTime:_commandEndTime)
+									)
+								]	
 							)
-						),
-					)			
+						)
+					)
 				],
 			)
 		);
 	}
 }
 
-class WebSocketClient
+class SocketClient
 {
-	WebSocket _socket;
+	Socket _socket;
 	_TerminalState _terminal;
 	Timer _reconnectTimer;
 	Timer _pingTimer;
@@ -530,7 +519,7 @@ class WebSocketClient
 		});
 	}
 
-	WebSocketClient(this._terminal, this._uniqueId)
+	SocketClient(this._terminal, this._uniqueId)
 	{
 		if(Platform.isAndroid)
 		{
@@ -571,23 +560,23 @@ class WebSocketClient
 
 	void dispose()
 	{
-		_socket?.close(99, "DISPOSING");
+		_socket?.close();
 	}
 
 	void onReady()
 	{
 		bool state = _terminal.handleReady();
-		_socket?.add(formatJSONMessage("ready", state));
+		_socket?.writeln(formatJSONMessage("ready", state));
 	}
 
 	void onStart()
 	{
-		_socket?.add(formatJSONMessage("startGame", true));
+		_socket?.writeln(formatJSONMessage("startGame", true));
 	}
 
 	void sendCommand(String taskType, int value)
 	{
-		_socket?.add(formatJSONMessage("clientInput", {"type":taskType, "value":value}));
+		_socket?.writeln(formatJSONMessage("clientInput", {"type":taskType, "value":value}));
 	}
 
 	void reconnect()
@@ -612,7 +601,7 @@ class WebSocketClient
 		int delay = _reconnectSeconds;
 		_reconnectSeconds = (_reconnectSeconds * 1.5).round().clamp(ReconnectMinSeconds, ReconnectMaxSeconds);
 
-		debugPrint("Attempting websocket reconnect in $delay seconds.");
+		debugPrint("Attempting socket reconnect in $delay seconds.");
 		_reconnectTimer = new Timer(new Duration(seconds: delay), connect);
 	}
 
@@ -628,7 +617,7 @@ class WebSocketClient
 			_pingTimer = null;
 		}
 		
-		_socket.add(formatJSONMessage("hi", _uniqueId));
+		_socket.writeln(formatJSONMessage("hi", _uniqueId));
 
 		_pingTimer = new Timer(new Duration(seconds: 5), sendPing);
 	}
@@ -645,133 +634,134 @@ class WebSocketClient
 			return;
 		}
 
-		print("Attempting connection to ws://" + address + ":8080/ws");
-		WebSocket.connect("ws://" + address + ":8080/ws")
-		// Make sure timeout registers first.
-		.timeout
-		(
-			const Duration(seconds: 5), 
-			onTimeout: ()
-			{
-				debugPrint("Websocket connect timed out.");
-				reconnect();
-			}
-		)
-		.catchError
-		(
-			(e)
-			{
-				debugPrint("Websocket caught error: $e");
-				reconnect();
-			}
-		)
-		.then
-		(
-			(WebSocket ws)
-			{
-				if(ws == null)
+		print("Attempting connection to " + address + " on port 8080");
+		Socket.connect(address, 8080, timeout:new Duration(seconds: 5))
+			.catchError
+			(
+				(e)
 				{
-					debugPrint("Connected with null socket?");
-					if(!_isConnected)
-					{
-						reconnect();
-					}
-					return;
-				}
-
-				if(_isConnected)
-				{
-					// This seems to occur when a connection times out, but then mysteriously
-					// comes back from the dead and calls its connection handler. This shouldn't
-					// happen with our new handler ordering, but this is a nice sanity check.
-					print("Good socket was already connected, kill this zombie socket.");
-					ws.close();
-					return;
-				}
-				_isConnected = true;
-				if(onConnectionChanged != null)
-				{
-					onConnectionChanged();
-				}
-				debugPrint("Websocket connected");
-				// Reset to min connect time for future reconnects.
-				_reconnectSeconds = ReconnectMinSeconds;
-
-				// Store socket.
-				_socket = ws;
-				//_socket.pingInterval = const Duration(seconds: 5);
-
-				// Let the server know who we are so they can kill older connections if they exist.
-				sendPing();
-
-				// Listen for messages.
-				ws.listen((message)
-				{
-					try
-					{
-						var jsonMsg = json.decode(message);
-						String msg = jsonMsg['message'];
-						print("GOT MESSAGE $jsonMsg");
-						var payload = jsonMsg['payload'];
-
-						var gameActive = jsonMsg['gameActive'];
-						var inGame = jsonMsg['inGame'];
-						var isClientReady = jsonMsg['isReady'];
-						var didClientMarkStart = jsonMsg['markedStart'];
-						
-						if(gameActive is bool && inGame is bool)
-						{
-							_terminal.setGameStatus(gameActive, inGame, isClientReady, didClientMarkStart);
-						}
-						
-						switch(msg)
-						{
-							case "commandsList":
-								_terminal.onGameStart(payload as List);
-								break;
-							case "gameOver":
-								_terminal.gameOver();
-								break;
-							case "newTask":
-								_terminal.onNewTask(payload as Map);
-								break;
-							case "playerList":
-								List<bool> boolList = [];
-								for(var b in payload) // Workaround for Dart throw
-								{
-									if(b is bool) boolList.add(b);
-								}
-								_terminal.arePlayersReady = boolList;
-								break;
-							case "taskFail":
-								_terminal.onTaskFail(payload as String);
-								break;
-							case "taskComplete":
-								_terminal.onTaskComplete(payload as String);
-								break;
-							case "teamLives":
-								_terminal.onLivesChanged(payload as int);
-								break;
-							default:
-								print("UNKNOWN MESSAGE: $jsonMsg");
-								break;
-						}
-					}
-					on FormatException catch(e)
-					{
-						print("Wrong Message Formatting, not JSON: ${message}");
-						print(e);
-					}
-
-				}, 
-
-				onDone: ()
-				{
-					debugPrint("Websocket done.");
+					debugPrint("Socket caught error: $e");
 					reconnect();
-				}); // Try to reconnect when server drops
-			}
-		);
+				}
+			)
+			.then(
+				(socket) 
+				{
+					if(socket == null)
+					{
+						debugPrint("Connected with null socket?");
+						if(!_isConnected)
+						{
+							reconnect();
+						}
+						return;
+					}
+					print("CONNECTION CALLBACK");
+					if(_isConnected)
+					{
+						// This seems to occur when a connection times out, but then mysteriously
+						// comes back from the dead and calls its connection handler. This shouldn't
+						// happen with our new handler ordering, but this is a nice sanity check.
+						print("Good socket was already connected, kill this zombie socket.");
+						socket.close();
+						return;
+					}
+					_isConnected = true;
+
+					if(onConnectionChanged != null)
+					{
+						onConnectionChanged();
+					}
+					debugPrint("Socket connected");
+					// Reset to min connect time for future reconnects.
+					_reconnectSeconds = ReconnectMinSeconds;
+
+					// Store socket.
+					_socket = socket;
+
+					// Let the server know who we are so they can kill older connections if they exist.
+					sendPing();
+
+					// Listen for messages.
+					String data = "";
+					_socket.transform(utf8.decoder).listen((message)
+					{
+						data += message;
+						while(true)
+						{
+							int idx = data.indexOf("\n");
+							if(idx == -1)
+							{
+								return;
+							}
+
+							String encodedJson = data.substring(0, idx);
+							try
+							{
+								var jsonMsg = json.decode(encodedJson);
+								String msg = jsonMsg['message'];
+								print("GOT MESSAGE $jsonMsg");
+								var payload = jsonMsg['payload'];
+
+								var gameActive = jsonMsg['gameActive'];
+								var inGame = jsonMsg['inGame'];
+								var isClientReady = jsonMsg['isReady'];
+								var didClientMarkStart = jsonMsg['markedStart'];
+								
+								if(gameActive is bool && inGame is bool)
+								{
+									_terminal.setGameStatus(gameActive, inGame, isClientReady, didClientMarkStart);
+								}
+								
+								switch(msg)
+								{
+									case "commandsList":
+										_terminal.onGameStart(payload as List);
+										break;
+									case "gameOver":
+										_terminal.gameOver();
+										break;
+									case "newTask":
+										_terminal.onNewTask(payload as Map);
+										break;
+									case "playerList":
+										List<bool> boolList = [];
+										for(var b in payload) // Workaround for Dart throw
+										{
+											if(b is bool) boolList.add(b);
+										}
+										_terminal.arePlayersReady = boolList;
+										break;
+									case "taskFail":
+										_terminal.onTaskFail(payload as String);
+										break;
+									case "taskComplete":
+										_terminal.onTaskComplete(payload as String);
+										break;
+									case "teamLives":
+										_terminal.onLivesChanged(payload as int);
+										break;
+									default:
+										print("UNKNOWN MESSAGE: $jsonMsg");
+										break;
+								}
+							}
+							on FormatException catch(e)
+							{
+								print("Wrong Message Formatting, not JSON: $encodedJson");
+								print(e);
+							}
+							data = data.substring(idx+1);
+						}
+
+					}, 
+
+					onDone: ()
+					{
+						debugPrint("Socket done.");
+						reconnect();
+					});
+				});
 	}
 }
 

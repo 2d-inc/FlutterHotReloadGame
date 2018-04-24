@@ -46,7 +46,7 @@ const int mistakePenalty = -1500;
 class GameClient
 {
     static const Duration timeBetweenTasks = const Duration(seconds: 2);
-    WebSocket _socket;
+    Socket _socket;
     GameServer _server;
 
     bool _isReady = false;
@@ -61,6 +61,7 @@ class GameClient
     String _name;
     DateTime _lastHello = new DateTime.now();
     int _idx;
+    String _data;
 
     int _lives = 0;
     
@@ -74,70 +75,92 @@ class GameClient
         return _lastHello.difference(DateTime.now());
     }
 
-    GameClient(GameServer server, WebSocket socket, this._idx)
+    bool get isReal
     {
+        return _name != null;
+    }
+
+    GameClient(GameServer server, Socket socket, this._idx)
+    {
+        _data = "";
         _socket = socket;
         _server = server;
-        _socket.listen(_dataReceived, onDone: _onDisconnected);
-        _socket.pingInterval = const Duration(seconds: 5);
+        _socket.transform(utf8.decoder).listen(_dataReceived, onDone: _onDisconnected);
     }
 
     disconnect()
     {
+        print("CLOSING SOCKET $_name");
         _socket.close();
     }
 
     _onDisconnected()
     {
-        print("${this.runtimeType} disconnected! ${_socket.closeCode}");
+        print("${this.runtimeType} disconnected!");
         _server.onClientDisconnected(this);
     }
 
-    void _dataReceived(message)
+    void _jsonReceived(jsonMsg)
     {
-        try
-        {
-            var jsonMsg = json.decode(message);
-            String msg = jsonMsg['message'];
+        String msg = jsonMsg['message'];
             
-            //print("Just received ====:\n $message");
-
-            switch(msg)
-            {
-                case "ready":
-                    _isReady = jsonMsg['payload'];
-                    if(!_isReady)
-                    {
-                        _markedStart = false;
-                    }
-                    print("PLAYER READY? ${_isReady}");
-                    _server.sendReadyState();
-                    break;
-                case "startGame":
-                    print("READY TO START");
-                    _markedStart = true;
-                    _server.sendReadyState();
-                    _server.onClientStartChanged(this);
-                    break;
-                case "clientInput":
-                    var payload = jsonMsg['payload'];
-                    _server.onClientInput(payload);
-                    break;
-                case "hi":
-                    _lastHello = new DateTime.now();
-                    String payload = jsonMsg['payload'];
-                    _name = payload;
-                    _server.onHello(this);
-                    break;
-                default:
-                    print("MESSAGE: $jsonMsg");
-                    break;
-            }
-        }
-        on FormatException catch(e)
+        //print("Just received ====:\n $message");
+        switch(msg)
         {
-            print("Wrong Message Formatting, not JSON: ${message}");
-            print(e);
+            case "ready":
+                _isReady = jsonMsg['payload'];
+                if(!_isReady)
+                {
+                    _markedStart = false;
+                }
+                print("PLAYER READY? $_isReady");
+                _server.sendReadyState();
+                break;
+            case "startGame":
+                print("READY TO START");
+                _markedStart = true;
+                _server.sendReadyState();
+                _server.onClientStartChanged(this);
+                break;
+            case "clientInput":
+                var payload = jsonMsg['payload'];
+                _server.onClientInput(payload);
+                break;
+            case "hi":
+                _lastHello = new DateTime.now();
+                String payload = jsonMsg['payload'];
+                _name = payload;
+                _server.onHello(this);
+                break;
+            default:
+                print("MESSAGE: $jsonMsg");
+                break;
+        }
+    }
+
+    void _dataReceived(String message)
+    {
+        _data += message;
+        while(true)
+        {
+            int idx = _data.indexOf("\n");
+            if(idx == -1)
+            {
+                return;
+            }
+
+            String encodedJson = _data.substring(0, idx);
+            try
+            {
+                var jsonMsg = json.decode(encodedJson);
+                _jsonReceived(jsonMsg);
+            }
+            on FormatException catch(e)
+            {
+                print("Wrong Message Formatting, not JSON: $encodedJson");
+                print(e);
+            }
+            _data = _data.substring(idx+1);
         }
     }
     
@@ -333,7 +356,7 @@ class GameClient
             "isReady":_isReady,
             "markedStart":_markedStart
         });
-        _socket.add(message);
+        _socket.writeln(message);
     }
 
     set lives(int livesLeft)
@@ -409,48 +432,47 @@ class GameServer
 
     void connect()
     {
-        // HttpServer.bind("10.76.253.124", 8080)
-        //String address = "192.168.1.156";
-        //HttpServer.bind("10.76.253.124", 8080)
-        HttpServer.bind(InternetAddress.ANY_IP_V4, 8080)
-            .then((server) async
+        ServerSocket.bind(InternetAddress.ANY_IP_V4, 8080).then(
+            (serverSocket) 
             {
-                print("Serving at ${server.address}, ${server.port}");
-                await for(var request in server)
+                serverSocket.listen((socket) 
                 {
-                    if(WebSocketTransformer.isUpgradeRequest(request))
-                    {
-                        WebSocketTransformer.upgrade(request).then(_handleWebSocket);
-                    }
-                    else
-                    {
-                        // Simple request
-                        request.response
-                            ..headers.contentType = new ContentType("text", "plain", charset: "utf-8")
-                            ..write("Hello, world")
-                            ..close();   
-                    }
-                }
+                    GameClient client = new GameClient(this, socket, _clients.length);
+                    _clients.add(client);
+                    sendReadyState();
+
+                });
         });
     }
 
     onClientDisconnected(GameClient client)
     {
+        print("CLIENT DISCONNECTED.");
         this._clients.remove(client);
         sendReadyState();
     }
 
     sendReadyState()
     {
-        int l = _clients.length;
-        List<bool> readyList = new List(l);
-        for(int i = 0; i < l; i++)
+        List<bool> readyList = new List();
+        for(GameClient gc in _clients)
         {
-            readyList[i] = _clients[i].isReady;
+            // Zombies don't count.
+            if(!gc.isReal)
+            {
+                continue;
+            }
+            readyList.add(gc.isReady);
         }
 
         for(var gc in _clients)
         {
+            // Don't spam possible zombie sockets.
+            if(!gc.isReal)
+            {
+                continue;
+            }
+
             gc.readyList = readyList;
         }
     }
@@ -586,6 +608,7 @@ class GameServer
             _clients.remove(gc);
             gc.disconnect();
         }
+        sendReadyState();
     }
 
     onClientInput(Map input)
@@ -717,8 +740,8 @@ class GameServer
 
     IssuedTask getNextTask(GameClient client)
     {
-        List<CommandTask> avoid = new List<CommandTask>();//We actually want to allow you to get one of your own.
-        // .from(client.commands);
+        // We allow you to receive one of your own tasks, but we make sure to exclude any currently assigned tasks.
+        List<CommandTask> avoid = new List<CommandTask>();
         for(GameClient gc in _clients)
         {
             if(gc.currentTask != null)
@@ -727,13 +750,5 @@ class GameServer
             }
         }
         return _taskList.nextTask(avoid, lowerChance:client.commands);
-    }
-
-    _handleWebSocket(WebSocket socket)
-    {
-        print("ADD WEBCLIENT! ${this._clients.length}");
-        GameClient client = new GameClient(this, socket, _clients.length);
-        _clients.add(client);
-        sendReadyState();
     }
 }

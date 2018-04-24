@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import "command_panel.dart";
 import "players_widget.dart";
 import "panel_button.dart";
+import "game_controls/game_colors.dart";
 
 class LobbyWidget extends StatelessWidget
 {
@@ -40,7 +41,22 @@ class LobbyWidget extends StatelessWidget
                             // Filler
                             new Expanded(child: new Container()),
                             // Buttons
-                            markedStart ? new Container() : new Column(
+                            markedStart ? 
+                                new Container(
+                                    margin: new EdgeInsets.only(bottom:60.0, left:60.0, right:60.0),
+                                    child:new Text("WAITING FOR ALL PLAYERS TO START", 
+                                    textAlign:TextAlign.center,
+                                    style: new TextStyle(
+                                        color: GameColors.buttonEnabledText,
+                                        fontFamily: "Inconsolata", 
+                                        fontWeight: FontWeight.w700, 
+                                        fontSize: 20.0, 
+                                        height: 1.2,
+                                        decoration: TextDecoration.none, 
+                                        letterSpacing: 1.3
+                                    )
+                                )
+                            ) : new Column(
                                 children: 
                                 [
                                     new PanelButton(_ready ? "SET TO NOT READY" : "SET TO READY", 18.0, 1.3, null, _onReady, isEnabled: canBeReady),
