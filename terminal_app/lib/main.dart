@@ -11,7 +11,8 @@ import "in_game.dart";
 import "character_scene.dart";
 import "command_timer.dart";
 import "dart:math";
-import 'package:path_provider/path_provider.dart';
+import "package:path_provider/path_provider.dart";
+import "package:uuid/uuid.dart";
 
 void main() 
 {
@@ -68,6 +69,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	bool _canBeReady = false;
 
 	bool _isReady = false;
+	bool _markedStart = false;
 	bool _gameOver = false;
 	List<bool> _arePlayersReady;
 
@@ -78,12 +80,9 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	int _randomSeed = 1;
 
-	@override
-	initState()
+	initSocketClient(String uniqueId)
 	{
-		super.initState();
-		_arePlayersReady = [_isReady];
-		_client = new WebSocketClient(this);
+		_client = new WebSocketClient(this, uniqueId);
 		_client.onConnectionChanged = ()
 		{
 			setState(()
@@ -91,6 +90,15 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 				_isConnected = _client.isConnected;
 			});
 		};
+	}
+
+	@override
+	initState()
+	{
+		super.initState();
+		_arePlayersReady = [_isReady];
+
+		initSocketClient(new Uuid().v4());
 
 		Future batteryQuery = platform.invokeMethod('getBatteryLevel');
 		batteryQuery.then((percent) => setState(() => _batteryLevel = "$percent%")).
@@ -118,7 +126,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	@override
 	void dispose()
 	{
-		_client.dispose();
+		if(_client != null)
+		{
+			_client.dispose();
+		}
 		_panelController.dispose();
 		super.dispose();
 	}
@@ -137,6 +148,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			_gameCommands = [];
 			_gameOver = false;
 			_isReady = false;
+			_markedStart = false;
 			if(_isPlaying)
 			{
 				_panelController.reverse();
@@ -159,11 +171,12 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		});
 	}
 
-	void setGameStatus(bool isServerInGame, bool isClientInGame, bool doesServerThinkImReady)
+	void setGameStatus(bool isServerInGame, bool isClientInGame, bool doesServerThinkImReady, bool doesServerThinkStart)
 	{
 		setState(() 
 		{
 			_isReady = doesServerThinkImReady;
+			_markedStart = doesServerThinkStart;
 			// we can only mark ready if the server isn't already in a game.
 			_canBeReady = !isServerInGame;
 			if(_isPlaying && !isClientInGame)
@@ -303,6 +316,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	void _issueCommand(String taskType, int value)
 	{
+		if(_client == null)
+		{
+			return;
+		}
 		print("SEND COMMAND $taskType $value");
 		_client.sendCommand(taskType, value);
 	}
@@ -345,7 +362,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 														String ip = _ipInputController.text;
 														if(_validateIpAddress(ip))
 														{
-															_client.address = ip;
+															if(_client != null)
+															{
+																_client.address = ip;
+															}
 															Navigator.of(context).pop();
 														}
 													}
@@ -401,7 +421,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
 										_isPlaying ? 
 											new InGame(_gameOpacity, _backToLobby, _gameCommands, _issueCommand, _randomSeed, isOver: _gameOver)
-											: new LobbyWidget(_isConnected && _canBeReady, _isReady, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
+											: new LobbyWidget(_isConnected && _canBeReady, _isReady, _markedStart, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
 											alignment: Alignment.bottomRight,
@@ -455,12 +475,14 @@ class WebSocketClient
 	WebSocket _socket;
 	_TerminalState _terminal;
 	Timer _reconnectTimer;
+	Timer _pingTimer;
 	static const int ReconnectMinSeconds = 2;
 	static const int ReconnectMaxSeconds = 10;
 	int _reconnectSeconds = ReconnectMinSeconds;
 	bool _isConnected = false;
 	VoidCallback onConnectionChanged;
 	String _address;
+	String _uniqueId;
 
 	bool get isConnected
 	{
@@ -484,7 +506,7 @@ class WebSocketClient
 		});
 	}
 
-	WebSocketClient(this._terminal)
+	WebSocketClient(this._terminal, this._uniqueId)
 	{
 		if(Platform.isAndroid)
 		{
@@ -523,7 +545,7 @@ class WebSocketClient
         });
     }
 
-	dispose()
+	void dispose()
 	{
 		_socket?.close(99, "DISPOSING");
 	}
@@ -534,17 +556,17 @@ class WebSocketClient
 		_socket?.add(formatJSONMessage("ready", state));
 	}
 
-	onStart()
+	void onStart()
 	{
 		_socket?.add(formatJSONMessage("startGame", true));
 	}
 
-	sendCommand(String taskType, int value)
+	void sendCommand(String taskType, int value)
 	{
 		_socket?.add(formatJSONMessage("clientInput", {"type":taskType, "value":value}));
 	}
 
-	reconnect()
+	void reconnect()
 	{
 		if(_reconnectTimer != null)
 		{
@@ -569,8 +591,25 @@ class WebSocketClient
 		debugPrint("Attempting websocket reconnect in $delay seconds.");
 		_reconnectTimer = new Timer(new Duration(seconds: delay), connect);
 	}
+
+	void sendPing()
+	{
+		if(_socket == null)
+		{
+			return;
+		}
+		if(_pingTimer != null)
+		{
+			_pingTimer.cancel();
+			_pingTimer = null;
+		}
+		
+		_socket.add(formatJSONMessage("hi", _uniqueId));
+
+		_pingTimer = new Timer(new Duration(seconds: 5), sendPing);
+	}
 	
-	connect()
+	void connect()
 	{
 		if(_socket != null)
 		{
@@ -583,10 +622,48 @@ class WebSocketClient
 		}
 
 		print("Attempting connection to ws://" + address + ":8080/ws");
-		WebSocket.connect("ws://" + address + ":8080/ws").then
+		WebSocket.connect("ws://" + address + ":8080/ws")
+		// Make sure timeout registers first.
+		.timeout
+		(
+			const Duration(seconds: 5), 
+			onTimeout: ()
+			{
+				debugPrint("Websocket connect timed out.");
+				reconnect();
+			}
+		)
+		.catchError
+		(
+			(e)
+			{
+				debugPrint("Websocket caught error: $e");
+				reconnect();
+			}
+		)
+		.then
 		(
 			(WebSocket ws)
 			{
+				if(ws == null)
+				{
+					debugPrint("Connected with null socket?");
+					if(!_isConnected)
+					{
+						reconnect();
+					}
+					return;
+				}
+
+				if(_isConnected)
+				{
+					// This seems to occur when a connection times out, but then mysteriously
+					// comes back from the dead and calls its connection handler. This shouldn't
+					// happen with our new handler ordering, but this is a nice sanity check.
+					print("Good socket was already connected, kill this zombie socket.");
+					ws.close();
+					return;
+				}
 				_isConnected = true;
 				if(onConnectionChanged != null)
 				{
@@ -599,6 +676,9 @@ class WebSocketClient
 				// Store socket.
 				_socket = ws;
 				//_socket.pingInterval = const Duration(seconds: 5);
+
+				// Let the server know who we are so they can kill older connections if they exist.
+				sendPing();
 
 				// Listen for messages.
 				ws.listen((message)
@@ -613,10 +693,11 @@ class WebSocketClient
 						var gameActive = jsonMsg['gameActive'];
 						var inGame = jsonMsg['inGame'];
 						var isClientReady = jsonMsg['isReady'];
+						var didClientMarkStart = jsonMsg['markedStart'];
 						
 						if(gameActive is bool && inGame is bool)
 						{
-							_terminal.setGameStatus(gameActive, inGame, isClientReady);
+							_terminal.setGameStatus(gameActive, inGame, isClientReady, didClientMarkStart);
 						}
 						
 						switch(msg)
@@ -662,23 +743,6 @@ class WebSocketClient
 					debugPrint("Websocket done.");
 					reconnect();
 				}); // Try to reconnect when server drops
-			}
-		)
-		.catchError
-		(
-			(e)
-			{
-				debugPrint("Websocket caught error: $e");
-				reconnect();
-			}
-		)
-		.timeout
-		(
-			const Duration(seconds: 5), 
-			onTimeout: ()
-			{
-				debugPrint("Websocket connect timed out.");
-				reconnect();
 			}
 		);
 	}

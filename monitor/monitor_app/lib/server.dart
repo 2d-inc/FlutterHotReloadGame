@@ -39,9 +39,9 @@ List<String> failedMessages = <String>
 ];
 
 const double minMultiplier = 1.0;
-const double maxMultiplier = 3.0;
-const int taskScore = 100;
-const int mistakePenalty = -150;
+const double maxMultiplier = 5.0;
+const int taskScore = 1000;
+const int mistakePenalty = -1500;
 
 class GameClient
 {
@@ -58,10 +58,18 @@ class GameClient
     TaskStatus _taskStatus;
     DateTime _sendTaskTime;
     DateTime _failTaskTime;
+    String _name;
+    DateTime _lastHello = new DateTime.now();
     int _idx;
 
     bool get isInGame => _isInGame;
     bool get markedStart => _markedStart;
+    String get name => _name;
+
+    Duration get lastHello
+    {
+        return _lastHello.difference(DateTime.now());
+    }
 
     GameClient(GameServer server, WebSocket socket, this._idx)
     {
@@ -69,6 +77,11 @@ class GameClient
         _server = server;
         _socket.listen(_dataReceived, onDone: _onDisconnected);
         _socket.pingInterval = const Duration(seconds: 5);
+    }
+
+    disconnect()
+    {
+        _socket.close();
     }
 
     _onDisconnected()
@@ -79,12 +92,13 @@ class GameClient
 
     void _dataReceived(message)
     {
-        print("Just received ====:\n $message");
         try
         {
             var jsonMsg = json.decode(message);
             String msg = jsonMsg['message'];
             
+            //print("Just received ====:\n $message");
+
             switch(msg)
             {
                 case "ready":
@@ -99,11 +113,18 @@ class GameClient
                 case "startGame":
                     print("READY TO START");
                     _markedStart = true;
+                    _server.sendReadyState();
                     _server.onClientStartChanged(this);
                     break;
                 case "clientInput":
                     var payload = jsonMsg['payload'];
                     _server.onClientInput(payload);
+                    break;
+                case "hi":
+                    _lastHello = new DateTime.now();
+                    String payload = jsonMsg['payload'];
+                    _name = payload;
+                    _server.onHello(this);
                     break;
                 default:
                     print("MESSAGE: $jsonMsg");
@@ -306,7 +327,8 @@ class GameClient
             "payload": payload,
             "gameActive":_server._inGame,
             "inGame":_isInGame,
-            "isReady":_isReady
+            "isReady":_isReady,
+            "markedStart":_markedStart
         });
         _socket.add(message);
     }
@@ -525,6 +547,32 @@ class GameServer
             
             gc.startGame(tasksForClient);
             
+        }
+    }
+
+    onHello(GameClient client)
+    {
+        List<GameClient> impostors = new List<GameClient>();
+
+        for(GameClient gc in _clients)
+        {
+            if(gc == client)
+            {
+                continue;
+            }
+
+            // Remove clients that already had this name or haven't said hi in a while.
+            if(gc.name == client.name || gc.lastHello.inSeconds > 15)
+            {
+                print("Removing a bad connection ${gc.name} ${gc.lastHello.inSeconds}");
+                impostors.add(gc); 
+            }
+        }
+
+        for(GameClient gc in impostors)
+        {
+            _clients.remove(gc);
+            gc.disconnect();
         }
     }
 
