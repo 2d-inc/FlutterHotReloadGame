@@ -630,7 +630,6 @@ class TerminalSceneRenderer extends RenderBox
 			else
 			{
 				_colorAccumulator = (_colorAccumulator + elapsed).clamp(0.0, 1.0);
-				print("ACCUMULATOR: $_colorAccumulator");
 				_angryBackground = Color.lerp(_angryBackground, Colors.transparent, _colorAccumulator);
 				_midStepGradient = Color.lerp(_midStepGradient, Colors.transparent, _colorAccumulator);
 				_topStepGradient = Color.lerp(_topStepGradient, Colors.transparent, _colorAccumulator);
