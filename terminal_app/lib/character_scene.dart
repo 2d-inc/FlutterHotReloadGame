@@ -5,6 +5,7 @@ import "package:nima/animation/actor_animation.dart";
 import "package:nima/actor_node.dart";
 import "package:flutter/scheduler.dart";
 import "package:AABB/AABB.dart";
+import "package:nima/math/mat2d.dart";
 import "dart:math";
 
 enum CharacterState
@@ -575,7 +576,9 @@ class TerminalSceneRenderer extends RenderBox
 
 		canvas.save();		
 		canvas.clipRect(offset & size);
-		canvas.translate(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
+		Offset center = new Offset(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
+		
+		canvas.translate(center.dx, center.dy);
 		canvas.scale(scale, -scale);
 		canvas.translate(_position.dx, _position.dy);
 		_scene.draw(canvas);
@@ -588,12 +591,47 @@ class TerminalSceneRenderer extends RenderBox
 								new ui.Paint()	..shader = new ui.Gradient.linear(new Offset(0.0, offset.dy + (size.height-fadeHeight)), new Offset(0.0, offset.dy + fadeHeight), <Color>[new Color.fromARGB((100*fadeOpacity).round(), 0, 0, 0), const Color.fromARGB(0, 0, 0, 0)])
 											..style = ui.PaintingStyle.fill);
 
+
+		TerminalCharacter boss = _characters[_characterIndex];
+
+		if(boss != null && _state != TerminalSceneState.All)
+		{			
+			DateTime now = new DateTime.now();
+			double f = _endTime == null ? 1.0 : (now.difference(_startTime).inMilliseconds/_endTime.difference(_startTime).inMilliseconds).clamp(0.0, 1.0);
+			double fi = 1.0-f;
+			if(fi < 0.35)
+			{
+				double t = ((0.35 - fi)*10).clamp(0.0, 1.0);
+				Mat2D radialScaleMatrix = new Mat2D();
+				double radialScale = size.width/size.height;
+				radialScaleMatrix[0] = radialScale;
+				radialScaleMatrix[4] = radialScale*size.width/2;
+				Color bg = Color.lerp(Colors.transparent, new Color.fromARGB(100, 246, 220, 156), t);
+				Color mid = Color.lerp(new Color.fromRGBO(255, 209, 0, 0.23), new Color.fromRGBO(250, 202, 88, 0.14), t);
+				Color top = Color.lerp(new Color.fromRGBO(255, 179, 0, 1.0), new Color.fromRGBO(251, 33, 33, 1.0), t);
+				canvas.drawRect(offset&size, new ui.Paint() ..color = bg);
+				double stopLerp = 0.27*t;
+				canvas.drawRect(offset&size, new ui.Paint() ..shader = new ui.Gradient.radial(center, size.height*1.1, [ Colors.transparent, mid, top ], [0.0, 0.6 - stopLerp, 1.0], TileMode.clamp, radialScaleMatrix.mat4));
+			}
+			else if(fi < 0.75)
+			{
+				double t = ((0.75 - fi)*10*(2/3)).clamp(0.0, 1.0);
+				Mat2D radialScaleMatrix = new Mat2D();
+				double radialScale = size.width/size.height;
+				radialScaleMatrix[0] = radialScale;
+				radialScaleMatrix[4] = radialScale*size.width/2;
+				Color mid = Color.lerp(Colors.transparent, new Color.fromRGBO(255, 209, 0, 0.23), t);
+				Color top = Color.lerp(Colors.transparent, new Color.fromRGBO(255, 179, 0, 1.0) , t);
+				canvas.drawRect(offset&size, new ui.Paint() ..shader = new ui.Gradient.radial(center, size.height*1.1, [ Colors.transparent, mid, top ], [0.0, 0.6, 1.0], TileMode.clamp, radialScaleMatrix.mat4));
+			}
+		}
+
+
 		_renderCharacters.sort((TerminalCharacter a, TerminalCharacter b)
 		{
 			return ((b.actor.root.y - a.actor.root.y) * 100.0).round();
 		});
 
-		TerminalCharacter boss = _characters[_characterIndex];
 		//bool showOnlyBoss = _animation != null && _animationTime == _animation.duration;
 		
 		for(TerminalCharacter character in _renderCharacters)

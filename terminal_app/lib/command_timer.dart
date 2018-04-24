@@ -54,6 +54,10 @@ class CommandTimerRenderer extends RenderBox
 	DateTime _endTime;
 	double _opacity;
 
+	static const Color angryTime = const Color.fromARGB(255, 255, 72, 0);
+	static const Color urgentTime = const Color.fromARGB(255, 255, 191, 0);
+	static const Color relaxedTime = const Color.fromARGB(255, 86, 234, 246);
+
 	CommandTimerRenderer(DateTime startTime, DateTime endTime, double opacity)
 	{
 		this.startTime = startTime;
@@ -174,6 +178,31 @@ class CommandTimerRenderer extends RenderBox
 
 		canvas.drawRRect(new RRect.fromRectAndRadius(barShadowOffset & new Size(width, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = new Color.fromARGB((48*_opacity.round()), 0, 19, 28));
 		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = Colors.white.withAlpha(alpha));
-		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width*fi, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = const Color.fromARGB(255, 86, 234, 246).withAlpha(alpha));
+		
+		Color barColor;
+		if(fi < 0.25)
+		{
+			barColor = angryTime.withAlpha(alpha);
+		}
+		else if(fi < 0.35)
+		{
+			double t = (0.35 - fi)*10;
+			barColor = Color.lerp(urgentTime, angryTime, t).withAlpha(alpha);
+		}
+		else if(fi < 0.6)
+		{
+			barColor = urgentTime.withAlpha(alpha);
+		}
+		else if(fi < 0.75)
+		{
+			double t = (0.75 - fi)*10*(2/3);
+			barColor = Color.lerp(relaxedTime, urgentTime, t).withAlpha(alpha);
+		}
+		else
+		{
+			barColor = relaxedTime.withAlpha(alpha);
+		}
+
+		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width*fi, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = barColor);
 	}
 }
