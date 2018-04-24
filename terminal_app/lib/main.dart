@@ -301,7 +301,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		{
 			return;
 		}
-		String message = _arePlayersReady.fold<int>(0, (int count, bool value) { if(value) { count++; } return count;} ) >= 2 ? "Come on, we've got a deadline to make!" : "Waiting for 2 players!";
+		String message = _arePlayersReady.fold<int>(0, (int count, bool value) { if(value) { count++; } return count;} ) >= 2 ? "Come on, we've got a deadline to meet!" : "Waiting for 2 players!";
 		if(message != _sceneMessage)
 		{
 			_sceneMessage = message;
