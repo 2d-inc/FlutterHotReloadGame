@@ -248,6 +248,12 @@ class TerminalSceneRenderer extends RenderBox
 
 	List<TerminalCharacter> _characters = new List<TerminalCharacter>(4);
 	List<TerminalCharacter> _renderCharacters = new List<TerminalCharacter>(4);
+
+	Color _angryBackground = Colors.transparent;
+	Color _midStepGradient = Colors.transparent;
+	Color _topStepGradient = Colors.transparent;
+	DateTime _lastNow;
+	double _colorAccumulator = 0.0;
 	
 	TerminalSceneRenderer(TerminalSceneState state, int characterIndex, String message, DateTime startTime, DateTime endTime)
 	{
@@ -302,6 +308,7 @@ class TerminalSceneRenderer extends RenderBox
 			return;
 		}
 		_startTime = value;
+		_lastNow = new DateTime.now();
 	}
 
 	DateTime get endTime
@@ -596,34 +603,45 @@ class TerminalSceneRenderer extends RenderBox
 
 		if(boss != null && _state != TerminalSceneState.All)
 		{			
+			
 			DateTime now = new DateTime.now();
+			double elapsed = now.difference(_lastNow).inMilliseconds / 1000.0;
+			_lastNow = now;
 			double f = _endTime == null ? 1.0 : (now.difference(_startTime).inMilliseconds/_endTime.difference(_startTime).inMilliseconds).clamp(0.0, 1.0);
 			double fi = 1.0-f;
-			if(fi < 0.35)
+			double stopLerp = 0.0;
+			// print("F: $f, FI: $fi, elapsed: $elapsed");
+			if(fi < 0.35 && fi > 0.0)
 			{
-				double t = ((0.35 - fi)*10).clamp(0.0, 1.0);
-				Mat2D radialScaleMatrix = new Mat2D();
-				double radialScale = size.width/size.height;
-				radialScaleMatrix[0] = radialScale;
-				radialScaleMatrix[4] = radialScale*size.width/2;
-				Color bg = Color.lerp(Colors.transparent, new Color.fromARGB(100, 246, 220, 156), t);
-				Color mid = Color.lerp(new Color.fromRGBO(255, 209, 0, 0.23), new Color.fromRGBO(250, 202, 88, 0.14), t);
-				Color top = Color.lerp(new Color.fromRGBO(255, 179, 0, 1.0), new Color.fromRGBO(251, 33, 33, 1.0), t);
-				canvas.drawRect(offset&size, new ui.Paint() ..color = bg);
-				double stopLerp = 0.27*t;
-				canvas.drawRect(offset&size, new ui.Paint() ..shader = new ui.Gradient.radial(center, size.height*1.1, [ Colors.transparent, mid, top ], [0.0, 0.6 - stopLerp, 1.0], TileMode.clamp, radialScaleMatrix.mat4));
+				_colorAccumulator = 0.0;
+				double n = (1.0 - (fi - 0.25)/ (0.35-0.25)).clamp(0.0, 1.0);
+				stopLerp = 0.27*n;
+				_angryBackground = Color.lerp(Colors.transparent, new Color.fromARGB(100, 246, 220, 156), n);
+				_midStepGradient = Color.lerp(new Color.fromRGBO(255, 209, 0, 0.23), new Color.fromRGBO(250, 202, 88, 0.14), n);
+				_topStepGradient = Color.lerp(new Color.fromRGBO(255, 179, 0, 1.0), new Color.fromRGBO(251, 33, 33, 1.0), n);
 			}
-			else if(fi < 0.75)
+			else if(fi < 0.75 && fi >= 0.35)
 			{
-				double t = ((0.75 - fi)*10*(2/3)).clamp(0.0, 1.0);
-				Mat2D radialScaleMatrix = new Mat2D();
-				double radialScale = size.width/size.height;
-				radialScaleMatrix[0] = radialScale;
-				radialScaleMatrix[4] = radialScale*size.width/2;
-				Color mid = Color.lerp(Colors.transparent, new Color.fromRGBO(255, 209, 0, 0.23), t);
-				Color top = Color.lerp(Colors.transparent, new Color.fromRGBO(255, 179, 0, 1.0) , t);
-				canvas.drawRect(offset&size, new ui.Paint() ..shader = new ui.Gradient.radial(center, size.height*1.1, [ Colors.transparent, mid, top ], [0.0, 0.6, 1.0], TileMode.clamp, radialScaleMatrix.mat4));
+				_colorAccumulator = 0.0;
+				double n = (1.0 - (fi - 0.6)/(0.75-0.6)).clamp(0.0, 1.0);
+				_midStepGradient = Color.lerp(Colors.transparent, new Color.fromRGBO(255, 209, 0, 0.23), n);
+				_topStepGradient = Color.lerp(Colors.transparent, new Color.fromRGBO(255, 179, 0, 1.0) , n);
 			}
+			else
+			{
+				_colorAccumulator = (_colorAccumulator + elapsed).clamp(0.0, 1.0);
+				print("ACCUMULATOR: $_colorAccumulator");
+				_angryBackground = Color.lerp(_angryBackground, Colors.transparent, _colorAccumulator);
+				_midStepGradient = Color.lerp(_midStepGradient, Colors.transparent, _colorAccumulator);
+				_topStepGradient = Color.lerp(_topStepGradient, Colors.transparent, _colorAccumulator);
+			}
+
+			Mat2D radialScaleMatrix = new Mat2D();
+			double radialScale = size.width/size.height;
+			radialScaleMatrix[0] = radialScale;
+			radialScaleMatrix[4] = radialScale*size.width/2;
+			canvas.drawRect(offset&size, new ui.Paint() ..color = _angryBackground);
+			canvas.drawRect(offset&size, new ui.Paint() ..shader = new ui.Gradient.radial(center, size.height*1.1, [ Colors.transparent, _midStepGradient, _topStepGradient ], [0.0, 0.6 - stopLerp, 1.0], TileMode.clamp, radialScaleMatrix.mat4));
 		}
 
 
