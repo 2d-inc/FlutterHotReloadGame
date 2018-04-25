@@ -4,7 +4,7 @@ import "dart:ui" show PointMode;
 import "dart:math";
 
 final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
-final Function mathFunc = (Match match) => "${match[1]},";
+final Function matchFunc = (Match match) => "${match[1]},";
 
 class HighScoreLine extends StatelessWidget
 {
@@ -14,7 +14,7 @@ class HighScoreLine extends StatelessWidget
 	final bool isHighlit;
 
 
-	HighScoreLine(this.idx, this.name, int v, this.isHighlit) : value = v.toString().replaceAllMapped(reg, mathFunc);
+	HighScoreLine(this.idx, this.name, int v, this.isHighlit) : value = v.toString().replaceAllMapped(reg, matchFunc);
 
 	@override
 	Widget build(BuildContext context)
@@ -90,23 +90,8 @@ class HighScoresScreen extends StatelessWidget
 							(
 								children:_highScores.map((HighScore score)
 									{
-										return new HighScoreLine(score.idx, score.name, score.value, score == _highScore);	
+										return new HighScoreLine(score.idx+1, score.name, score.value, score == _highScore);	
 									}).toList()
-								
-								// <Widget>
-								// [
-									
-								// 	new HighScoreLine(1, "ABC", 1343000),
-								// 	new HighScoreLine(2, "DEF", 303430),
-								// 	new HighScoreLine(3, "GHI", 1030),
-								// 	new HighScoreLine(4, "ABC", 1343000),
-								// 	new HighScoreLine(5, "DEF", 303430),
-								// 	new HighScoreLine(6, "GHI", 1030),
-								// 	new HighScoreLine(7, "ABC", 1343000),
-								// 	new HighScoreLine(8, "DEF", 303430),
-								// 	new HighScoreLine(9, "GHI", 1030),
-								// 	new HighScoreLine(10, "ABC", 1343000)
-								// ]
 							)
 						)
 					)

@@ -11,6 +11,8 @@ import "game_controls/game_radial.dart";
 import "game_controls/game_command_widget.dart";
 
 typedef void StringCallback(String msg);
+final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
+final Function matchFunc = (Match match) => "${match[1]},";
 
 class InGame extends StatelessWidget
 {
@@ -330,11 +332,11 @@ class HighScore extends StatelessWidget
 {
 	final VoidCallback _onRetry;
 	final StringCallback _onInitialsSet;
-	final int _score;
+	final String _score;
 	final TextEditingController _initialsController = new TextEditingController();
 	final bool _canEnterInitials;
 
-	HighScore(this._onRetry, this._onInitialsSet, this._score, this._canEnterInitials);
+	HighScore(this._onRetry, this._onInitialsSet, int s, this._canEnterInitials) : _score = s.toString().replaceAllMapped(reg, matchFunc);
 
 	@override
 	Widget build(BuildContext context) 
@@ -361,7 +363,7 @@ class HighScore extends StatelessWidget
 							height: 105.0,
 							child:new Center(
 								child: new Text(
-									_score.toString(),
+									_score,
 									style: new TextStyle(
 										color: Colors.white,
 										fontFamily: "Inconsolata",

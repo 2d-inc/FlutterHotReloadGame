@@ -165,10 +165,11 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		});
 	}
 
-	void showGameOver()
+	void showGameOver(bool isHighScore, bool didDie)
 	{
 		setState(()
 		{
+			_isHighScore = isHighScore;
 			_gameOver = true;
 
 			_sceneMessage = null;
@@ -185,10 +186,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			_markedStart = doesServerThinkStart;
 			// we can only mark ready if the server isn't already in a game.
 			_canBeReady = !isServerInGame;
-			if(_isPlaying && !isClientInGame)
+			if(!_gameOver && _isPlaying && !isClientInGame)
 			{
 				//_backToLobby();
-				showGameOver();
+				showGameOver(false, false);
 			}
 		});
 	}
@@ -299,11 +300,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		}
 	}
 
-	void onGameWon(bool isHighScore)
-	{
-		setState(() => _isHighScore = isHighScore);
-	}
-
 	void onServerInitials(String initials)
 	{
 		if(_initials != initials)
@@ -312,9 +308,9 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		}
 	}
 
-	void gameOver()
+	void gameOver(isHighScore, didDie)
 	{
-		showGameOver();
+		showGameOver(isHighScore, didDie);
 
 		//_backToLobby(); // TODO: show the game over screen instead
 	}
@@ -756,7 +752,12 @@ class SocketClient
 										_terminal.onGameStart(payload as List);
 										break;
 									case "gameOver":
-										_terminal.gameOver();
+										var isHighScore = payload["highscore"];
+										var didDie = payload["died"];
+										if(isHighScore is bool && didDie is bool)
+										{
+											_terminal.gameOver(isHighScore, didDie);
+										}
 										break;
 									case "newTask":
 										_terminal.onNewTask(payload as Map);
@@ -783,9 +784,6 @@ class SocketClient
 										break;
 									case "initials":
 										_terminal.onServerInitials(payload as String);
-										break;
-									case "gameWon":
-										_terminal.onGameWon(payload as bool);
 										break;
 									default:
 										print("UNKNOWN MESSAGE: $jsonMsg");

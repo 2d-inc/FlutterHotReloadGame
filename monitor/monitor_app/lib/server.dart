@@ -179,16 +179,10 @@ class GameClient
         _failTaskTime = null;
     }
 
-    gameOver()
+    gameOver(bool isDead, bool isHighScore)
     {
         reset();
-        _sendJSONMessage("gameOver", true);
-    }
-
-    gameWon(bool isHighScore)
-    {
-        reset();
-        _sendJSONMessage("gameWon", isHighScore);
+        _sendJSONMessage("gameOver", {"highscore":isHighScore, "died":isDead});
     }
 
     void _completeTask()
@@ -586,6 +580,8 @@ class GameServer
         {
             gc.sendGotInitials(initials);
         }
+
+        onScoreChanged();
     }
 
     onClientStartChanged(GameClient client)
@@ -734,39 +730,27 @@ class GameServer
 
         if(_lives <= 0 || playersLeft < 2)
         {
-            _onGameOver();
+            _onGameOver(true);
         }
         else if((!someoneHasTask && _taskList.isEmpty))
         {
-            onGameWon();
+            _onGameOver(false);
         }
     }
-    
-    
-    onGameWon()
+
+    void _onGameOver(bool isDead, {bool saveScore = true})
     {
+        
         _inGame = false;
-        bool isHighScore = _highScores.isTopTen(_score);
+        bool isHighScore = saveScore && _highScores.isTopTen(_score);
         if(isHighScore)
         {
             _highScore = _highScores.addScore("???", _score);
         }
-        print("TEAM WINS! $isHighScore");
+        print("GAME OVER! $isHighScore");
         for(var gc in _clients)
         {
-            gc.gameWon(isHighScore);
-        }
-        onGameOver();
-        sendReadyState();
-    }
-
-    _onGameOver()
-    {
-        print("GAME OVER!");
-        _inGame = false;
-        for(var gc in _clients)
-        {
-            gc.gameOver();
+            gc.gameOver(isDead, isHighScore);
         }
         onGameOver();
 
@@ -775,7 +759,7 @@ class GameServer
 
     restartGame()
     {
-        _onGameOver();
+        _onGameOver(false, saveScore:false);
     }
 
     void completeTask(IssuedTask it, Duration remaining)

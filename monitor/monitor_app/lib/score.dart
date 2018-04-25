@@ -5,6 +5,9 @@ import "dart:typed_data";
 import "package:flutter/scheduler.dart";
 import "shadow_text.dart";
 
+final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
+final Function matchFunc = (Match match) => "${match[1]},";
+
 class GameScore extends StatefulWidget
 {	
 	final int score;
@@ -20,6 +23,7 @@ class _GameScoreState extends State<GameScore> with SingleTickerProviderStateMix
 	Animation<double> _scoreAnimation;
 	double _score = 0.0;
 	double _targetScore = 0.0;
+	String _displayScore = "0";
 
 	@override
 	initState() 
@@ -32,6 +36,7 @@ class _GameScoreState extends State<GameScore> with SingleTickerProviderStateMix
 			setState(()
 			{
 				_score = _scoreAnimation.value;
+				_displayScore = _score.round().toString().replaceAllMapped(reg, matchFunc);
 			});
 		});
 
@@ -73,6 +78,6 @@ class _GameScoreState extends State<GameScore> with SingleTickerProviderStateMix
 	@override
 	Widget build(BuildContext context) 
 	{
-		return new Container(margin:const EdgeInsets.only(bottom:7.0), child:ShadowText(_score.round().toString(), fontFamily: "Inconsolata", fontSize: 50.0));
+		return new Container(margin:const EdgeInsets.only(bottom:7.0), child:ShadowText(_displayScore.toString(), fontFamily: "Inconsolata", fontSize: 50.0));
 	}
 }
