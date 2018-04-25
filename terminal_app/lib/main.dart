@@ -74,6 +74,9 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	bool _gameOver = false;
 	List<bool> _arePlayersReady;
 	int _lives = 0;
+	int _score = 0;
+	String _initials = "";
+	bool _isHighScore = false;
 
 	List _gameCommands = [];
 
@@ -239,6 +242,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			_sceneMessage = null;
 			_commandStartTime = new DateTime.now();
 			_commandEndTime = new DateTime.now().add(new Duration(seconds: 60));
+			_initials = "";
+			_isHighScore = false;
 			print("PLAYING AND SETTING CHARACTER TO $_sceneCharacterIndex");
 		});
 	}
@@ -282,6 +287,27 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		if(_lives != value)
 		{
 			setState( () => _lives = value);
+		}
+	}
+
+	void onScoreChanged(int value)
+	{
+		if(_score != value)
+		{
+			setState(() => _score = value);
+		}
+	}
+
+	void onGameWon(bool isHighScore)
+	{
+		setState(() => _isHighScore = isHighScore);
+	}
+
+	void onServerInitials(String initials)
+	{
+		if(_initials != initials)
+		{
+			setState(() => _initials = initials);
 		}
 	}
 
@@ -331,7 +357,12 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		print("SEND COMMAND $taskType $value");
 		_client.sendCommand(taskType, value);
 	}
-	
+
+	void _onInitialsSet(String initials)
+	{
+		_client.initials = initials;
+	}
+
 	@override
 	Widget build(BuildContext context) 
 	{
@@ -427,7 +458,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
 										_isPlaying ? 
-											new InGame(_gameOpacity, _backToLobby, _gameCommands, _issueCommand, _randomSeed, isOver: _gameOver)
+											new InGame(_gameOpacity, _backToLobby, _gameCommands, _issueCommand, _randomSeed, _onInitialsSet, isOver: _gameOver, hasWon: _isHighScore, score: _score, canEnterInitials: _initials.isEmpty)
 											: new LobbyWidget(_isConnected && _canBeReady, _isReady, _markedStart, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
@@ -621,6 +652,11 @@ class SocketClient
 
 		_pingTimer = new Timer(new Duration(seconds: 5), sendPing);
 	}
+
+	set initials(String initials)
+	{
+		_socket?.writeln(formatJSONMessage("initials", initials));
+	}
 	
 	void connect()
 	{
@@ -740,6 +776,15 @@ class SocketClient
 										break;
 									case "teamLives":
 										_terminal.onLivesChanged(payload as int);
+										break;
+									case "score":
+										_terminal.onScoreChanged(payload as int);
+										break;
+									case "initials":
+										_terminal.onServerInitials(payload as String);
+										break;
+									case "gameWon":
+										_terminal.onGameWon(payload as bool);
 										break;
 									default:
 										print("UNKNOWN MESSAGE: $jsonMsg");
