@@ -10,14 +10,20 @@ import "game_controls/game_slider.dart";
 import "game_controls/game_radial.dart";
 import "game_controls/game_command_widget.dart";
 
+typedef void StringCallback(String msg);
+
 class InGame extends StatelessWidget
 {
     final VoidCallback _onRetry;
+    final StringCallback _onInitialsSet;
     final double _opacity;
 	final bool isOver;
+	final bool hasWon;
+	final bool canEnterInitials;
 	final List _gridDescription;
 	final IssueCommandCallback _issueCommand;
 	final int _seed;	
+	final int score;
 
 	static const Map gameWidgetsMap = const {
 		"GameBinaryButton" : GameBinaryButton,
@@ -25,7 +31,7 @@ class InGame extends StatelessWidget
 		"GameRadial": GameRadial,
 	};
 
-    const InGame(this._opacity, this._onRetry, this._gridDescription, this._issueCommand, this._seed, {  this.isOver: false , Key key } ) : super(key: key);
+    const InGame(this._opacity, this._onRetry, this._gridDescription, this._issueCommand, this._seed, this._onInitialsSet, { this.isOver: false, this.hasWon: false, this.canEnterInitials: false, this.score: 0, Key key } ) : super(key: key);
 
 	Widget buildGrid(BuildContext context, BoxConstraints constraints)
 	{
@@ -145,9 +151,8 @@ class InGame extends StatelessWidget
 						child:new Container(
 							margin:new EdgeInsets.only(top:43.0), 
 							child:
-							this.isOver ? 
-							new GameOver(_onRetry) :
-							new LayoutBuilder(builder: buildGrid)
+							this.hasWon ? new HighScore(_onRetry, _onInitialsSet, score, canEnterInitials) :
+							this.isOver ? new GameOver(_onRetry) : new LayoutBuilder(builder: buildGrid)
 							// new ControlGrid(
 							// 	children: grid
 							// )
@@ -318,6 +323,96 @@ class GameOver extends StatelessWidget
 					],
 				)
 		);
-	}
-	
+	}	
+}
+
+class HighScore extends StatelessWidget
+{
+	final VoidCallback _onRetry;
+	final StringCallback _onInitialsSet;
+	final int _score;
+	final TextEditingController _initialsController = new TextEditingController();
+	final bool _canEnterInitials;
+
+	HighScore(this._onRetry, this._onInitialsSet, this._score, this._canEnterInitials);
+
+	@override
+	Widget build(BuildContext context) 
+	{
+		return new Center(
+				child: new Column(
+					children: 
+					[
+						new Container(
+							margin: new EdgeInsets.only(top: 68.0),
+							child:new Text("HIGH\nSCORE!", 
+								textAlign: TextAlign.center,
+								style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), 
+									fontFamily: "RalewayDots",
+									fontWeight: FontWeight.w100,
+									fontSize: 144.0, 
+									height: 0.8,
+									decoration: TextDecoration.none
+								)
+							)
+						),
+						new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:30.0, left:73.0, right:73.0), color: Colors.white, height: 2.0)) ]),
+						new Container(
+							height: 105.0,
+							child:new Center(
+								child: new Text(
+									_score.toString(),
+									style: new TextStyle(
+										color: Colors.white,
+										fontFamily: "Inconsolata",
+										fontWeight: FontWeight.normal,
+										fontSize: 36.0,
+										height: 42.0/36.0,
+										decoration: TextDecoration.none
+									),
+								)
+							)
+						),
+						new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(left:73.0, right:73.0, top: 10.0), color: Colors.white, height: 2.0)) ]),
+						new Container(
+							width: 274.0,
+							child: new PanelButton("ENTER YOUR INITIALS", 18.0, 1.3, const EdgeInsets.only(top:40.0), () => showDialog(
+								context: context,
+								builder: (_) => new AlertDialog(
+									title: new Text("INITIALS:"),
+									content: new TextFormField(
+										controller: _initialsController,
+										decoration: new InputDecoration(hintText: "___"),
+										autofocus: true,
+										maxLength: 3,
+										maxLines: 1
+									),
+									actions:
+									[
+										new FlatButton(
+											child: new Text("OK"),
+											onPressed: ()
+											{
+												String initials = _initialsController.text;
+												if(initials.length == 3)
+												{
+													_onInitialsSet(initials);
+													Navigator.of(context).pop();
+												}
+											},
+										)
+									]
+								)
+							), 
+							isAccented: _canEnterInitials,
+							isEnabled: _canEnterInitials)
+						),
+						new Container(
+							width: 274.0,
+							child: new PanelButton("TRY AGAIN", 18.0, 1.3, const EdgeInsets.only(top:10.0), _onRetry)
+						)
+					],
+				)
+		);
+	}	
 }
