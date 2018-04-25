@@ -181,6 +181,12 @@ class GameClient
         _sendJSONMessage("gameOver", true);
     }
 
+    gameWon()
+    {
+        reset();
+        _sendJSONMessage("gameWon", true);
+    }
+
     void _completeTask()
     {
         String message = completedMessages[new Random().nextInt(completedMessages.length)];
@@ -668,13 +674,29 @@ class GameServer
             playersLeft++;
         }
 
-        if(_lives <= 0 || playersLeft < 2 || (!someoneHasTask && _taskList.isEmpty))
+        if(_lives <= 0 || playersLeft < 2)
         {
             onGameOver();
+        }
+        else if((!someoneHasTask && _taskList.isEmpty))
+        {
+            onGameWon();
         }
     }
     
     
+    onGameWon()
+    {
+        print("TEAM WINS!");
+        _inGame = false;
+        for(var gc in _clients)
+        {
+            gc.gameWon();
+        }
+        onGameOverCallback();
+        sendReadyState();
+    }
+
     onGameOver()
     {
         print("GAME OVER!");
