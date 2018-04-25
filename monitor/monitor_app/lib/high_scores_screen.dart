@@ -90,7 +90,7 @@ class HighScoresScreen extends StatelessWidget
 							(
 								children:_highScores.map((HighScore score)
 									{
-										return new HighScoreLine(score.idx, score.name, score.value, score.idx == 1/*score == _highScore*/);	
+										return new HighScoreLine(score.idx, score.name, score.value, score == _highScore);	
 									}).toList()
 								
 								// <Widget>

@@ -773,6 +773,11 @@ class GameServer
         sendReadyState();
     }
 
+    restartGame()
+    {
+        _onGameOver();
+    }
+
     void completeTask(IssuedTask it, Duration remaining)
     {
         // Assign score.        

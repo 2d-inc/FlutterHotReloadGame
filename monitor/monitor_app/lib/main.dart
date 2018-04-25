@@ -504,15 +504,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 											{
 												if(_server != null)
 												{
-													_server.flutterTask = null;
-
-													initFlutterTask();
-
-													_flutterTask.load(targetDevice).then((success)
-													{
-														_allowReinit = true;
-														_server.flutterTask = _flutterTask;
-													});
+													_server.restartGame();
 												}
 											}
 										)
