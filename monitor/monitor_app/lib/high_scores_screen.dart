@@ -11,40 +11,48 @@ class HighScoreLine extends StatelessWidget
 	final String name;
 	final String value;
 	final int idx;
+	final bool isHighlit;
 
 
-	HighScoreLine(this.idx, this.name, int v) : value = v.toString().replaceAllMapped(reg, mathFunc);
+	HighScoreLine(this.idx, this.name, int v, this.isHighlit) : value = v.toString().replaceAllMapped(reg, mathFunc);
 
 	@override
 	Widget build(BuildContext context)
 	{
-		return new Container(height:40.0, child:new Row(
-			crossAxisAlignment: CrossAxisAlignment.end,
-			children: <Widget>
-			[
-				new Container(width: 40.0, margin:const EdgeInsets.only(right:20.0), child:new Text(idx.toString(), textAlign: TextAlign.right, style: new TextStyle(color: new Color.fromRGBO(255, 255, 255, 0.3), fontFamily: "Inconsolata", fontSize: 40.0, decoration: TextDecoration.none))),
-				new Text(name, style: new TextStyle(color: new Color.fromRGBO(253, 205, 242, 0.6), fontFamily: "Inconsolata", fontSize: 40.0, decoration: TextDecoration.none)),
-				new Expanded
-				(
-					child:new Container
+		return new Container(
+			height: 40.0, 
+			decoration: isHighlit ? new HighLightDecoration() : null,
+			child: new Row
+			(
+				//margin: const EdgeInsets.only(top: 30.0, bottom: 30.0, left: 20.0, right: 40.0),
+				crossAxisAlignment: CrossAxisAlignment.end,
+				children: <Widget>
+				[
+					new Container(width: 40.0, margin:const EdgeInsets.only(left: 20.0, right:20.0), child:new Text(idx.toString(), textAlign: TextAlign.right, style: new TextStyle(color: isHighlit ? Colors.white : new Color.fromRGBO(255, 255, 255, 0.3), fontFamily: "Inconsolata", fontSize: 40.0, decoration: TextDecoration.none))),
+					new Text(name, style: new TextStyle(color: isHighlit ? Colors.white : new Color.fromRGBO(253, 205, 242, 0.6), fontFamily: "Inconsolata", fontSize: 40.0, decoration: TextDecoration.none)),
+					new Expanded
 					(
-						alignment: Alignment.bottomLeft,
-						decoration: new DottedDecoration(),
-						height: 1.0, 
-						margin: new EdgeInsets.only(left: 10.0, right: 0.0, bottom: 4.0),
-                    ),
-				),
-				new Text(value, textAlign: TextAlign.right, style: new TextStyle(color: new Color.fromRGBO(133, 226, 255, 0.6), fontFamily: "Inconsolata", fontSize: 40.0, decoration: TextDecoration.none))
-			]
-		));
+						child:new Container
+						(
+							alignment: Alignment.bottomLeft,
+							decoration: new DottedDecoration(),
+							height: 1.0, 
+							margin: new EdgeInsets.only(left: 10.0, right: 0.0, bottom: 4.0),
+						),
+					),
+					new Container(margin:const EdgeInsets.only(right:40.0), child:new Text(value, textAlign: TextAlign.right, style: new TextStyle(color: isHighlit ? Colors.white : new Color.fromRGBO(133, 226, 255, 0.6), fontFamily: "Inconsolata", fontSize: 40.0, decoration: TextDecoration.none)))
+				]
+			)
+		);
 	}
 }
 
 class HighScoresScreen extends StatelessWidget
 {
-	final HighScores _highScores;
+	final List<HighScore> _highScores;
+	final HighScore _highScore;
 
-	HighScoresScreen(this._highScores);
+	HighScoresScreen(this._highScores, this._highScore);
 
 	@override
 	Widget build(BuildContext context)
@@ -77,22 +85,28 @@ class HighScoresScreen extends StatelessWidget
 					(
 						child: new Container
 						(
-							margin: const EdgeInsets.only(top: 30.0, bottom: 30.0, left: 20.0, right: 40.0),
+							margin: const EdgeInsets.only(top: 30.0, bottom: 30.0),
 							child:new Column
 							(
-								children:<Widget>
-								[
-									new HighScoreLine(1, "ABC", 1343000),
-									new HighScoreLine(2, "DEF", 303430),
-									new HighScoreLine(3, "GHI", 1030),
-									new HighScoreLine(4, "ABC", 1343000),
-									new HighScoreLine(5, "DEF", 303430),
-									new HighScoreLine(6, "GHI", 1030),
-									new HighScoreLine(7, "ABC", 1343000),
-									new HighScoreLine(8, "DEF", 303430),
-									new HighScoreLine(9, "GHI", 1030),
-									new HighScoreLine(10, "ABC", 1343000)
-								]
+								children:_highScores.map((HighScore score)
+									{
+										return new HighScoreLine(score.idx, score.name, score.value, score.idx == 1/*score == _highScore*/);	
+									}).toList()
+								
+								// <Widget>
+								// [
+									
+								// 	new HighScoreLine(1, "ABC", 1343000),
+								// 	new HighScoreLine(2, "DEF", 303430),
+								// 	new HighScoreLine(3, "GHI", 1030),
+								// 	new HighScoreLine(4, "ABC", 1343000),
+								// 	new HighScoreLine(5, "DEF", 303430),
+								// 	new HighScoreLine(6, "GHI", 1030),
+								// 	new HighScoreLine(7, "ABC", 1343000),
+								// 	new HighScoreLine(8, "DEF", 303430),
+								// 	new HighScoreLine(9, "GHI", 1030),
+								// 	new HighScoreLine(10, "ABC", 1343000)
+								// ]
 							)
 						)
 					)
@@ -132,5 +146,25 @@ class DottedPainter extends BoxPainter
             dots[i] = new Offset(dx, offset.dy);
         }
         canvas.drawPoints(PointMode.points, dots, dotsPaint);
+    }
+}
+
+class HighLightDecoration extends Decoration
+{
+    @override
+    BoxPainter createBoxPainter([VoidCallback onChanged])
+    {
+        return new HighLightDecorationPainter();
+    }
+}
+
+class HighLightDecorationPainter extends BoxPainter
+{
+	static const Color color = const Color.fromRGBO(255, 0, 108, 0.22);
+
+    @override
+    void paint(Canvas canvas, Offset offset, ImageConfiguration configuration)
+    {
+        canvas.drawRect(offset & new Size(configuration.size.width, configuration.size.height + 3.0), new Paint()..color = color);
     }
 }

@@ -23,6 +23,7 @@ import "flare_widget.dart";
 import "shadow_text.dart";
 import "score.dart";
 import "high_scores_screen.dart";
+import "high_scores.dart";
 
 const double STDOUT_PADDING = 41.0;
 const double STDOUT_HEIGHT = 150.0 - STDOUT_PADDING;
@@ -116,6 +117,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	int _score = 0;
 	String _characterMessage;
 	bool _showHighScores = true;
+	HighScore _highScore;
 
 	void showLobby()
 	{
@@ -124,6 +126,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		_startTaskTime = null;
 		_failTaskTime = null;
 		_showHighScores = true;
+		_highScore = null;
 	}
 
 	@override
@@ -328,6 +331,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 						setState(()
 						{
 							showLobby();
+							_highScore = _server.highScore;
 						});
 					};
 				});
@@ -470,7 +474,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							child:new Container
 							(
 								margin:const EdgeInsets.only(left:20.0, top: 15.0, right:300.0, bottom:20.0),
-								child:new HighScoresScreen(null)
+								child:new HighScoresScreen(_server?.highScores?.scores, _highScore)
 							)
 						),
 						!hasMonitorCoordinates ? new Container() : new Positioned

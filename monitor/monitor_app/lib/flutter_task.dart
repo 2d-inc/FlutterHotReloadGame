@@ -70,12 +70,18 @@ class FlutterTask
 
 	onReceivedLine(String line)
 	{
-		if(_outputHandler != null && line.trim().isNotEmpty)
+		line = line.trim();
+		if(_outputHandler != null && line.isNotEmpty)
 		{
-			List<String> lines = line.trim().split('\n');
-			for(String l in lines) 
+			while(true)
 			{
-				_outputHandler(l);
+				int idx = line.indexOf("\n");
+				if(idx == -1)
+				{
+					break;
+				}
+				_outputHandler(line.substring(0, idx));
+				line = line.substring(idx+1);
 			}
 		}
 

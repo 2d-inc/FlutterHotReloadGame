@@ -7,6 +7,7 @@ class HighScore
 {
 	String name;
 	int value;
+	int idx;
 
 	@override
 	String toString()
@@ -45,6 +46,7 @@ class HighScores
 						}
 					}
 				}
+				sortScores();
 			}
 			catch(Exception)
 			{
@@ -53,12 +55,8 @@ class HighScores
 		});
 	}
 
-	int addScore(String name, int value)
+	void sortScores()
 	{
-		_scores.add(new HighScore()
-									..name = name
-									..value = value);
-
 		_scores.sort((HighScore a, HighScore b)
 		{
 			return b.value-a.value;
@@ -66,10 +64,35 @@ class HighScores
 
 		_scores = _scores.sublist(0, min(10, _scores.length));
 		
+		int idx = 0;
+		for(HighScore score in _scores)
+		{
+			score.idx = idx++;
+		}
+	}
+	
+	bool isTopTen(int value)
+	{
 		return _scores.indexWhere((HighScore score)
 		{
-			return score.name == name && score.value == value;
-		});
+			return score.value < value;
+		}) < 10;
+	}
+
+	HighScore addScore(String name, int value)
+	{
+		HighScore score = new HighScore()
+									..name = name
+									..value = value;
+		_scores.add(score);
+		
+		sortScores();
+
+		return score;
+		// return _scores.indexWhere((HighScore score)
+		// {
+		// 	return score.name == name && score.value == value;
+		// });
 	}
 
 	void save()

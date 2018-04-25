@@ -185,6 +185,12 @@ class GameClient
         _sendJSONMessage("gameOver", true);
     }
 
+    gameWon(bool isHighScore)
+    {
+        reset();
+        _sendJSONMessage("gameWon", isHighScore);
+    }
+
     void _completeTask()
     {
         String message = completedMessages[new Random().nextInt(completedMessages.length)];
@@ -398,7 +404,9 @@ class GameServer
     VoidCallback onScoreChanged;
     int _lives = 0;
     int _score = 0;
+    HighScore _highScore;
     bool _gotInitials = false;
+
 
     Map<String, CommandTask> _completedTasks;
     HighScores _highScores;
@@ -421,6 +429,8 @@ class GameServer
 
     int get lives => _lives;
     int get score => _score;
+    HighScore get highScore => _highScore;
+    HighScores get highScores => _highScores;
 
     FlutterTask get flutterTask
     {
@@ -564,7 +574,11 @@ class GameServer
         }
         initials = initials.toUpperCase();
         
-        //_highScores.addScore(initials, _score);
+        if(_highScore != null)
+        {
+            _highScore.name = initials;
+            _highScores.save();
+        }
 
         _gotInitials = true;
 
@@ -582,6 +596,7 @@ class GameServer
         }
         
         _gotInitials = false;
+        _highScore = null;
         _setLives(5);
         _setScore(0);
 
@@ -717,13 +732,34 @@ class GameServer
             playersLeft++;
         }
 
-        if(_lives <= 0 || playersLeft < 2 || (!someoneHasTask && _taskList.isEmpty))
+        if(_lives <= 0 || playersLeft < 2)
         {
             _onGameOver();
+        }
+        else if((!someoneHasTask && _taskList.isEmpty))
+        {
+            onGameWon();
         }
     }
     
     
+    onGameWon()
+    {
+        _inGame = false;
+        bool isHighScore = _highScores.isTopTen(_score);
+        if(isHighScore)
+        {
+            _highScore = _highScores.addScore("???", _score);
+        }
+        print("TEAM WINS! $isHighScore");
+        for(var gc in _clients)
+        {
+            gc.gameWon(isHighScore);
+        }
+        onGameOver();
+        sendReadyState();
+    }
+
     _onGameOver()
     {
         print("GAME OVER!");
