@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -38,13 +39,14 @@ class TextRenderObject extends RenderBox
 {
 	static const double FONT_SIZE = 16.0;
 	static const String FONT_FAMILY = "Inconsolata";
-	static const FontWeight FONT_WEIGHT = FontWeight.w100;
 	static const double LINE_HEIGHT_MULTIPLIER = 18.0/16.0;
 	static const double LINES_NUM_WIDTH = 60.0;
 	static const int LINES_RECT_PADDING = 15;
 	static const int CODE_PADDING_LEFT = 15;
 	static const int CODE_PADDING_TOP = 10;
 	static const int HIGHLIGHT_PADDING = 1;
+
+	static final HashSet<String> dartKeywords = new HashSet.from(["abstract", "deferred", "if", "super", "as", "do", "implements", "switch", "assert", "dynamic", "import", "sync*", "async", "else", "in", "this", "async*", "enum", "is", "throw", "await", "export", "library", "true", "break", "external", "new", "try", "case", "extends", "null", "typedef", "1", "catch", "factory", "operator", "var", "class", "false", "part", "void", "const", "final", "rethrow", "while", "continue", "finally", "return", "with", "covariant", "for", "set", "yield", "default", "get", "static", "yield*"]);
 
 	String _text;
 	TextStyle style;
@@ -68,7 +70,6 @@ class TextRenderObject extends RenderBox
 				fontFamily: FONT_FAMILY,
 				fontSize: FONT_SIZE,
 				lineHeight: LINE_HEIGHT_MULTIPLIER,
-				// fontWeight: FONT_WEIGHT
 			);
 
 		ui.ParagraphBuilder pb = new ui.ParagraphBuilder(codeStyle);
@@ -97,12 +98,10 @@ class TextRenderObject extends RenderBox
 	performLayout()
 	{
 		super.performLayout();
-
 		ui.ParagraphStyle codeStyle = new ui.ParagraphStyle(
 					fontFamily: FONT_FAMILY,
 					fontSize: FONT_SIZE,
 					lineHeight: LINE_HEIGHT_MULTIPLIER,
-					// fontWeight: FONT_WEIGHT
 				);
 
 		ui.ParagraphBuilder codePB = new ui.ParagraphBuilder(codeStyle);
@@ -112,14 +111,9 @@ class TextRenderObject extends RenderBox
 					fontFamily: FONT_FAMILY,
 					fontSize: FONT_SIZE,
 					lineHeight: LINE_HEIGHT_MULTIPLIER,
-					// fontWeight: FONT_WEIGHT,
 				)
 			);
-		ui.TextStyle semiTransparent = new ui.TextStyle(color: new Color.fromRGBO(255, 255, 255, 0.5));
-		ui.TextStyle opaque = new ui.TextStyle(color: Colors.white);
 
-		codePB.pushStyle(semiTransparent);
-		linesPB.pushStyle(semiTransparent);
 		ui.ParagraphConstraints codeConstraints = new ui.ParagraphConstraints(width: double.maxFinite);
 
 		int maxNumDigits = _maxLines.toString().length;
@@ -136,22 +130,19 @@ class TextRenderObject extends RenderBox
 
 		int highlightStart = _highlight.row;
 		int highlightEnd = _highlight.row + _highlight.howManyLines;
+		final ui.TextStyle semiTransparent = new ui.TextStyle(color: new Color.fromRGBO(255, 255, 255, 0.5));
+		final ui.TextStyle opaque = new ui.TextStyle(color: Colors.white);
 
 		for(int i = 0; i < visibleLines.length; i++)
 		{
 			String l = visibleLines[i].replaceAll('\t', "  ");
 			ui.TextStyle lineStyle;
 			int currentLine = topLine + i;
-			if(currentLine >= highlightStart && currentLine < highlightEnd)
-			{
-				lineStyle = opaque;
-			}
-			else
-			{
-				lineStyle = semiTransparent;
-			}
+			bool isHighlight = currentLine >= highlightStart && currentLine < highlightEnd;
+			lineStyle = isHighlight ? opaque : semiTransparent;
+			
 			codePB.pushStyle(lineStyle);
-			codePB.addText("$l\n");
+			styleLine(l, codePB, isHighlight);
 			codePB.pop();
 
 			linesPB.pushStyle(lineStyle);
@@ -161,6 +152,77 @@ class TextRenderObject extends RenderBox
 
 		_codeParagraph = codePB.build()..layout(codeConstraints);
 		_linesParagraph = linesPB.build()..layout(lineConstraints);
+	}
+	
+	styleLine(String line, ui.ParagraphBuilder codePB, bool isOpaque)
+	{
+		double alpha = isOpaque ? 1.0 : 0.5;
+		StringBuffer buf = new StringBuffer();
+		RegExp alphabetic = new RegExp(r"[a-zA-Z]+");
+		for(int i = 0; i < line.length; i++)
+		{
+			String currentChar = line[i];
+			bool isAlphabetic = alphabetic.hasMatch(currentChar);
+			if(isAlphabetic)
+			{
+				buf.write(currentChar);
+			}
+			else if(currentChar == '/')
+			{
+				if((i+1) < line.length && line[i+1] == '/')
+				{
+					final ui.TextStyle comment = new ui.TextStyle(color: new Color.fromRGBO(144, 112, 137, alpha));
+					codePB.pushStyle(comment);
+					codePB.addText(line.substring(i, line.length-1));
+					codePB.pop();
+					i = line.length; // break out of the loop
+				}
+			}
+			else if (currentChar == "\'" || currentChar == "\"")
+			{
+				final ui.TextStyle string = new ui.TextStyle(color: new Color.fromRGBO(255, 0, 108, alpha));
+				int stringEndIdx = line.indexOf(currentChar, i+1);
+				String s = line.substring(i, stringEndIdx + 1);
+				codePB.pushStyle(string);
+				codePB.addText(s);
+				codePB.pop();
+				i = stringEndIdx;
+			}
+			else
+			{
+				String word = buf.toString();
+				buf.clear();
+				if(dartKeywords.contains(word))
+				{
+					final ui.TextStyle keyword = new ui.TextStyle(color: new Color.fromRGBO(133, 226, 255, alpha));
+					codePB.pushStyle(keyword);
+					codePB.addText(word);
+					codePB.pop();
+					codePB.addText(currentChar);
+				}
+				else
+				{
+					codePB.addText(word + currentChar); 
+				}
+			}
+		}
+		if(buf.isNotEmpty)
+		{
+			String word = buf.toString();
+			if(dartKeywords.contains(word))
+			{
+				final ui.TextStyle keyword = new ui.TextStyle(color: new Color.fromRGBO(133, 226, 255, alpha));
+				codePB.pushStyle(keyword);
+				codePB.addText(word);
+				codePB.pop();
+			}
+			else
+			{
+				codePB.addText(word); 
+			}
+		}
+
+		codePB.addText("\n");
 	}
 
 	@override
@@ -184,7 +246,7 @@ class TextRenderObject extends RenderBox
 			int highlightLineNumber = _highlight.row - this.topLineNumber;
 			Offset highlightOffset = new Offset(
 				offset.dx,
-				codeBoxTop + _glyphHeight * highlightLineNumber + HIGHLIGHT_PADDING
+				codeBoxTop + _glyphHeight * LINE_HEIGHT_MULTIPLIER * highlightLineNumber
 			);
 			canvas.drawRect(highlightOffset&highlightSize, new Paint()..color = new Color.fromARGB(_highlightAlpha, 255, 0, 108));
 		}
