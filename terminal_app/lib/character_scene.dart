@@ -62,6 +62,7 @@ class StateMix
 
 class TerminalCharacter
 {
+	FlutterActor _sourceActor;
 	FlutterActor actor;
 	AABB _bounds;
 	ActorNode mount;
@@ -141,9 +142,10 @@ class TerminalCharacter
 
 	void load(String filename)
 	{
-		actor = new FlutterActor();
-		actor.loadFromBundle(filename).then((bool ok)
+		_sourceActor = new FlutterActor();
+		_sourceActor.loadFromBundle(filename).then((bool ok)
 		{
+			actor = _sourceActor.makeInstance();
 			for(StateMix sm in states)
 			{
 				sm.animation = getAnimation(sm.state);
@@ -221,6 +223,12 @@ class TerminalCharacter
 			return;
 		}
 		actor.draw(canvas);
+	}
+
+	void reinit()
+	{
+		actor = _sourceActor.makeInstance();
+		advance(0.0, true);
 	}
 }
 const double MessagePadding = 40.0;
@@ -396,6 +404,16 @@ class TerminalSceneRenderer extends RenderBox
 		{
 			return;
 		}
+
+		for(TerminalCharacter character in _characters)
+		{
+			if(character == null)
+			{
+				continue;
+			}
+			character.reinit();
+		}
+
 		_state = state;
 		if(_characters[_characterIndex] != null)
 		{
