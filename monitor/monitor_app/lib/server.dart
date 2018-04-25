@@ -16,6 +16,7 @@ enum TaskStatus { complete, inProgress, failed, noMore }
 typedef void UpdateCodeCallback(String code, int line);
 typedef void OnTaskIssuedCallback(IssuedTask task, DateTime failTime);
 typedef void OnTaskCompletedCallback(IssuedTask task, DateTime failTime, String message);
+typedef void OnScoreIncCallback(int amount);
 
 List<String> completedMessages = <String>
 [
@@ -392,6 +393,7 @@ class GameServer
     UpdateCodeCallback onUpdateCode;
     OnTaskIssuedCallback onTaskIssued;
     OnTaskCompletedCallback onTaskCompleted;
+    OnScoreIncCallback onScoreIncreased;
     VoidCallback onGameOver;
     VoidCallback onGameStarted;
     VoidCallback onLivesUpdated;
@@ -534,7 +536,12 @@ class GameServer
 
     void _setScore(int score)
     {
+        int lastScore = _score;
         _score = max(0, score);
+        if(onScoreIncreased != null)
+        {
+            onScoreIncreased(_score - lastScore);
+        }
         if(onScoreChanged != null)
         {
             onScoreChanged();

@@ -24,6 +24,7 @@ import "shadow_text.dart";
 import "score.dart";
 import "high_scores_screen.dart";
 import "high_scores.dart";
+import "score_dopamine.dart";
 
 const double STDOUT_PADDING = 41.0;
 const double STDOUT_HEIGHT = 150.0 - STDOUT_PADDING;
@@ -541,7 +542,8 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 									)
 								]
 							)
-						)
+						),
+						new ScoreDopamine(_server)
 					],
 			);
 
