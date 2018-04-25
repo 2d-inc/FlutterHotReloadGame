@@ -47,6 +47,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	static const double gamePanelRatio = 0.33;
 	static const double lobbyPanelRatio = 0.66;
 	static const MethodChannel platform = const MethodChannel('2d.hot_reload.io/battery');
+	static const String _waitingMessage = "Waiting for 2-4 players!";
 
 	bool _isPlaying = false;
 	double _panelRatio = 0.66;
@@ -60,7 +61,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	Animation<double> _fadeGameAnimation;
 	TerminalSceneState _sceneState = TerminalSceneState.All;
 	int _sceneCharacterIndex = 0;
-	String _sceneMessage = "Waiting for 2 players!";
+	String _sceneMessage = _waitingMessage;
 	String _batteryLevel = "LOADING%";
 	DateTime _commandStartTime = new DateTime.now();
 	DateTime _commandEndTime = new DateTime.now().add(const Duration(seconds:10));
@@ -325,7 +326,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		{
 			return;
 		}
-		String message = _arePlayersReady.fold<int>(0, (int count, bool value) { if(value) { count++; } return count;} ) >= 2 ? "Come on, we've got a deadline to meet!" : "Waiting for 2 players!";
+		String message = _arePlayersReady.fold<int>(0, (int count, bool value) { if(value) { count++; } return count;} ) >= 2 ? "Come on, we've got a deadline to meet!" : _waitingMessage;
 		if(message != _sceneMessage)
 		{
 			_sceneMessage = message;

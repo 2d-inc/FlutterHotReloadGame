@@ -122,7 +122,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	void showLobby()
 	{
 		_characterIndex = 0;
-		_characterMessage = "WAITING FOR 2 PLAYERS!";
+		_characterMessage = "WAITING FOR 2-4 PLAYERS!";
 		_startTaskTime = null;
 		_failTaskTime = null;
 		_showHighScores = true;
