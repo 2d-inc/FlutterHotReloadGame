@@ -246,7 +246,7 @@ class TextRenderObject extends RenderBox
 			int highlightLineNumber = _highlight.row - this.topLineNumber;
 			Offset highlightOffset = new Offset(
 				offset.dx,
-				codeBoxTop + _glyphHeight * highlightLineNumber + HIGHLIGHT_PADDING
+				codeBoxTop + _glyphHeight * LINE_HEIGHT_MULTIPLIER * highlightLineNumber
 			);
 			canvas.drawRect(highlightOffset&highlightSize, new Paint()..color = new Color.fromARGB(_highlightAlpha, 255, 0, 108));
 		}
