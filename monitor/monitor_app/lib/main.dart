@@ -22,6 +22,7 @@ import "stdout_display.dart";
 import "flare_widget.dart";
 import "shadow_text.dart";
 import "score.dart";
+import "high_scores_screen.dart";
 
 const double STDOUT_PADDING = 41.0;
 const double STDOUT_HEIGHT = 150.0 - STDOUT_PADDING;
@@ -114,6 +115,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	int _lives = 0;
 	int _score = 0;
 	String _characterMessage;
+	bool _showHighScores = true;
 
 	void showLobby()
 	{
@@ -121,6 +123,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		_characterMessage = "WAITING FOR 2 PLAYERS!";
 		_startTaskTime = null;
 		_failTaskTime = null;
+		_showHighScores = true;
 	}
 
 	@override
@@ -312,7 +315,15 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 						}
 					};
 
-					_server.onGameOverCallback = ()
+					_server.onGameStarted = ()
+					{
+						setState(()
+						{
+							_showHighScores = false;
+						});
+					};
+
+					_server.onGameOver = ()
 					{
 						setState(()
 						{
@@ -405,7 +416,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 								]
 							)
 						),
-						!hasMonitorCoordinates ? new Container() : new Positioned(
+						!hasMonitorCoordinates || _showHighScores ? new Container() : new Positioned(
 							left: CODE_BOX_MARGIN_LEFT,
 							top: CODE_BOX_MARGIN_TOP,
 							width: CODE_BOX_SCREEN_WIDTH,
@@ -417,7 +428,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 									_highlightAlpha
 								)
 						),
-						!hasMonitorCoordinates ? new Container() : new Positioned(
+						!hasMonitorCoordinates || _showHighScores ? new Container() : new Positioned(
 							left: CODE_BOX_MARGIN_LEFT,
 							top: CODE_BOX_MARGIN_TOP + CODE_BOX_SCREEN_HEIGHT - STDOUT_HEIGHT - STDOUT_PADDING,
 							width: CODE_BOX_SCREEN_WIDTH,
@@ -438,47 +449,101 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 											padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
 											child: new Text("TERMINAL", style: new TextStyle(color: new Color.fromARGB(128, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
 										),
-										new Expanded(
-											child:new Row(
-
-												children:<Widget>[
-													new Expanded(child:new Container
-													(
-														padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
-														child: StdoutDisplay(_stdoutQueue.join("\n") + "\n ")//new Text("Syncing files to iPhone 8...", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
-													)),
-													new Container(
-														padding: const EdgeInsets.all(15.0),
-														child:new FlatButton(
-															
-															color: const Color.fromRGBO(255, 255, 255, 0.5),
-															disabledColor: const Color.fromRGBO(255, 255, 255, 0.2),
-															disabledTextColor: const Color.fromRGBO(255, 255, 255, 0.5),
-															child:new Text("run", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none)),
-															onPressed:!_allowReinit ? null : ()
-															{
-																if(_server != null)
-																{
-																	_server.flutterTask = null;
-
-																	initFlutterTask();
-
-																	_flutterTask.load(targetDevice).then((success)
-																	{
-																		_allowReinit = true;
-																		_server.flutterTask = _flutterTask;
-																	});
-																}
-															}
-														)
-													)
-												]
+										new Expanded
+										(
+											child:new Container
+											(
+												padding: const EdgeInsets.only(left:15.0, top:12.0, bottom:12.0),
+												child: StdoutDisplay(_stdoutQueue.join("\n") + "\n ")//new Text("Syncing files to iPhone 8...", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none))
 											)
 										)
 									],
 								)
 							)
 						),
+						!hasMonitorCoordinates || !_showHighScores ? new Container() : new Positioned
+						(
+							left: CODE_BOX_MARGIN_LEFT,
+							top: CODE_BOX_MARGIN_TOP,
+							width: CODE_BOX_SCREEN_WIDTH,
+							height: CODE_BOX_SCREEN_HEIGHT,
+							child:new Container
+							(
+								margin:const EdgeInsets.only(left:20.0, top: 15.0, right:300.0, bottom:20.0),
+								child:new HighScoresScreen(null)
+							)
+						),
+						!hasMonitorCoordinates ? new Container() : new Positioned
+						(
+							left: CODE_BOX_MARGIN_LEFT,
+							top: CODE_BOX_MARGIN_TOP,
+							width: CODE_BOX_SCREEN_WIDTH,
+							height: CODE_BOX_SCREEN_HEIGHT,
+							child:new Column
+							(
+								crossAxisAlignment: CrossAxisAlignment.end,
+								mainAxisAlignment: MainAxisAlignment.end,
+								children: <Widget>
+								[
+									new Container
+									(
+										width: 90.0,
+										height: 40.0,
+										margin: const EdgeInsets.only(bottom:20.0, right:20.0),
+										child:new FlatButton
+										(
+											color: const Color.fromRGBO(255, 255, 255, 0.5),
+											disabledColor: const Color.fromRGBO(255, 255, 255, 0.2),
+											disabledTextColor: const Color.fromRGBO(255, 255, 255, 0.5),
+											child:new Text("restart", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none)),
+											onPressed:!_allowReinit ? null : ()
+											{
+												if(_server != null)
+												{
+													_server.flutterTask = null;
+
+													initFlutterTask();
+
+													_flutterTask.load(targetDevice).then((success)
+													{
+														_allowReinit = true;
+														_server.flutterTask = _flutterTask;
+													});
+												}
+											}
+										)
+									),
+									new Container
+									(
+										width: 90.0,
+										height: 40.0,
+										margin: const EdgeInsets.only(bottom:20.0, right:20.0),
+										child:new FlatButton
+										(
+											color: const Color.fromRGBO(255, 255, 255, 0.5),
+											disabledColor: const Color.fromRGBO(255, 255, 255, 0.2),
+											disabledTextColor: const Color.fromRGBO(255, 255, 255, 0.5),
+											child:new Text("run", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none)),
+											onPressed:!_allowReinit ? null : ()
+											{
+												if(_server != null)
+												{
+													_server.flutterTask = null;
+
+													initFlutterTask();
+
+													_flutterTask.load(targetDevice).then((success)
+													{
+														_allowReinit = true;
+														_server.flutterTask = _flutterTask;
+													});
+												}
+											}
+										)
+									)
+								]
+							)
+						)
 					],
 			);
 

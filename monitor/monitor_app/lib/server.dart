@@ -4,6 +4,7 @@ import "dart:async";
 import 'dart:math';
 import "tasks/task_list.dart";
 import "tasks/icon_tasks.dart";
+import "high_scores.dart";
 import "tasks/command_tasks.dart";
 import "package:flutter/scheduler.dart";
 import 'flutter_task.dart';
@@ -131,6 +132,9 @@ class GameClient
                 String payload = jsonMsg['payload'];
                 _name = payload;
                 _server.onHello(this);
+                break;
+            case "initials":
+                _server.setInitials(jsonMsg['payload']);
                 break;
             default:
                 print("MESSAGE: $jsonMsg");
@@ -363,6 +367,16 @@ class GameClient
     {
         _sendJSONMessage("teamLives", livesLeft);
     }
+
+    set score(int score)
+    {
+        _sendJSONMessage("score", score);
+    }
+
+    sendGotInitials(initials)
+    {
+        _sendJSONMessage("initials", initials);
+    }
 }
 
 class GameServer
@@ -378,20 +392,31 @@ class GameServer
     UpdateCodeCallback onUpdateCode;
     OnTaskIssuedCallback onTaskIssued;
     OnTaskCompletedCallback onTaskCompleted;
-    VoidCallback onGameOverCallback;
+    VoidCallback onGameOver;
+    VoidCallback onGameStarted;
     VoidCallback onLivesUpdated;
     VoidCallback onScoreChanged;
     int _lives = 0;
     int _score = 0;
+    bool _gotInitials = false;
 
     Map<String, CommandTask> _completedTasks;
+    HighScores _highScores;
 
     GameServer(FlutterTask flutterTask, this._template)
     {
         this.flutterTask = flutterTask;
+        _highScores = new HighScores(flutterTask);
+        
         SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
         SchedulerBinding.instance.scheduleForcedFrame();
-        connect();
+
+        // _highScores.addScore("GLR", 123362622);
+        // _highScores.addScore("LFR", 835393323);
+        // _highScores.addScore("US", 326212636);
+        // _highScores.save();
+        
+        listen();
     }
 
     int get lives => _lives;
@@ -430,7 +455,7 @@ class GameServer
         SchedulerBinding.instance.scheduleForcedFrame();
     }
 
-    void connect()
+    void listen()
     {
         ServerSocket.bind(InternetAddress.ANY_IP_V4, 8080).then(
             (serverSocket) 
@@ -510,6 +535,11 @@ class GameServer
         {
             onScoreChanged();
         }
+
+        for(var gc in _clients)
+        {
+            gc.score = score;
+        }
     }
 
     void _setLives(int lives)
@@ -526,6 +556,24 @@ class GameServer
         }
     }
 
+    void setInitials(String initials)
+    {
+        if(_gotInitials || initials == null)
+        {
+            return;
+        }
+        initials = initials.toUpperCase();
+        
+        //_highScores.addScore(initials, _score);
+
+        _gotInitials = true;
+
+        for(var gc in _clients)
+        {
+            gc.sendGotInitials(initials);
+        }
+    }
+
     onClientStartChanged(GameClient client)
     {
         if(!allReadyToStart)
@@ -533,6 +581,7 @@ class GameServer
             return;
         }
         
+        _gotInitials = false;
         _setLives(5);
         _setScore(0);
 
@@ -579,9 +628,9 @@ class GameServer
                 tasksForClient.add(taskTypes.removeAt(rand.nextInt(taskTypes.length)));
             }
             
-            gc.startGame(tasksForClient);
-            
+            gc.startGame(tasksForClient);   
         }
+        onGameStarted();
     }
 
     onHello(GameClient client)
@@ -670,12 +719,12 @@ class GameServer
 
         if(_lives <= 0 || playersLeft < 2 || (!someoneHasTask && _taskList.isEmpty))
         {
-            onGameOver();
+            _onGameOver();
         }
     }
     
     
-    onGameOver()
+    _onGameOver()
     {
         print("GAME OVER!");
         _inGame = false;
@@ -683,7 +732,7 @@ class GameServer
         {
             gc.gameOver();
         }
-        onGameOverCallback();
+        onGameOver();
 
         sendReadyState();
     }
