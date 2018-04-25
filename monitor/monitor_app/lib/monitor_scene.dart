@@ -31,12 +31,13 @@ class MonitorScene extends LeafRenderObjectWidget
 	final int characterIndex;
 	final String message;
 	final SetMonitorExtentsCallback monitorExtentsCallback;
-	MonitorScene({Key key, this.state, this.characterIndex, this.message, this.startTime, this.endTime, this.monitorExtentsCallback}): super(key: key);
+	final DateTime reloadDateTime;
+	MonitorScene({Key key, this.state, this.characterIndex, this.message, this.startTime, this.endTime, this.monitorExtentsCallback, this.reloadDateTime}): super(key: key);
 
 	@override
 	RenderObject createRenderObject(BuildContext context) 
 	{
-		return new MonitorSceneRenderer(state, characterIndex, message, startTime, endTime)
+		return new MonitorSceneRenderer(state, characterIndex, message, startTime, endTime, reloadDateTime)
 			..monitorExtentsCallback = monitorExtentsCallback;
 	}
 
@@ -48,6 +49,7 @@ class MonitorScene extends LeafRenderObjectWidget
 					..message = message
 					..startTime = startTime
 					..endTime = endTime
+					..reloadDateTime = reloadDateTime
 					..monitorExtentsCallback = monitorExtentsCallback;
 	}
 }
@@ -252,6 +254,9 @@ class MonitorSceneRenderer extends RenderBox
 	FlutterActor _scene;
 	ActorAnimation _flicker;
 	double _flickerTime = 0.0;
+	ActorAnimation _reload;
+	double _reloadTime = 0.0;
+	
 	ActorAnimation _animation;
 	int _characterIndex = 0;
 	double _animationTime = 0.0;
@@ -269,6 +274,7 @@ class MonitorSceneRenderer extends RenderBox
 	SetMonitorExtentsCallback monitorExtentsCallback;
 	ActorNode _monitorTopLeft;
 	ActorNode _monitorBottomRight;
+	DateTime _reloadDateTime;
 
 	List<TerminalCharacter> _characters = new List<TerminalCharacter>(4);
 	List<TerminalCharacter> _renderCharacters = new List<TerminalCharacter>(4);
@@ -276,13 +282,14 @@ class MonitorSceneRenderer extends RenderBox
 	Offset _monitorTopLeftOffset;
 	Offset _monitorBottomRightOffset;
 	
-	MonitorSceneRenderer(MonitorSceneState state, int characterIndex, String message, DateTime startTime, DateTime endTime)
+	MonitorSceneRenderer(MonitorSceneState state, int characterIndex, String message, DateTime startTime, DateTime endTime, DateTime reloadDateTime)
 	{
 		this.state = state;
 		this.characterIndex = characterIndex;
 		this.message = message;
 		this.startTime = startTime;
 		this.endTime = endTime;
+		this.reloadDateTime = reloadDateTime;
 		
 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 
@@ -295,8 +302,9 @@ class MonitorSceneRenderer extends RenderBox
 		}						
 
 		_scene = new FlutterActor();
-		_scene.loadFromBundle("assets/nima/Scene/Scene").then((bool ok)
+		_scene.loadFromBundle("assets/nima/HotReloadScene/HotReloadScene").then((bool ok)
 		{
+			_scene.getAnimation("Monitor").apply(0.0, _scene, 1.0);
 			_scene.advance(0.0);
 			_bounds = _scene.computeAABB();
 			for(int i = 0; i < 4; i++)
@@ -320,12 +328,28 @@ class MonitorSceneRenderer extends RenderBox
 			_contentWidth = width;
 			_position = new Offset(x, y);
 			_flicker = _scene.getAnimation("Flicker");
+			_reload = _scene.getAnimation("Reload");
 
 			_monitorTopLeft = _scene.getNode("MonitorUpperLeft");
-			_monitorBottomRight = _scene.getNode("MonitorLowerRIght");
+			_monitorBottomRight = _scene.getNode("MonitorLowerRight");
 
 			markNeedsLayout();
 		});
+	}
+
+	DateTime get reloadDateTime
+	{
+		return _reloadDateTime;
+	}
+
+	set reloadDateTime(DateTime value)
+	{
+		if(_reloadDateTime == value)
+		{
+			return;
+		}
+		_reloadDateTime = value;
+		playReloadAnimation();
 	}
 
 	DateTime get startTime
@@ -461,6 +485,14 @@ class MonitorSceneRenderer extends RenderBox
 		_position = offset;
 	}
 
+	void playReloadAnimation()
+	{
+		if(_reload != null && _reloadTime > _reload.duration)
+		{
+			_reloadTime = 0.0;
+		}
+	}
+
 	void beginFrame(Duration timeStamp) 
 	{
 		final double t = timeStamp.inMicroseconds / Duration.microsecondsPerMillisecond / 1000.0;
@@ -508,6 +540,11 @@ class MonitorSceneRenderer extends RenderBox
 		{
 			_flickerTime = (_flickerTime+elapsed)%_flicker.duration;
 			_flicker.apply(_flickerTime, _scene, 1.0);
+		}
+		if(_reload != null)
+		{
+			_reloadTime += elapsed;
+			_reload.apply(_reloadTime, _scene, 1.0);
 		}
 
 		for(TerminalCharacter character in _characters)

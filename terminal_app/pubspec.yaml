@@ -34,8 +34,8 @@ flutter:
     - assets/nima/NPC3/NPC3.png
     - assets/nima/NPC4/NPC4.nima
     - assets/nima/NPC4/NPC4.png
-    - assets/nima/NPCScene/NPCScene.nima
-    - assets/nima/NPCScene/NPCScene.png
+    - assets/nima/HotReloadScene/HotReloadScene.nima
+    - assets/nima/HotReloadScene/HotReloadScene.png
     - assets/flares/Heart.flr
   fonts:
   - family: RobotoMono

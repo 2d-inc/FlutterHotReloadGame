@@ -61,8 +61,8 @@ flutter:
     - assets/nima/NPC3/NPC3.png
     - assets/nima/NPC4/NPC4.nima
     - assets/nima/NPC4/NPC4.png
-    - assets/nima/Scene/Scene.nima
-    - assets/nima/Scene/Scene.png
+    - assets/nima/HotReloadScene/HotReloadScene.nima
+    - assets/nima/HotReloadScene/HotReloadScene.png
     - assets/flares/Heart.flr
 
   # To add assets to your application, add an assets section, like this:

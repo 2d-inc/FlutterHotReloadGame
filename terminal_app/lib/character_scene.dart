@@ -282,7 +282,7 @@ class TerminalSceneRenderer extends RenderBox
 		}						
 
 		_scene = new FlutterActor();
-		_scene.loadFromBundle("assets/nima/NPCScene/NPCScene").then((bool ok)
+		_scene.loadFromBundle("assets/nima/HotReloadScene/HotReloadScene").then((bool ok)
 		{
 			_scene.advance(0.0);
 			_bounds = _scene.computeAABB();

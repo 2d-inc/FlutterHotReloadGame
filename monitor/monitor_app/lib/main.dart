@@ -118,6 +118,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	String _characterMessage;
 	bool _showHighScores = true;
 	HighScore _highScore;
+	DateTime _reloadTime;
 
 	void showLobby()
 	{
@@ -271,6 +272,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 
 					_server.onUpdateCode = (String code, int lineOfInterest)
 					{
+						_reloadTime = new DateTime.now();
 						setState(()
 						{
 							_contents = code; 
@@ -369,7 +371,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							child: new Stack(
 										children: 
 										[
-											new MonitorScene(state:MonitorSceneState.BossOnly, characterIndex: _characterIndex, message:_characterMessage, startTime: _startTaskTime, endTime:_failTaskTime, monitorExtentsCallback:(Offset topLeft, Offset bottomRight)
+											new MonitorScene(state:MonitorSceneState.BossOnly, reloadDateTime:_reloadTime, characterIndex: _characterIndex, message:_characterMessage, startTime: _startTaskTime, endTime:_failTaskTime, monitorExtentsCallback:(Offset topLeft, Offset bottomRight)
 											{
 												if(_monitorTopLeft != topLeft || _monitorBottomRight != bottomRight)
 												{
