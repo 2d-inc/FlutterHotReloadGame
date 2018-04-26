@@ -126,7 +126,6 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                     onTapDown: widget.isEnabled ? _onButtonPressed : null,
                     onTapUp: widget.isEnabled ? _onButtonReleased : null,
                     child: new Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
                         margin: widget._margin,
                         decoration: new BoxDecoration(
                             borderRadius: new BorderRadius.circular(3.0), 
@@ -136,6 +135,7 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                             alignment: Alignment.center,
                             child: new Text(
                                 widget._text, 
+                                textAlign: TextAlign.center,
                                 style: 
                                     new TextStyle(
                                         color: _currentTxtColor,
