@@ -160,8 +160,7 @@ class TaskList
 
 	double get progress
 	{
-		double idx = _tasksCompleted / _completionsPerUpdate;
-		return (idx / (_completionsPerUpdate * _automaticUpdates.length)).clamp(0.0, 1.0);
+		return (_tasksCompleted / (_completionsPerUpdate*_automaticUpdates.length)).clamp(0.0, 1.0);
 	}
 
 	void setNonPlayableToFinal()
@@ -297,7 +296,7 @@ class TaskList
 			IssuedTask issuedTask = isIssuingFinalValues ? (new IssuedTask()
 								..task = chosenTask
 								..value = chosenTask.finalValue) : chosenTask.issue();
-			print("TASKS IN LIST $valid | $issuedTask | $avoid");
+			//print("TASKS IN LIST $valid | $issuedTask | $avoid");
 			if(issuedTask != null)
 			{
 				chosenTask.lastIssued = new DateTime.now();

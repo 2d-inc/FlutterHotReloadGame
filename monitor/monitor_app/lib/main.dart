@@ -183,7 +183,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 				}
 			);
 
-		_progressController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 125))
+		_progressController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 600))
 			..addListener(
 				()
 				{
@@ -296,7 +296,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							).animate(_progressController);
 
 							_progressController ..value = 0.0..animateTo(1.0, curve: Curves.easeInOut);
-							_gameProgress = progress;
+							//_gameProgress = progress;
 						 });
 					};
 

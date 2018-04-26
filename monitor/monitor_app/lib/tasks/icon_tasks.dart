@@ -64,7 +64,6 @@ class AddIconATask extends CommandTask
 
 	String apply(String code)
 	{
-		print("APPLYING ICON A $value");
 		code = code.replaceAll("PIZZA_ICON", _hasPizza || !isPlayable ? "\"assets/flares/PizzaIcon\"" : "null");
 		code = code.replaceAll("BURGER_ICON", _hasBurger || !isPlayable ? "\"assets/flares/BurgerIcon\"" : "null");
 		code = code.replaceAll("DESSERT_ICON", _hasDessert || !isPlayable ? "\"assets/flares/DessertIcon\"" : "null");
@@ -314,7 +313,6 @@ class CarouselIcons extends CommandTask
 
 	String apply(String code)
 	{
-		print("APPLYING CAROUSEL ICONS");
 		return code.replaceAll("CAROUSEL_ICON_TYPE", values[value]);
 	}
 
@@ -666,7 +664,6 @@ class FontFamily extends CommandTask
 
 	String apply(String code)
 	{
-		print("APPLYING FONT FAMILY $value");
 		return code.replaceAll("FONT_FAMILY", values[value]);
 	}
 
