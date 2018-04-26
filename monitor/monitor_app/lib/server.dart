@@ -534,11 +534,11 @@ class GameServer
             });
     }
 
-    void _setScore(int score)
+    void _setScore(int score, {bool callIncreased = true})
     {
         int lastScore = _score;
         _score = max(0, score);
-        if(onScoreIncreased != null)
+        if(callIncreased && onScoreIncreased != null)
         {
             onScoreIncreased(_score - lastScore);
         }
@@ -601,7 +601,7 @@ class GameServer
         _gotInitials = false;
         _highScore = null;
         _setLives(5);
-        _setScore(0);
+        _setScore(0, callIncreased: false);
 
         int numClientsReady = readyCount;
 

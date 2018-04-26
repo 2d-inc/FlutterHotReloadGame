@@ -88,7 +88,7 @@ class HighScoresScreen extends StatelessWidget
 							margin: const EdgeInsets.only(top: 30.0, bottom: 30.0),
 							child:new Column
 							(
-								children:_highScores.map((HighScore score)
+								children:_highScores == null ? [] : _highScores.map((HighScore score)
 									{
 										return new HighScoreLine(score.idx+1, score.name, score.value, score == _highScore);	
 									}).toList()

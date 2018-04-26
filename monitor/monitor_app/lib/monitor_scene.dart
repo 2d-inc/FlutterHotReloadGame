@@ -21,7 +21,7 @@ enum MonitorSceneState
 	BossOnly
 }
 
-typedef void SetMonitorExtentsCallback(Offset topLeft, Offset bottomRight);
+typedef void SetMonitorExtentsCallback(Offset topLeft, Offset bottomRight, Offset dopamineTopLeft, Offset dopamineBottomRight);
 
 class MonitorScene extends LeafRenderObjectWidget
 {
@@ -274,6 +274,8 @@ class MonitorSceneRenderer extends RenderBox
 	SetMonitorExtentsCallback monitorExtentsCallback;
 	ActorNode _monitorTopLeft;
 	ActorNode _monitorBottomRight;
+	ActorNode _dopamineTopLeft;
+	ActorNode _dopamineBottomRight;
 	DateTime _reloadDateTime;
 
 	List<TerminalCharacter> _characters = new List<TerminalCharacter>(4);
@@ -281,6 +283,8 @@ class MonitorSceneRenderer extends RenderBox
 
 	Offset _monitorTopLeftOffset;
 	Offset _monitorBottomRightOffset;
+	Offset _dopamineTopLeftOffset;
+	Offset _dopamineBottomRightOffset;
 	
 	MonitorSceneRenderer(MonitorSceneState state, int characterIndex, String message, DateTime startTime, DateTime endTime, DateTime reloadDateTime)
 	{
@@ -332,6 +336,8 @@ class MonitorSceneRenderer extends RenderBox
 
 			_monitorTopLeft = _scene.getNode("MonitorUpperLeft");
 			_monitorBottomRight = _scene.getNode("MonitorLowerRight");
+			_dopamineTopLeft = _scene.getNode("DopamineUpperLeft");
+			_dopamineBottomRight = _scene.getNode("DopamineLowerRight");
 
 			markNeedsLayout();
 		});
@@ -746,7 +752,7 @@ class MonitorSceneRenderer extends RenderBox
 		}
 		canvas.restore();
 
-		if(_monitorTopLeft != null && _monitorBottomRight != null)
+		if(_monitorTopLeft != null && _monitorBottomRight != null && _dopamineTopLeft != null && _dopamineBottomRight != null)
 		{
 			Vec2D topLeft = _monitorTopLeft.getWorldTranslation(new Vec2D());
 			Vec2D bottomRight = _monitorBottomRight.getWorldTranslation(new Vec2D());
@@ -760,13 +766,24 @@ class MonitorSceneRenderer extends RenderBox
 														(_position.dx + bottomRight[0])*scale+bx, 
 														(_position.dy + bottomRight[1])*-scale+by);
 
+			topLeft = _dopamineTopLeft.getWorldTranslation(new Vec2D());
+			bottomRight = _dopamineBottomRight.getWorldTranslation(new Vec2D());
+	;
+			Offset dopamineTopLeftOffset = new Offset(
+														(_position.dx + topLeft[0])*scale+bx, 
+														(_position.dy + topLeft[1])*-scale+by);
+			Offset dopamineBottomRightOffset = new Offset(
+														(_position.dx + bottomRight[0])*scale+bx, 
+														(_position.dy + bottomRight[1])*-scale+by);
 
-			if(monitorTopLeftOffset != _monitorTopLeftOffset || monitorBottomRightOffset != _monitorBottomRightOffset)
+			if(monitorTopLeftOffset != _monitorTopLeftOffset || monitorBottomRightOffset != _monitorBottomRightOffset || dopamineTopLeftOffset != _dopamineTopLeftOffset || dopamineBottomRightOffset != _dopamineBottomRightOffset)
 			{
-				print("EHER $monitorTopLeftOffset $monitorBottomRightOffset");
 				_monitorTopLeftOffset = monitorTopLeftOffset;
 				_monitorBottomRightOffset = monitorBottomRightOffset;
-				monitorExtentsCallback(_monitorTopLeftOffset, _monitorBottomRightOffset);
+				_dopamineTopLeftOffset = dopamineTopLeftOffset;
+				_dopamineBottomRightOffset = dopamineBottomRightOffset;
+				
+				monitorExtentsCallback(_monitorTopLeftOffset, _monitorBottomRightOffset, _dopamineTopLeftOffset, _dopamineBottomRightOffset);
 			}
 		}
 

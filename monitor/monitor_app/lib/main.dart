@@ -110,6 +110,8 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 
 	Offset _monitorTopLeft;
 	Offset _monitorBottomRight;
+	Offset _dopamineTopLeft;
+	Offset _dopamineBottomRight;
 	DateTime _startTaskTime;
 	DateTime _failTaskTime;
 	DateTime _waitMessageTime;
@@ -372,16 +374,19 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							child: new Stack(
 										children: 
 										[
-											new MonitorScene(state:MonitorSceneState.BossOnly, reloadDateTime:_reloadTime, characterIndex: _characterIndex, message:_characterMessage, startTime: _startTaskTime, endTime:_failTaskTime, monitorExtentsCallback:(Offset topLeft, Offset bottomRight)
+											new MonitorScene(state:MonitorSceneState.BossOnly, reloadDateTime:_reloadTime, characterIndex: _characterIndex, message:_characterMessage, startTime: _startTaskTime, endTime:_failTaskTime, monitorExtentsCallback:(Offset topLeft, Offset bottomRight, Offset dopamineTopLeft, Offset dopamineBottomRight)
 											{
-												if(_monitorTopLeft != topLeft || _monitorBottomRight != bottomRight)
+												if(_monitorTopLeft != topLeft || _monitorBottomRight != bottomRight || _dopamineTopLeft != dopamineTopLeft || _dopamineBottomRight != dopamineBottomRight)
 												{
 													setState(() 
 													{
 														_monitorTopLeft = topLeft;
 														_monitorBottomRight = bottomRight;
+														_dopamineTopLeft = dopamineTopLeft;
+														_dopamineBottomRight = dopamineBottomRight;
 													});
 												}	
+
 											})
 										]
 									)
@@ -543,7 +548,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 								]
 							)
 						),
-						new ScoreDopamine(_server)
+						_server != null && hasMonitorCoordinates ? new ScoreDopamine(_server, _dopamineTopLeft, _dopamineBottomRight) : Container()
 					],
 			);
 
