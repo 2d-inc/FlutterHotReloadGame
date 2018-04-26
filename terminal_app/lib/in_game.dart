@@ -115,12 +115,17 @@ class InGame extends StatelessWidget
 		Offset bigStart = positions.removeAt(biggerIndex);
 		positions.removeAt(biggerIndex); // Remove also the following element since we're occupying two rows
 		var biggest = pq.removeFirst();
+		Widget bw = biggest['widget'];
+		if(bw is GameBinaryButton)
+		{
+			bw.isTall = true;
+		}
 		grid.add(new Positioned(
 			width: cellWidth,
 			height: doubleCellHeight,
 			left: bigStart.dx,
 			top: bigStart.dy,
-			child: new TitledCommandPanel(biggest['name'], biggest['widget'], isExpanded: true)
+			child: new TitledCommandPanel(biggest['name'], bw, isExpanded: true)
 		));
 
 		while(pq.isNotEmpty)
@@ -166,14 +171,12 @@ class InGame extends StatelessWidget
 
 class GameBinaryButton extends StatelessWidget implements GameCommand
 {
-	// TODO: final List<VoidCallback> _callbacks;
 	final List<String> _labels;
 	final String taskType;
 	final IssueCommandCallback issueCommand;
+	bool isTall;
 
-	//GameBinaryButton(this._labels, {Key key}) : super(key: key);
-
-	GameBinaryButton.make(this.issueCommand, this.taskType, Map params) : _labels = new List<String>(params['buttons'].length)
+	GameBinaryButton.make(this.issueCommand, this.taskType, Map params, {this.isTall: false}) : _labels = new List<String>(params['buttons'].length)
 	{
 		List l = params['buttons'];
 		for(int i = 0; i < l.length; i++)
@@ -185,25 +188,40 @@ class GameBinaryButton extends StatelessWidget implements GameCommand
 	@override
 	Widget build(BuildContext context)
 	{
-		bool isTall = _labels.length > 2;
+		bool hasThree = _labels.length > 2;
 		List<Widget> buttons = [];
+		const EdgeInsets horizontalPlacement = const EdgeInsets.only(right:10.0, bottom: 10.0);
+		const EdgeInsets verticalPlacement = const EdgeInsets.only(bottom: 10.0);
 		for(int i = 0; i < _labels.length; i++)
 		{
 			buttons.add(
 				new Expanded(
 					child:
 						new PanelButton(_labels[i], 16.0, 1.1, 
-							isTall ? const EdgeInsets.only(bottom: 10.0) : const EdgeInsets.only(right:10.0, bottom: 10.0), 
+							!hasThree ? horizontalPlacement : (isTall ? verticalPlacement : (i < 1) ? horizontalPlacement : verticalPlacement),
 					() 
 					{
 						issueCommand(taskType, i);
-						/* TODO: */
 					}, isAccented: true)
 				)
 			);
 		}
-
-		return buttons.length > 2 ? new Column(children: buttons) : Row(children: buttons);
+		if(!hasThree)
+		{
+			return new Row(children: buttons);
+		}
+		else if(isTall)
+		{
+			return new Column(children:buttons);
+		}
+		else //!isTall && hasThree
+		{
+			return new Column(children:
+			[
+				new Expanded(child:new Row(children: buttons.sublist(0, 2))),
+				new Expanded(child:new Row(children: [buttons.last]))
+			]);
+		}
 	}
 }
 
@@ -261,7 +279,6 @@ class RenderControlGrid extends RenderBox with ContainerRenderObjectMixin<Render
   	void performLayout() 
 	{
 		// For now, just place them in a grid. Later we need to use MaxRects to figure out the best layout as some cells will be double height.
-		// FIXME: overflows for smaller layouts
 		RenderBox child = firstChild;
 
 		const double padding = 50.0;
