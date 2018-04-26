@@ -11,6 +11,8 @@ const double APP_PADDING = 20.0;
 const String PIZZA_ICON = null;
 const String BURGER_ICON = null;
 const String DESSERT_ICON = null;
+const String NOODLES_ICON = null;
+const String SUSHI_ICON = null;
 
 const Color BACKGROUND_COLOR = Colors.white;
 

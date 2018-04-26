@@ -65,8 +65,9 @@ class GameClient
     DateTime _lastHello = new DateTime.now();
     int _idx;
     String _data;
-
+    
     int _lives = 0;
+    bool _isFirstTask = true;
     
     int get lives => _lives;
     bool get isInGame => _isInGame;
@@ -172,6 +173,7 @@ class GameClient
     
     reset()
     {
+        _isFirstTask = true;
         _isInGame = false;
         _isReady = false;
         _markedStart = false;
@@ -192,7 +194,7 @@ class GameClient
         String message = completedMessages[new Random().nextInt(completedMessages.length)];
 
         _server.onTaskCompleted(_currentTask, _failTaskTime, message);
-        _server.completeTask(_currentTask, _failTaskTime.difference(DateTime.now()));
+        _server.completeTask(_currentTask, _failTaskTime == null ? new Duration(seconds:0) : _failTaskTime.difference(DateTime.now()));
         _taskStatus = TaskStatus.complete;
         _currentTask = null;
         _failTaskTime = null;
@@ -261,7 +263,9 @@ class GameClient
         _taskStatus = TaskStatus.complete;
         _currentTask = null;
 
-        _assignTask(false);
+        //_assignTask(false);
+
+        _sendJSONMessage("talk", "Listen to my instructions and relay them to your colleagues!");
     }
 
     waitGame()
@@ -288,6 +292,12 @@ class GameClient
         if(_currentTask != null)
         {
             int expiry = _currentTask.expires;
+            if(_isFirstTask)
+            {
+                expiry = (expiry * 1.5).round();
+                _currentTask.expires = expiry;
+                _isFirstTask = false;
+            }
             _failTaskTime = new DateTime.now().add(new Duration(seconds:delaySend ? expiry + timeBetweenTasks.inSeconds : expiry));
 
             _server.onTaskIssued(_currentTask, _failTaskTime);
@@ -315,7 +325,17 @@ class GameClient
                 if(_failTaskTime != null && _failTaskTime.isBefore(now))
                 {
                     _failTaskTime = null;
-                    _failTask();
+
+                    // Set this to false if you want to test auto-completing tasks.
+                    if(true)
+                    {
+                        _failTask();
+                    }
+                    else//test auto complete
+                    {
+                        _server.forceCompleteTask(_currentTask);
+                        _completeTask();
+                    }
                 }
                 break;
             case TaskStatus.complete:
@@ -399,12 +419,15 @@ class GameServer
     VoidCallback onGameStarted;
     VoidCallback onLivesUpdated;
     VoidCallback onScoreChanged;
+    VoidCallback onIssuingFinalValues;
     OnProgressChangedCallback onProgressChanged;
     int _lives = 0;
     int _score = 0;
     HighScore _highScore;
     bool _gotInitials = false;
     double _progress = 0.0;
+    bool _isIssuingFinalValues = false;
+    DateTime _waitForInstructionsTime;
 
 
     Map<String, CommandTask> _completedTasks;
@@ -644,9 +667,8 @@ class GameServer
         List<CommandTask> taskTypes = new List<CommandTask>.from(_taskList.allTasks);
         _completedTasks = new Map<String, CommandTask>();
         
-        // Todo: change back to this logic.
         int perClient = min(5, (taskTypes.length/max(1,numClientsReady)).ceil());
-        //int perClient = 2;
+
         print("PER CLIENT $perClient");
         hotReload();
 
@@ -675,6 +697,8 @@ class GameServer
             }
             gc.startGame(tasksForClient);   
         }
+        _waitForInstructionsTime = new DateTime.now().add(new Duration(seconds:8));
+        _taskList.setNonPlayableToFinal();
         onGameStarted();
     }
 
@@ -745,6 +769,11 @@ class GameServer
 
     void gameLoop()
     {
+        if(_waitForInstructionsTime.isAfter(new DateTime.now()))
+        {
+            // waiting for instructions
+            return;
+        }
         bool someoneHasTask = false;
         int playersLeft = 0;
         for(GameClient gc in _clients)
@@ -796,6 +825,23 @@ class GameServer
         _onGameOver(false, saveScore:false);
     }
 
+    // N.B. this function is only for testing.
+    void forceCompleteTask(IssuedTask it)
+    {
+        CommandTask task = _taskList.setTaskValue(it.task.taskType(), it.value);
+        if(task != null)
+        {
+            task.complete(it.value, _template);
+            if(task.hasLineOfInterest)
+            {
+                _lineOfInterest = task.lineOfInterest;
+            }
+            _completedTasks[task.taskType()] = task;
+
+            hotReload();
+        }
+    }
+
     void completeTask(IssuedTask it, Duration remaining)
     {
         // Assign score.        
@@ -807,6 +853,15 @@ class GameServer
 
         // Advance app.
         _template = _taskList.completeTask(_template);
+
+        bool tasksInFinal = _taskList.isIssuingFinalValues;
+        if(tasksInFinal && tasksInFinal != _isIssuingFinalValues)
+        {
+            _isIssuingFinalValues = tasksInFinal;
+            _taskList.prepForFinals();
+            onIssuingFinalValues();
+        }
+        
         double progress = _taskList.progress;
         if(_progress != progress)
         {
@@ -831,12 +886,12 @@ class GameServer
             return;
         }
 
-        String code = _template.toString();
-        
-        _completedTasks.forEach((String key, CommandTask task)
-        {
-            code = task.apply(code);
-        });
+        //String code = _template.toString();
+        String code = _taskList.transformCode(_template.toString());
+        // _completedTasks.forEach((String key, CommandTask task)
+        // {
+        //     code = task.apply(code);
+        // });
 
         _isHotReloading = true;
 

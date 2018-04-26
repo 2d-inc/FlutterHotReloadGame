@@ -337,7 +337,7 @@ class GameOver extends StatelessWidget
 						),
 						new Container(
 							width: 274.0,
-							child: new PanelButton("Try Again", 18.0, 1.3, const EdgeInsets.only(top:95.0, bottom: 90.0), _onRetry)
+							child: new PanelButton("Try Again", 18.0, 1.3, const EdgeInsets.only(top:95.0, bottom: 90.0), _onRetry, height:60.0)
 						)
 					],
 				)
@@ -424,11 +424,12 @@ class HighScore extends StatelessWidget
 								)
 							), 
 							isAccented: _canEnterInitials,
-							isEnabled: _canEnterInitials)
+							isEnabled: _canEnterInitials, 
+							height:60.0)
 						),
 						new Container(
 							width: 274.0,
-							child: new PanelButton("TRY AGAIN", 18.0, 1.3, const EdgeInsets.only(top:10.0), _onRetry)
+							child: new PanelButton("TRY AGAIN", 18.0, 1.3, const EdgeInsets.only(top:10.0), _onRetry, height:60.0)
 						)
 					],
 				)

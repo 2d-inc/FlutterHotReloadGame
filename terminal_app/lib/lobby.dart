@@ -59,8 +59,8 @@ class LobbyWidget extends StatelessWidget
                             ) : new Column(
                                 children: 
                                 [
-                                    new PanelButton(_ready ? "SET TO NOT READY" : "SET TO READY", 18.0, 1.3, null, _onReady, isEnabled: canBeReady),
-                                    new PanelButton("START", 18.0, 1.3, const EdgeInsets.only(top:10.0), _onStart, isAccented: canStart, isEnabled: canStart)
+                                    new PanelButton(_ready ? "SET TO NOT READY" : "SET TO READY", 18.0, 1.3, null, _onReady, height:60.0, isEnabled: canBeReady),
+                                    new PanelButton("START", 18.0, 1.3, const EdgeInsets.only(top:10.0), _onStart, height:60.0, isAccented: canStart, isEnabled: canStart)
                                 ],
                             )
 

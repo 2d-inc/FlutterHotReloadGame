@@ -64,6 +64,15 @@ class ScoreParagraph
 		setLife(0.0);
 	}
 
+	ScoreParagraph.withText(String text)
+	{
+		Random rand = new Random();
+
+		color = colors[rand.nextInt(colors.length)];
+		label = text;
+		setLife(0.0);
+	}
+
 	bool advance(double seconds)
 	{
 		center += velocity*seconds;
@@ -128,17 +137,25 @@ class ScoreDopamineRenderObject extends RenderBox
 
 	void onScoreIncreased(int amount)
 	{
+		showScoreParagraph(new ScoreParagraph(amount));
+	}
+
+	void showScoreParagraph(ScoreParagraph paragraph)
+	{
 		Random rand = new Random();
-		
-		ScoreParagraph score = new ScoreParagraph(amount);
 
 		Offset center = (lowerRight - upperLeft)/2.0;
 		Offset offCenter = new Offset((lowerRight.dx - upperLeft.dx)*rand.nextDouble(), (lowerRight.dy - upperLeft.dy)*rand.nextDouble());
-		score.center = _upperLeft + offCenter;
-		score.velocity = offCenter - center;
-		score.velocity /= score.velocity.distance;
-		score.velocity *= 100.0;
-		_scores.add(score);
+		paragraph.center = _upperLeft + offCenter;
+		paragraph.velocity = offCenter - center;
+		paragraph.velocity /= paragraph.velocity.distance;
+		paragraph.velocity *= 100.0;
+		_scores.add(paragraph);
+	}
+
+	void onIssuingFinalValues()
+	{
+		showScoreParagraph(new ScoreParagraph.withText("FINAL STRETCH!!"));
 	}
 
 	GameServer get server
@@ -155,9 +172,11 @@ class ScoreDopamineRenderObject extends RenderBox
 		if(_server != null)
 		{
 			_server.onScoreIncreased = null;
+			_server.onIssuingFinalValues = null;
 		}
 		_server = d;
 		_server.onScoreIncreased = onScoreIncreased;
+		_server.onIssuingFinalValues = onIssuingFinalValues;
 	}
 
 	Offset get upperLeft

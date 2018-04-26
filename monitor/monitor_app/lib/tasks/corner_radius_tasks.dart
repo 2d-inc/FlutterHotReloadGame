@@ -2,17 +2,19 @@ import "dart:math";
 import "command_tasks.dart";
 
 class ListCornerRadius extends CommandTask
-{
-	int _cornerRadius = 0;
+{	
+	ListCornerRadius()
+	{
+		value = 10;
+	}
 
 	Map serialize()
 	{
-		return CommandTask.makeRadial(this, 0, 60);
+		return CommandTask.makeRadial(this, 10, 30);
 	}
 
 	void complete(int value, String code)
 	{
-		_cornerRadius = value;
 		if(!hasLineOfInterest)
 		{
 			findLineOfInterest(code, "LIST_CORNER_RADIUS");
@@ -26,7 +28,7 @@ class ListCornerRadius extends CommandTask
 	
 	String apply(String code)
 	{
-		code = code.replaceAll("LIST_CORNER_RADIUS", _cornerRadius.toString() + ".0");
+		code = code.replaceAll("LIST_CORNER_RADIUS", value.toString() + ".0");
 		return code;
 	}
 
@@ -40,28 +42,33 @@ class ListCornerRadius extends CommandTask
 		return "Set List Radius";
 	}
 
+	int get finalValue
+	{
+		return 10;
+	}
+
 	IssuedTask issue()
 	{
 		Random rand = new Random();
 		int v = value;
 		while(v == value)
 		{
-			switch(rand.nextInt(3))
+			switch(rand.nextInt(5))
 			{	
 				case 0:
-					v = 0;
+					v = 10;
 					break;
 				case 1:
 					v = 15;
 					break;
 				case 2:
-					v = 30;
+					v = 20;
 					break;
 				case 3:
-					v = 45;
+					v = 25;
 					break;
 				case 4:
-					v = 60;
+					v = 30;
 					break;
 			}
 		}
@@ -73,16 +80,18 @@ class ListCornerRadius extends CommandTask
 
 class FeaturedCornerRadius extends CommandTask
 {
-	int _cornerRadius = 0;
+	FeaturedCornerRadius()
+	{
+		value = 5;
+	}
 
 	Map serialize()
 	{
-		return CommandTask.makeRadial(this, 0, 30);
+		return CommandTask.makeRadial(this, 5, 25);
 	}
 
 	void complete(int value, String code)
 	{
-		_cornerRadius = value;
 		if(!hasLineOfInterest)
 		{
 			findLineOfInterest(code, "FEATURED_CORNER_RADIUS");
@@ -96,7 +105,7 @@ class FeaturedCornerRadius extends CommandTask
 
 	String apply(String code)
 	{
-		code = code.replaceAll("FEATURED_CORNER_RADIUS", _cornerRadius.toString() + ".0");
+		code = code.replaceAll("FEATURED_CORNER_RADIUS", value.toString() + ".0");
 		return code;
 	}
 
@@ -110,6 +119,11 @@ class FeaturedCornerRadius extends CommandTask
 		return "Set Featured Radius";
 	}
 
+	int get finalValue
+	{
+		return 10;
+	}
+
 	IssuedTask issue()
 	{
 		Random rand = new Random();
@@ -119,19 +133,19 @@ class FeaturedCornerRadius extends CommandTask
 			switch(rand.nextInt(5))
 			{
 				case 0:
-					v = 0;
+					v = 5;
 					break;
 				case 1:
-					v = 8;
+					v = 10;
 					break;
 				case 2:
 					v = 15;
 					break;
 				case 3:
-					v = 23;
+					v = 20;
 					break;
 				case 4:
-					v = 30;
+					v = 25;
 					break;
 			}
 		}
@@ -143,16 +157,23 @@ class FeaturedCornerRadius extends CommandTask
 
 class AppPadding extends CommandTask
 {
-	int _padding = 20;
+	AppPadding()
+	{
+		value = 4;
+	}
+
+	int get finalValue
+	{
+		return 20;
+	}
 
 	Map serialize()
 	{
-		return CommandTask.makeRadial(this, 0, 60);
+		return CommandTask.makeRadial(this, 4, 26);
 	}
 
 	void complete(int value, String code)
 	{
-		_padding = value;
 		if(!hasLineOfInterest)
 		{
 			findLineOfInterest(code, "APP_PADDING");
@@ -166,7 +187,7 @@ class AppPadding extends CommandTask
 
 	String apply(String code)
 	{
-		code = code.replaceAll("APP_PADDING", _padding.toString() + ".0");
+		code = code.replaceAll("APP_PADDING", value.toString() + ".0");
 		return code;
 	}
 
@@ -179,7 +200,7 @@ class AppPadding extends CommandTask
 	{
 		return "Set Padding";
 	}
-
+	
 	IssuedTask issue()
 	{
 		Random rand = new Random();
@@ -189,19 +210,19 @@ class AppPadding extends CommandTask
 			switch(rand.nextInt(5))
 			{
 				case 0:
-					v = 15;
+					v = 4;
 					break;
 				case 1:
-					v = 30;
+					v = 12;
 					break;
 				case 2:
-					v = 45;
+					v = 20;
 					break;
 				case 3:
-					v = 60;
+					v = 28;
 					break;
 				case 4:
-					v = 0;
+					v = 36;
 					break;
 			}
 		}
@@ -213,9 +234,19 @@ class AppPadding extends CommandTask
 
 class FontSizeCommand extends CommandTask
 {
+	FontSizeCommand()
+	{
+		value = 12;
+	}
+
 	Map serialize()
 	{
-		return CommandTask.makeRadial(this, 10, 18);
+		return CommandTask.makeRadial(this, 12, 16);
+	}
+
+	int get finalValue
+	{
+		return 15;
 	}
 
 	void complete(int value, String code)
@@ -256,19 +287,19 @@ class FontSizeCommand extends CommandTask
 			switch(rand.nextInt(5))
 			{
 				case 0:
-					v = 10;
+					v = 12;
 					break;
 				case 1:
-					v = 12;
+					v = 13;
 					break;
 				case 2:
 					v = 14;
 					break;
 				case 3:
-					v = 16;
+					v = 15;
 					break;
 				case 4:
-					v = 18;
+					v = 16;
 					break;
 			}
 		}
@@ -282,12 +313,11 @@ class DollarSigns extends CommandTask
 {
 	DollarSigns()
 	{
-		value = 4;
+		value = 2;
 	}
 
 	Map serialize()
 	{
-		//2,3,4,5,6
 		return CommandTask.makeRadial(this, 2, 6);
 	}
 
@@ -339,12 +369,17 @@ class ImageWidthTask extends CommandTask
 {
 	ImageWidthTask()
 	{
-		value = 95;
+		value = 100;
+	}
+
+	int get finalValue
+	{
+		return 100;
 	}
 
 	Map serialize()
 	{
-		return CommandTask.makeRadial(this, 80, 140);
+		return CommandTask.makeRadial(this, 100, 132);
 	}
 
 	void complete(int value, String code)
@@ -385,19 +420,19 @@ class ImageWidthTask extends CommandTask
 			switch(rand.nextInt(5))
 			{
 				case 0:
-					v = 80;
+					v = 100;
 					break;
 				case 1:
-					v = 95;
+					v = 108;
 					break;
 				case 2:
-					v = 110;
+					v = 116;
 					break;
 				case 3:
-					v = 125;
+					v = 124;
 					break;
 				case 4:
-					v = 140;
+					v = 132;
 					break;
 			}
 		}

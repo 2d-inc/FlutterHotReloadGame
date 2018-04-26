@@ -330,6 +330,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 						setState(()
 						{
 							_showHighScores = false;
+							_characterMessage = "GET READY FOR MY INSTRUCTIONS!";
 						});
 					};
 

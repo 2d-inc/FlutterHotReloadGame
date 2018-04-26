@@ -34,6 +34,9 @@ flutter:
    - assets/flares/PizzaIcon.flr
    - assets/flares/BurgerIcon.flr
    - assets/flares/Pizzeria.flr
+   - assets/flares/DessertIcon.flr
+   - assets/flares/SushiIcon.flr
+   - assets/flares/NoodlesIcon.flr
    - assets/flares/Sushi.flr
    - assets/images/cafe.jpg
    - assets/images/pizza.jpg

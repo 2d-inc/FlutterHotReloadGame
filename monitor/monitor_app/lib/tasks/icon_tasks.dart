@@ -5,7 +5,7 @@ class AddIconATask extends CommandTask
 {
 	@override
 	bool isDelayed() { return true; }
-
+	
 	List<String> options = ["PIZZA", "BURGER", "DESSERT"];
 	
 	bool _hasPizza = false;
@@ -16,6 +16,26 @@ class AddIconATask extends CommandTask
 	{
 		return CommandTask.makeBinary(this, options);
 	}
+
+	@override
+	void prepareForFinal()
+	{
+		_hasPizza = true;
+		_hasBurger = true;
+		_hasDessert = true;
+	}
+
+	@override
+	void setCurrentValue(int value)
+    {
+		if(value == -1)
+		{
+			_hasPizza = true;
+			_hasBurger = true;
+			_hasDessert = true;
+		}
+        super.setCurrentValue(value);
+    }
 
 	void complete(int value, String code)
 	{
@@ -44,9 +64,10 @@ class AddIconATask extends CommandTask
 
 	String apply(String code)
 	{
-		code = code.replaceAll("PIZZA_ICON", _hasPizza ? "\"assets/flares/PizzaIcon\"" : "null");
-		code = code.replaceAll("BURGER_ICON", _hasBurger ? "\"assets/flares/BurgerIcon\"" : "null");
-		code = code.replaceAll("DESSERT_ICON", _hasDessert ? "\"assets/flares/DessertIcon\"" : "null");
+		print("APPLYING ICON A $value");
+		code = code.replaceAll("PIZZA_ICON", _hasPizza || !isPlayable ? "\"assets/flares/PizzaIcon\"" : "null");
+		code = code.replaceAll("BURGER_ICON", _hasBurger || !isPlayable ? "\"assets/flares/BurgerIcon\"" : "null");
+		code = code.replaceAll("DESSERT_ICON", _hasDessert || !isPlayable ? "\"assets/flares/DessertIcon\"" : "null");
 		return code;
 	}
 
@@ -116,6 +137,24 @@ class AddIconBTask extends CommandTask
 		return "ADD $name ICON!";
 	}
 
+	@override
+	void prepareForFinal()
+	{
+		_hasSushi = true;
+		_hasNoodles = true;
+	}
+
+	@override
+	void setCurrentValue(int value)
+    {
+		if(value == -1)
+		{
+			_hasSushi = true;
+			_hasNoodles = true;
+		}
+        super.setCurrentValue(value);
+    }
+
 	void complete(int value, String code)
 	{
 		switch(value)
@@ -134,8 +173,8 @@ class AddIconBTask extends CommandTask
 
 	String apply(String code)
 	{
-		code = code.replaceAll("SUSHI_ICON", _hasSushi ? "\"assets/flares/SushiIcon\"" : "null");
-		code = code.replaceAll("NOODLES_ICON", _hasNoodles ? "\"assets/flares/NoodlesIcon\"" : "null");
+		code = code.replaceAll("SUSHI_ICON", _hasSushi || !isPlayable ? "\"assets/flares/SushiIcon\"" : "null");
+		code = code.replaceAll("NOODLES_ICON", _hasNoodles || !isPlayable ? "\"assets/flares/NoodlesIcon\"" : "null");
 		return code;
 	}
 
@@ -181,7 +220,17 @@ class SetBackgroundColor extends CommandTask
 {
 	List<String> options = ["WHITE", "GREY", "GREENISH"];
 	List<String> colors = ["Colors.white", "Color.fromARGB(255, 242, 243, 246)", "Color.fromARGB(255, 200, 243, 200)"];
-	int _colorIdx = 0;
+	
+	SetBackgroundColor()
+	{
+		value = 0;
+	}
+
+	int get finalValue
+	{
+		return 1;
+	}
+
 	Map serialize()
 	{
 		return CommandTask.makeBinary(this, options);
@@ -189,7 +238,6 @@ class SetBackgroundColor extends CommandTask
 
 	void complete(int value, String code)
 	{
-		_colorIdx = value;
 		if(!hasLineOfInterest)
 		{
 			findLineOfInterest(code, "BACKGROUND_COLOR");
@@ -204,12 +252,12 @@ class SetBackgroundColor extends CommandTask
 
 	String apply(String code)
 	{
-		return code.replaceAll("BACKGROUND_COLOR", colors[_colorIdx]);
+		return code.replaceAll("BACKGROUND_COLOR", colors[value]);
 	}
 
 	String taskType()
 	{
-		return "IconA";
+		return "BackgroundColor";
 	}
 
 	String taskLabel()
@@ -239,7 +287,12 @@ class CarouselIcons extends CommandTask
 	
 	List<String> options = ["HIDDEN", "STATIC", "ANIMATED"];
 	List<String> values = ["IconType.hidden", "IconType.still", "IconType.animated"];
-	int _valueIdx = 0;
+	
+	int get finalValue
+	{
+		return 1;
+	}
+
 	Map serialize()
 	{
 		return CommandTask.makeBinary(this, options);
@@ -247,7 +300,6 @@ class CarouselIcons extends CommandTask
 
 	void complete(int value, String code)
 	{
-		_valueIdx = value;
 		if(!hasLineOfInterest)
 		{
 			findLineOfInterest(code, "CAROUSEL_ICON_TYPE");
@@ -262,7 +314,8 @@ class CarouselIcons extends CommandTask
 
 	String apply(String code)
 	{
-		return code.replaceAll("CAROUSEL_ICON_TYPE", values[_valueIdx]);
+		print("APPLYING CAROUSEL ICONS");
+		return code.replaceAll("CAROUSEL_ICON_TYPE", values[value]);
 	}
 
 	String taskType()
@@ -301,6 +354,11 @@ class AddImages extends CommandTask
 	AddImages()
 	{
 		value = 1;
+	}
+
+	int get finalValue
+	{
+		return 1;
 	}
 
 	Map serialize()
@@ -352,6 +410,11 @@ class ShowRatings extends CommandTask
 	ShowRatings()
 	{
 		value = 1;
+	}
+
+	int get finalValue
+	{
+		return 1;
 	}
 	
 	List<String> options = ["HIDE RATINGS", "SHOW RATINGS"];
@@ -406,6 +469,11 @@ class ShowDeliveryTimes extends CommandTask
 	{
 		value = 1;
 	}
+
+	int get finalValue
+	{
+		return 1;
+	}
 	
 	List<String> options = ["HIDE DELIVERY TIMES", "SHOW DELIVERY TIMES"];
 	List<String> values = ["false", "true"];
@@ -459,6 +527,11 @@ class CondenseListItems extends CommandTask
 	{
 		value = 0;
 	}
+
+	int get finalValue
+	{
+		return 0;
+	}
 	
 	List<String> options = ["EXPANDED", "CONDENSED"];
 	List<String> values = ["false", "true"];
@@ -511,6 +584,11 @@ class CategoryFontWeight extends CommandTask
 	{
 		value = 0;
 	}
+
+	int get finalValue
+	{
+		return 0;
+	}
 	
 	List<String> options = ["NORMAL", "BOLD"];
 	List<String> values = ["FontWeight.normal", "FontWeight.w700"];
@@ -558,12 +636,14 @@ class CategoryFontWeight extends CommandTask
 }
 
 class FontFamily extends CommandTask
-{
-	@override
-	bool isDelayed() { return true; }
-	
+{	
 	List<String> options = ["DEFAULT", "ROBOTO", "INCONSOLATA"];
 	List<String> values = ["null", "'Roboto'", "'Inconsolata'"];
+
+	int get finalValue
+	{
+		return 1;
+	}
 
 	Map serialize()
 	{
@@ -586,6 +666,7 @@ class FontFamily extends CommandTask
 
 	String apply(String code)
 	{
+		print("APPLYING FONT FAMILY $value");
 		return code.replaceAll("FONT_FAMILY", values[value]);
 	}
 

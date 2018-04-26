@@ -242,8 +242,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			_sceneState = TerminalSceneState.BossOnly;
 			_sceneCharacterIndex = new Random().nextInt(4);
 			_sceneMessage = null;
-			_commandStartTime = new DateTime.now();
-			_commandEndTime = new DateTime.now().add(new Duration(seconds: 60));
+			_commandStartTime = null;
+			_commandEndTime = null;
 			_initials = "";
 			_isHighScore = false;
 			print("PLAYING AND SETTING CHARACTER TO $_sceneCharacterIndex");
@@ -264,6 +264,14 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 				_commandEndTime = time == 0 ? null :  new DateTime.now().add(new Duration(seconds: time));
 			}
 		);
+	}
+
+	void onTalk(String msg)
+	{
+		setState(()
+		{
+			_sceneMessage = msg;
+		});
 	}
 
 	void onTaskFail(String msg)
@@ -748,6 +756,9 @@ class SocketClient
 								
 								switch(msg)
 								{
+									case "talk":
+										_terminal.onTalk(payload as String);
+										break;
 									case "commandsList":
 										_terminal.onGameStart(payload as List);
 										break;

@@ -3,9 +3,7 @@ import "command_tasks.dart";
 import "icon_tasks.dart";
 import "corner_radius_tasks.dart";
 
-const int NumGameTasks = 30;
-
-typedef String CodeUpdateStep(String code, List<CommandTask> availableTasks);
+typedef String CodeUpdateStep(String code, TaskList list);
 
 class TaskList
 {
@@ -35,42 +33,45 @@ class TaskList
 	int _tasksAssigned = 0;
 	int _completionsPerUpdate = 0;
 	int _appliedUpdateIndex = -1;
+	bool _isDone = false;
+
 	Random _rand = new Random();
 
 	List<CodeUpdateStep> _automaticUpdates = <CodeUpdateStep>
 	[
-		(String code, List<CommandTask> availableTasks)
+		(String code, TaskList list)
 		{
 			return code.replaceAll("CategorySimple", "CategoryAligned");
 		},
-		(String code, List<CommandTask> availableTasks)
+		(String code, TaskList list)
 		{
 			return code.replaceAll("FeaturedRestaurantSimple", "FeaturedRestaurantAligned");
 		},
-		(String code, List<CommandTask> availableTasks)
+		(String code, TaskList list)
 		{
 			return code.replaceAll("RestaurantsHeaderSimple", "RestaurantsHeaderAligned");
 		},
-		(String code, List<CommandTask> availableTasks)
+		(String code, TaskList list)
 		{
-			availableTasks.add(new AddIconATask());
-			availableTasks.add(new AddIconBTask());
+			list.makeTaskAvailable("IconA");
+			list.makeTaskAvailable("IconB");
 			return code.replaceAll("CategoryAligned", "CategoryDesigned");
 		},
-		(String code, List<CommandTask> availableTasks)
+		(String code, TaskList list)
 		{
 			return code.replaceAll("ListRestaurantSimple", "ListRestaurantAligned");
 		},
-		(String code, List<CommandTask> availableTasks)
+		(String code, TaskList list)
 		{
 			return code.replaceAll("RestaurantsHeaderAligned", "RestaurantsHeaderDesigned");
 		},
-		(String code, List<CommandTask> availableTasks)
+		(String code, TaskList list)
 		{
-			availableTasks.add(new CarouselIcons());
+
+			list.makeTaskAvailable("CarouselIconType");
 			return code.replaceAll("FEATURED_RESTAURANT_SIZE", "304.0");
 		},
-		(String code, List<CommandTask> availableTasks)
+		(String code, TaskList list)
 		{
 			//availableTasks.add(new AddImages());
 			return code.replaceAll("ListRestaurantAligned", "ListRestaurantDesigned");
@@ -90,19 +91,67 @@ class TaskList
 
 	bool get isEmpty
 	{
-		return _tasksAssigned > NumGameTasks;
+		return _isDone;
 	}
 	
+	bool get gotFinalValues
+	{
+		for(CommandTask task in allTasks)
+		{
+			if(task.isPlayable && task.finalValue != -1 && task.value != task.finalValue)
+			{
+				print("TASK INCOMPLETE $task ${task.value} ${task.finalValue}");
+				return false;
+			}
+		}
+		print("SHOULD BE DONE");
+		return true;
+	}
+
+	bool get isIssuingFinalValues
+	{
+		return (_tasksCompleted ~/ _completionsPerUpdate) >= _automaticUpdates.length;
+	}
+
+	void makeTaskAvailable(String type)
+	{
+		for(CommandTask task in allTasks)
+		{
+			if(task.taskType() == type)
+			{
+				if(_available.indexOf(task) == -1)
+				{
+					_available.add(task);
+				}
+				return;
+			}
+		}
+	}
+
+	void prepForFinals()
+	{
+		for(CommandTask task in allTasks)
+		{
+			task.prepareForFinal();
+		}
+	}
+
 	String completeTask(String code)
 	{
 		_tasksCompleted++;
 		int idx = _tasksCompleted ~/ _completionsPerUpdate;
+
+		if(isIssuingFinalValues && gotFinalValues)
+		{
+			_isDone = true;
+		}
+
 		if(_appliedUpdateIndex != idx)
 		{
 			_appliedUpdateIndex = idx;
 			if(idx < _automaticUpdates.length)
 			{
-				return _automaticUpdates[idx](code, _available);
+				return _automaticUpdates[idx](code, this);
 			}
 		}
 
@@ -113,6 +162,18 @@ class TaskList
 	{
 		double idx = _tasksCompleted / _completionsPerUpdate;
 		return (idx / (_completionsPerUpdate * _automaticUpdates.length)).clamp(0.0, 1.0);
+	}
+
+	void setNonPlayableToFinal()
+	{
+		for(CommandTask task in allTasks)
+		{
+			if(!task.isPlayable)
+			{
+				print("SETTING NON PLAYABLE $task to ${task.finalValue}");
+				task.setCurrentValue(task.finalValue);
+			}
+		}
 	}
 
 	CommandTask setTaskValue(String taskType, int value)
@@ -127,6 +188,15 @@ class TaskList
 		}
 		return null;
 	}
+
+	String transformCode(String code)
+	{
+		for(CommandTask task in allTasks)
+		{
+			code = task.apply(code);
+		}
+		return code;
+	}
 	
 	IssuedTask nextTask(List<CommandTask> avoid, {double timeMultiplier = 1.0, List<CommandTask> lowerChance})
 	{
@@ -139,8 +209,8 @@ class TaskList
 		const int lowerWeightSeconds = 8;
 
 		DateTime now = new DateTime.now();
-		//List<String> avoidTypes = avoid.map((CommandTask task) { return task.taskType(); });
-		for(int sanity = 0; sanity < 100; sanity++)
+		const int maxSanity = 10;
+		for(int sanity = 0; sanity < maxSanity; sanity++)
 		{
 			List<CommandTask> valid = new List<CommandTask>();
 			for(CommandTask task in _available)
@@ -179,18 +249,38 @@ class TaskList
 					
 					int weight = lowChanceTask == null ? highChanceWeight : lowChanceWeight;
 
-					int secondsSinceIssue = now.difference(task.lastIssued).inSeconds;
 					
-					if(secondsSinceIssue < lowerWeightSeconds)
+					/*if(sanity == maxSanity-1)
 					{
-						// Task was issued recently, don't re-issue it.
-						weight = 0;
+						// give everything a weight of three if we're desperate for a task.
+						weight = 3;
+					}
+					else */if(isIssuingFinalValues)
+					{
+						//print("ISSUING FINALS");
+						// When issuing final values, don't issue tasks that have already reached completion.
+						// Don't assign tasks that a finalValue of -1, this means their final values are not important.
+						if(task.finalValue == -1 || task.value == task.finalValue)
+						{
+							weight = 0;
+						}
 					}
 					else
 					{
-						// Weight task by lowerWeightSeconds since issue (provided it's less than the currently established weight).
-						// This lets task gradually come back to high chance after 30 seconds.
-						weight = min(weight, ((secondsSinceIssue-lowerWeightSeconds)/lowerWeightSeconds).floor());
+						// Alter weights based on time of issue. Don't do this while in final task assignment.
+						int secondsSinceIssue = now.difference(task.lastIssued).inSeconds;
+						
+						if(secondsSinceIssue < lowerWeightSeconds)
+						{
+							// Task was issued recently, don't re-issue it.
+							weight = 0;
+						}
+						else
+						{
+							// Weight task by lowerWeightSeconds since issue (provided it's less than the currently established weight).
+							// This lets task gradually come back to high chance after 30 seconds.
+							weight = min(weight, ((secondsSinceIssue-lowerWeightSeconds)/lowerWeightSeconds).floor());
+						}
 					}
 					
 					for(int i = 0; i < weight; i++)
@@ -199,8 +289,15 @@ class TaskList
 					}
 				}
 			}
+			if(valid.length == 0)
+			{
+				return null;
+			}
 			CommandTask chosenTask = valid[_rand.nextInt(valid.length)];
-			IssuedTask issuedTask = chosenTask.issue();
+			IssuedTask issuedTask = isIssuingFinalValues ? (new IssuedTask()
+								..task = chosenTask
+								..value = chosenTask.finalValue) : chosenTask.issue();
+			print("TASKS IN LIST $valid | $issuedTask | $avoid");
 			if(issuedTask != null)
 			{
 				chosenTask.lastIssued = new DateTime.now();
@@ -216,34 +313,4 @@ class TaskList
 		}
 		return null;
 	}
-
-	// void buildIssueList()
-	// {
-	// 	Random rand = new Random();
-	// 	const int MaxLoop = 5000;
-	// 	for(int counter = 0; _toIssue.length < NumGameTasks && counter < MaxLoop; counter++)
-	// 	{
-	// 		if(_highPrioriy.length > 0)
-	// 		{
-	// 			int index = rand.nextInt(_highPrioriy.length);
-	// 			_highPrioriy.removeAt(index).tryToIssue(_toIssue);
-	// 			continue;
-	// 		}
-	// 		int index = rand.nextInt(_available.length);
-	// 		_available[index].tryToIssue(_toIssue);
-	// 	}
-
-	// 	for(IssuedTask t in _toIssue)
-	// 	{
-	// 		String lookingForType = t.task.taskType();
-	// 		CommandTask found = allTasks.firstWhere((CommandTask t)
-	// 		{
-	// 			return t.taskType() == lookingForType;
-	// 		}, orElse:(){ return null; });
-	// 		if(found == null)
-	// 		{
-	// 			allTasks.add(t.task);
-	// 		}
-	// 	}
-	// }
 }

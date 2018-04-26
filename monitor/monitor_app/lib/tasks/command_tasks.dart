@@ -16,11 +16,24 @@ abstract class CommandTask
 	IssuedTask issue();
 	Map serialize();
 
+    void prepareForFinal() {}
+
+    @override
+    String toString()
+    {
+        return taskLabel();
+    }
+
     bool isDelayed() { return false; }
 
     bool get hasLineOfInterest
     {
         return _lineOfInterest != null;
+    }
+
+    int get finalValue
+    {
+        return -1;
     }
 
     void findLineOfInterest(String code, String match)
@@ -63,7 +76,7 @@ abstract class CommandTask
         };
     }
 
-    static Map makeBinary(CommandTask task, List<String> options)
+static Map makeBinary(CommandTask task, List<String> options)
     {
         return {
             "type": "GameBinaryButton",

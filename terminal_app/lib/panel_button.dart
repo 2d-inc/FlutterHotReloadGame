@@ -10,6 +10,7 @@ class PanelButton extends StatefulWidget
     final VoidCallback _onTap;
     final bool isEnabled;
     final bool isAccented;
+    final double height;
 
     PanelButton(
         this._text, 
@@ -20,6 +21,7 @@ class PanelButton extends StatefulWidget
         { 
             this.isEnabled: true,
             this.isAccented: false,
+            this.height,
             Key key 
         }
     ) : super(key: key);
@@ -126,6 +128,7 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                     onTapDown: widget.isEnabled ? _onButtonPressed : null,
                     onTapUp: widget.isEnabled ? _onButtonReleased : null,
                     child: new Container(
+                        height:widget.height,
                         margin: widget._margin,
                         decoration: new BoxDecoration(
                             borderRadius: new BorderRadius.circular(3.0), 
