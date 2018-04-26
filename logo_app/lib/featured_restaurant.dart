@@ -33,7 +33,8 @@ class FeaturedRestaurantSimple extends StatelessWidget
 		this.deliveryTime,
 		this.cornerRadius,
 		this.iconType,
-		this.fontSize
+		this.fontSize,
+		this.fontFamily
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -43,6 +44,7 @@ class FeaturedRestaurantSimple extends StatelessWidget
 	final double cornerRadius;
 	final IconType iconType;
 	final double fontSize;
+	final String fontFamily;
 
 	Widget build(BuildContext context) 
 	{
@@ -68,11 +70,11 @@ class FeaturedRestaurantSimple extends StatelessWidget
 					new Container(
 						padding:const EdgeInsets.fromLTRB(0.0, 5.0, 0.0, 5.0),
 						child:new Text(name, 
-							style:const TextStyle(fontSize:12.0,color:Colors.black, decoration: TextDecoration.none)),
+							style:new TextStyle(fontFamily:fontFamily, fontSize:12.0,color:Colors.black, decoration: TextDecoration.none)),
 					),
 					new Text(description, 
 						maxLines: 3,
-						style:new TextStyle(fontSize:fontSize,color:Colors.black, decoration: TextDecoration.none)),
+						style:new TextStyle(fontFamily:fontFamily, fontSize:fontSize,color:Colors.black, decoration: TextDecoration.none)),
 				]
 			)
 		);
@@ -88,7 +90,8 @@ class FeaturedRestaurantAligned extends StatelessWidget
 		this.deliveryTime,
 		this.cornerRadius,
 		this.iconType,
-		this.fontSize
+		this.fontSize,
+		this.fontFamily
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -98,6 +101,7 @@ class FeaturedRestaurantAligned extends StatelessWidget
 	final double cornerRadius;
 	final IconType iconType;
 	final double fontSize;
+	final String fontFamily;
 	
 	Widget build(BuildContext context) 
 	{
@@ -126,15 +130,15 @@ class FeaturedRestaurantAligned extends StatelessWidget
 						child:new Row(
 							children: <Widget>[
 									new Expanded(
-										child:new Text(name, style:const TextStyle(fontSize:17.0,color:Colors.black, decoration: TextDecoration.none)),
+										child:new Text(name, style:new TextStyle(fontFamily:fontFamily, fontSize:17.0,color:Colors.black, decoration: TextDecoration.none)),
 									),
-									new Text("15 min", style:const TextStyle(fontSize:12.0,color:Colors.grey, decoration: TextDecoration.none)),
+									new Text("15 min", style:new TextStyle(fontFamily:fontFamily, fontSize:12.0,color:Colors.grey, decoration: TextDecoration.none)),
 								],
 							),
 					),
 					new Text(description, 
 						maxLines: 3,
-						style:new TextStyle(fontSize:fontSize,color:Colors.grey, decoration: TextDecoration.none)),
+						style:new TextStyle(fontFamily:fontFamily, fontSize:fontSize, color:Colors.grey, decoration: TextDecoration.none)),
 				]
 			)
 		);
@@ -160,13 +164,14 @@ class FeaturedRestaurantData
 
 class FeaturedCarousel extends StatefulWidget 
 {
-	FeaturedCarousel({Key key, this.data, this.cornerRadius, this.iconType, this.fontSize, this.padding}) : super(key: key);
+	FeaturedCarousel({Key key, this.data, this.cornerRadius, this.iconType, this.fontSize, this.padding, this.fontFamily}) : super(key: key);
 
 	final List<FeaturedRestaurantData> data;
 	final double cornerRadius;
 	final IconType iconType;
 	final double fontSize;
 	final double padding;
+	final String fontFamily;
 
 	@override
 	_FeaturedCarouselState createState() => new _FeaturedCarouselState(data);
@@ -246,7 +251,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with SingleTickerPr
 			FeaturedRestaurantData restaurant = data[visibleIdx+i];
 			//visibleHeros.add(new RepaintBoundary(child:new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare)));
 			visibleHeros.add(new RestaurantHero(color:restaurant.color, scroll:scrollFactor+i, flare:restaurant.flare, iconType:widget.iconType));
-			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i, deliveryTime: restaurant.deliveryTime, cornerRadius:widget.cornerRadius, fontSize:widget.fontSize, padding:widget.padding));
+			visibleDetails.add(new FeaturedRestaurantDetail(restaurant.name, description:restaurant.description, scroll:scrollFactor+i, deliveryTime: restaurant.deliveryTime, cornerRadius:widget.cornerRadius, fontSize:widget.fontSize, padding:widget.padding, fontFamily:widget.fontFamily));
 		}
 
 		if(visibleDetails.length == 0)
@@ -275,6 +280,7 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 	final double cornerRadius;
 	final double fontSize;
 	final double padding;
+	final String fontFamily;
 
 	FeaturedRestaurantDetail(this.name,
 		{
@@ -284,7 +290,8 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 			this.scroll = 0.0,
 			this.cornerRadius,
 			this.fontSize,
-			this.padding
+			this.padding,
+			this.fontFamily
 		}): super(key: key);
 
 	@override
@@ -296,7 +303,8 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 					scroll:scroll,
 					cornerRadius:cornerRadius,
 					fontSize:fontSize,
-					padding:padding);
+					padding:padding,
+					fontFamily:fontFamily);
 	}
 
 	@override
@@ -308,7 +316,8 @@ class FeaturedRestaurantDetail extends LeafRenderObjectWidget
 					..scroll = scroll
 					..cornerRadius = cornerRadius
 					..fontSize = fontSize
-					..padding = padding;
+					..padding = padding
+					..fontFamily = fontFamily;
 	}
 }
 const double Padding = 20.0;
@@ -330,6 +339,7 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 	double _cornerRadius;
 	double _fontSize;
 	double _padding;
+	String _fontFamily;
 
 	ui.Paragraph _nameParagraph;
 	ui.Paragraph _timeParagraph;
@@ -344,7 +354,8 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 			double scroll = 0.0,
 			double cornerRadius = 0.0,
 			double fontSize = 11.0,
-			double padding = 15.0
+			double padding = 15.0,
+			String fontFamily = null
 		})
 	{
 		this.fontSize = fontSize;
@@ -353,6 +364,7 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		this.deliveryTime = deliveryTime;
 		this.cornerRadius = _cornerRadius;
 		this.padding = padding;
+		this.fontFamily = fontFamily;
 		_scroll = scroll;
 	}
 
@@ -374,6 +386,15 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		super.performLayout();
 
 		final double detailsTextMaxWidth = size.width - Padding*2 - DetailPaddingLeft*2.0;
+
+		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
+			textAlign:TextAlign.start,
+			fontFamily: fontFamily,
+			fontSize: 20.0,
+			fontWeight: FontWeight.w500
+		))..pushStyle(new ui.TextStyle(color:Colors.black));
+		builder.addText(_name);
+		_nameParagraph = builder.build();
 
 		_timeParagraph.layout(new ui.ParagraphConstraints(width: detailsTextMaxWidth/2.0));
 
@@ -420,15 +441,23 @@ class FeaturedRestaurantDetailRenderObject extends RenderBox
 		}
 		_name = value ?? "";
 
-		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
-			textAlign:TextAlign.start,
-			fontFamily: "Roboto",
-			fontSize: 20.0,
-			fontWeight: FontWeight.w500
-		))..pushStyle(new ui.TextStyle(color:Colors.black));
-		builder.addText(_name);
-		_nameParagraph = builder.build();
+		markNeedsLayout();
+		markNeedsPaint();
+	}
 
+	String get fontFamily
+	{
+		return _fontFamily;
+	}
+
+	set fontFamily(String value)
+	{
+		if(_fontFamily == value)
+		{
+			return;
+		}
+		_fontFamily = value;
+	
 		markNeedsLayout();
 		markNeedsPaint();
 	}

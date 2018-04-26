@@ -333,3 +333,76 @@ class DollarSigns extends CommandTask
 								..value = v;
 	}
 }
+
+
+class ImageWidthTask extends CommandTask
+{
+	ImageWidthTask()
+	{
+		value = 95;
+	}
+
+	Map serialize()
+	{
+		return CommandTask.makeRadial(this, 80, 140);
+	}
+
+	void complete(int value, String code)
+	{
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "IMAGE_WIDTH");
+		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		return "SET IMAGE WIDTH TO $value";
+	}
+	
+	String apply(String code)
+	{
+		code = code.replaceAll("IMAGE_WIDTH", value.toString());
+		return code;
+	}
+
+	String taskType()
+	{
+		return "ImageWidthType";
+	}
+
+	String taskLabel()
+	{
+		return "Image Width";
+	}
+
+	IssuedTask issue()
+	{
+		Random rand = new Random();
+		int v = value;
+		while(v == value)
+		{
+			switch(rand.nextInt(5))
+			{
+				case 0:
+					v = 80;
+					break;
+				case 1:
+					v = 95;
+					break;
+				case 2:
+					v = 110;
+					break;
+				case 3:
+					v = 125;
+					break;
+				case 4:
+					v = 140;
+					break;
+			}
+		}
+		return new IssuedTask()
+								..task = this
+								..value = v;
+	}
+}

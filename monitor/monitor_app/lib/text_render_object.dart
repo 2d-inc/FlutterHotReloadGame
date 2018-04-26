@@ -249,7 +249,7 @@ class TextRenderObject extends RenderBox
 			// calcualte offset by line number and center of screen.
 			double offset = lineNumber * _glyphHeight;
 
-			if(size == null)
+			if(size != null)
 			{
 				offset -= size.height/2.0; // go down to center of screen
 				offset += _glyphHeight/2.0; // go back up by half of the line

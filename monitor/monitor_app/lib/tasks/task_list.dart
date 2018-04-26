@@ -26,7 +26,9 @@ class TaskList
 		new ShowDeliveryTimes(),
 		new DollarSigns(),
 		new CondenseListItems(),
-		new CategoryFontWeight()
+		new CategoryFontWeight(),
+		new ImageWidthTask(),
+		new FontFamily()
 	];
 
 	int _tasksCompleted = 0;
@@ -107,6 +109,12 @@ class TaskList
 		return code;
 	}
 
+	double get progress
+	{
+		double idx = _tasksCompleted / _completionsPerUpdate;
+		return (idx / (_completionsPerUpdate * _automaticUpdates.length)).clamp(0.0, 1.0);
+	}
+
 	CommandTask setTaskValue(String taskType, int value)
 	{
 		for(CommandTask task in allTasks)
@@ -137,6 +145,19 @@ class TaskList
 			List<CommandTask> valid = new List<CommandTask>();
 			for(CommandTask task in _available)
 			{
+				if(!task.isPlayable)
+				{
+					// A widget for this task wasn't assigned to any player.
+					// This can happen if there are more tasks assignable than
+					// total number of widget slots for all clients.
+					// For example: two players (clients)
+					// Widgets total: 16
+					// The clients can only show a combined set of 10 widgets
+					// So the last 6 cannot be assigned.
+					// We track this by marking isPlayable to true when widgets
+					// are assigned to clients at the start of the game.
+					continue;
+				}
 				// Certain tasks we want to make sure do not get issued
 				// We leave this up to the implementer but generally this
 				// is the list of tasks that are already assigned.

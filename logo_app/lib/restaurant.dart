@@ -8,29 +8,47 @@ const bool HAVE_IMAGES = true;
 const bool SHOW_DELIVERY_TIMES = true;
 const int DOLLAR_SIGNS = 4;
 const bool CONDENSE_LIST_ITEMS = false;
+const int IMAGE_WIDTH = 95;
+const String FONT_FAMILY = null;
 
 class RestaurantsHeaderSimple extends StatelessWidget
 {
+	const RestaurantsHeaderSimple(
+	{
+		Key key,
+		this.fontFamily
+	}) : super(key: key);
+	
+	final String fontFamily;
+
 	Widget build(BuildContext context)
 	{
 		return new Container(
 			padding:const EdgeInsets.fromLTRB(20.0, 5.0, 0.0, 10.0),
 			child:new Text("Nearby\n1600 Amphitheater Pkwy", 
-				style:const TextStyle(fontSize:12.0,color:Colors.black, decoration: TextDecoration.none)),
+				style:new TextStyle(fontFamily:fontFamily, fontSize:12.0,color:Colors.black, decoration: TextDecoration.none)),
 		);
 	}
 }
 
 class RestaurantsHeaderAligned extends StatelessWidget
 {
+	const RestaurantsHeaderAligned(
+	{
+		Key key,
+		this.fontFamily
+	}) : super(key: key);
+	
+	final String fontFamily;
+
 	Widget build(BuildContext context)
 	{
 		return new Container(
 			padding:const EdgeInsets.fromLTRB(20.0, 5.0, 20.0, 10.0),
 			child:new Row(
 				children: <Widget>[
-					new Expanded(child:new Text("NEARBY", style:const TextStyle(fontSize:12.0,color:Colors.grey, decoration: TextDecoration.none))),
-					new Text("1600 Amphitheater Pkwy", style:const TextStyle(fontSize:12.0,color:Colors.black, decoration: TextDecoration.none)),
+					new Expanded(child:new Text("NEARBY", style:new TextStyle(fontFamily:fontFamily, fontSize:12.0,color:Colors.grey, decoration: TextDecoration.none))),
+					new Text("1600 Amphitheater Pkwy", style:new TextStyle(fontFamily:fontFamily, fontSize:12.0,color:Colors.black, decoration: TextDecoration.none)),
 				]
 			)
 		);
@@ -39,14 +57,22 @@ class RestaurantsHeaderAligned extends StatelessWidget
 
 class RestaurantsHeaderDesigned extends StatelessWidget
 {
+	const RestaurantsHeaderDesigned(
+	{
+		Key key,
+		this.fontFamily
+	}) : super(key: key);
+
+	final String fontFamily;
+
 	Widget build(BuildContext context)
 	{
 		return new Container(
 			padding:const EdgeInsets.fromLTRB(20.0, 5.0, 20.0, 17.0),
 			child:new Row(
 				children: <Widget>[
-					new Expanded(child:new Text("NEARBY", style:const TextStyle(fontSize:14.0, fontWeight: FontWeight.w500, fontFamily: "Roboto", color:const Color.fromARGB(127, 48, 44, 72), decoration: TextDecoration.none))),
-					new Text("1600 Amphitheater Pkwy", style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(255, 107, 146, 242), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
+					new Expanded(child:new Text("NEARBY", style:new TextStyle(fontSize:14.0, fontWeight: FontWeight.w500, fontFamily: fontFamily, color:const Color.fromARGB(127, 48, 44, 72), decoration: TextDecoration.none))),
+					new Text("1600 Amphitheater Pkwy", style:new TextStyle(fontSize:15.0, fontFamily: fontFamily, color:const Color.fromARGB(255, 107, 146, 242), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
 				]
 			)
 		);
@@ -69,7 +95,9 @@ class ListRestaurantSimple extends StatelessWidget
 		this.totalDollarSigns,
 		this.cornerRadius,
 		this.padding,
-		this.isCondensed
+		this.isCondensed,
+		this.imageWidth,
+		this.fontFamily
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -86,6 +114,8 @@ class ListRestaurantSimple extends StatelessWidget
 	final double cornerRadius;
 	final double padding;
 	final bool isCondensed;
+	final int imageWidth;
+	final String fontFamily;
 	
 	Widget build(BuildContext context) 
 	{
@@ -95,7 +125,7 @@ class ListRestaurantSimple extends StatelessWidget
 				crossAxisAlignment: CrossAxisAlignment.start,
 				children: <Widget>[
 					showImage ? new SizedBox(
-						width:100.0, 
+						width:imageWidth.toDouble(), 
 						height:isCondensed ? 70.0 : 100.0, 
 						child:new Container(
 							decoration:new BoxDecoration(
@@ -110,16 +140,16 @@ class ListRestaurantSimple extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, isCondensed ? 0.0 : 5.0, 0.0, 0.0),
 						child:new Text("Restaurant Name", 
-							style:new TextStyle(fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)),
+							style:new TextStyle(fontFamily:fontFamily, fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)),
 					),
 					new Text("Description", 
-						style:new TextStyle(fontSize:isCondensed ? 8.0 : 10.0,color:Colors.black, decoration: TextDecoration.none)),
+						style:new TextStyle(fontFamily:fontFamily, fontSize:isCondensed ? 8.0 : 10.0,color:Colors.black, decoration: TextDecoration.none)),
 					showRating ? new Text("0/10", 
-						style:new TextStyle(fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)) : new Container(),
+						style:new TextStyle(fontFamily:fontFamily, fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)) : new Container(),
 					new Text("\$"*totalDollarSigns, 
-						style:new TextStyle(fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)),
+						style:new TextStyle(fontFamily:fontFamily, fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)),
 					showDeliveryTime ? new Text("0 min", 
-						style:new TextStyle(fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)) : new Container(),
+						style:new TextStyle(fontFamily:fontFamily, fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)) : new Container(),
 				]
 			)
 		);
@@ -142,7 +172,9 @@ class ListRestaurantAligned extends StatelessWidget
 		this.totalDollarSigns,
 		this.cornerRadius,
 		this.padding,
-		this.isCondensed
+		this.isCondensed,
+		this.imageWidth,
+		this.fontFamily
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -159,6 +191,8 @@ class ListRestaurantAligned extends StatelessWidget
 	final double cornerRadius;
 	final double padding;
 	final bool isCondensed;
+	final int imageWidth;
+	final String fontFamily;
 
 	Widget build(BuildContext context) 
 	{
@@ -168,7 +202,7 @@ class ListRestaurantAligned extends StatelessWidget
 				crossAxisAlignment: CrossAxisAlignment.start,
 				children: <Widget>[
 					showImage ? new SizedBox(
-						width:100.0, 
+						width:imageWidth.toDouble(), 
 						height:isCondensed ? 70.0 : 100.0, 
 						child:new Container(
 							decoration:new BoxDecoration(
@@ -189,12 +223,12 @@ class ListRestaurantAligned extends StatelessWidget
 									new Container(
 										padding:const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 4.0),
 										child:new Text(name, 
-											style:const TextStyle(fontSize:14.0,color:Colors.black, decoration: TextDecoration.none)),
+											style:new TextStyle(fontFamily:fontFamily, fontSize:14.0,color:Colors.black, decoration: TextDecoration.none)),
 									),
 									new Container(
 										padding:const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 12.0),
 										child:new Text(description, 
-											style:const TextStyle(fontSize:12.0,color:Colors.grey, decoration: TextDecoration.none)),
+											style:new TextStyle(fontFamily:fontFamily, fontSize:12.0,color:Colors.grey, decoration: TextDecoration.none)),
 									),
 									new Row(
 										children:<Widget>[
@@ -203,13 +237,13 @@ class ListRestaurantAligned extends StatelessWidget
 													child:new Row(
             											mainAxisSize: MainAxisSize.min,
 														children: [
-															new Text("\$"*min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns), style:const TextStyle(fontSize:13.0, color:const Color.fromARGB(255, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
-															new Text("\$"*(totalDollarSigns-min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns)), style:const TextStyle(fontSize:13.0, color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
+															new Text("\$"*min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns), style:new TextStyle(fontFamily:fontFamily, fontSize:13.0, color:const Color.fromARGB(255, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
+															new Text("\$"*(totalDollarSigns-min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns)), style:new TextStyle(fontFamily:fontFamily, fontSize:13.0, color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
 														]
 													)
 												),
 											showDeliveryTime ? new Text(deliveryTime.toString() + " min", 
-												style:const TextStyle(fontSize:13.0,color:Colors.grey, decoration: TextDecoration.none)) : new Container(),
+												style:new TextStyle(fontFamily:fontFamily, fontSize:13.0,color:Colors.grey, decoration: TextDecoration.none)) : new Container(),
 										]
 									)
 								]
@@ -238,7 +272,9 @@ class ListRestaurantDesigned extends StatelessWidget
 		this.showDeliveryTime,
 		this.cornerRadius = 10.0,
 		this.padding,
-		this.isCondensed
+		this.isCondensed,
+		this.imageWidth,
+		this.fontFamily
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -255,6 +291,8 @@ class ListRestaurantDesigned extends StatelessWidget
 	final double cornerRadius;
 	final double padding;
 	final bool isCondensed;
+	final int imageWidth;
+	final String fontFamily;
 	
 	Widget build(BuildContext context) 
 	{
@@ -275,7 +313,7 @@ class ListRestaurantDesigned extends StatelessWidget
 					crossAxisAlignment: CrossAxisAlignment.start,
 					children: <Widget>[
 						showImage ? new Container(
-							width:100.0,
+							width:imageWidth.toDouble(),
 							height:isCondensed ? 70.0 : 100.0,
 							decoration: new BoxDecoration(
 								borderRadius: new BorderRadius.only(topLeft:new Radius.circular(this.cornerRadius), bottomLeft:new Radius.circular(this.cornerRadius)),
@@ -297,9 +335,9 @@ class ListRestaurantDesigned extends StatelessWidget
 										new Container(
 											padding:const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
 											child:new Text(name, 
-												style:const TextStyle(
+												style:new TextStyle(
 													fontSize:15.0,
-													fontFamily:"Roboto",
+													fontFamily:fontFamily,
 													color: const Color.fromARGB(255, 48, 44, 72),
 													fontWeight: FontWeight.normal,
 													decoration: TextDecoration.none)),
@@ -309,9 +347,9 @@ class ListRestaurantDesigned extends StatelessWidget
 											child:new Text(description, 
 												maxLines: 1,
 												overflow: TextOverflow.ellipsis,
-												style:const TextStyle(
+												style:new TextStyle(
 													fontSize:15.0,
-													fontFamily:"Roboto",
+													fontFamily:fontFamily,
 													color: const Color.fromARGB(102, 48, 44, 72),
 													fontWeight: FontWeight.normal,
 													decoration: TextDecoration.none)
@@ -319,18 +357,18 @@ class ListRestaurantDesigned extends StatelessWidget
 										),
 										new Row(
 											children:<Widget>[
-												showRating ? new Expanded(child:new Text(rating.round().toString() + "/10", style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), fontWeight: FontWeight.normal, decoration: TextDecoration.none))) : new Container(),
+												showRating ? new Expanded(child:new Text(rating.round().toString() + "/10", style:new TextStyle(fontSize:15.0, fontFamily: fontFamily, color:const Color.fromARGB(102, 48, 44, 72), fontWeight: FontWeight.normal, decoration: TextDecoration.none))) : new Container(),
 												new Expanded(
 													child:new Row(
             											mainAxisSize: MainAxisSize.min,
 														children: [
-															new Text("\$"*min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(255, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
-															new Text("\$"*(totalDollarSigns-min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns)), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
+															new Text("\$"*min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns), style:new TextStyle(fontSize:15.0, fontFamily:fontFamily, color:const Color.fromARGB(255, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
+															new Text("\$"*(totalDollarSigns-min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns)), style:new TextStyle(fontSize:15.0, fontFamily:fontFamily, color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
 														]
 													)
 												),
 												showDeliveryTime ? new Text(deliveryTime.toString() + " min", 
-													style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)) : new Container(),
+													style:new TextStyle(fontSize:15.0, fontFamily: fontFamily, color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)) : new Container(),
 											]
 										)
 									]

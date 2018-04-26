@@ -257,6 +257,11 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 					_allowReinit = true;
 					_server = new GameServer(_flutterTask, _contents);
 					
+					_server.onProgressChanged = (double progress)
+					{
+						print("PROGRESS $progress");
+					};
+
 					_server.onLivesUpdated = ()
 					{
 						setState(()

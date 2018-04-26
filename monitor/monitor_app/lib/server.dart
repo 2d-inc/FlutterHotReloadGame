@@ -17,6 +17,7 @@ typedef void UpdateCodeCallback(String code, int line);
 typedef void OnTaskIssuedCallback(IssuedTask task, DateTime failTime);
 typedef void OnTaskCompletedCallback(IssuedTask task, DateTime failTime, String message);
 typedef void OnScoreIncCallback(int amount);
+typedef void OnProgressChangedCallback(double progress);
 
 List<String> completedMessages = <String>
 [
@@ -398,10 +399,12 @@ class GameServer
     VoidCallback onGameStarted;
     VoidCallback onLivesUpdated;
     VoidCallback onScoreChanged;
+    OnProgressChangedCallback onProgressChanged;
     int _lives = 0;
     int _score = 0;
     HighScore _highScore;
     bool _gotInitials = false;
+    double _progress = 0.0;
 
 
     Map<String, CommandTask> _completedTasks;
@@ -612,6 +615,13 @@ class GameServer
         }
         
         _gotInitials = false;
+        _progress = 0.0;
+
+        if(onProgressChanged != null)
+        {
+            onProgressChanged(_progress);
+        }
+        
         _highScore = null;
         _setLives(5);
         _setScore(0, callIncreased: false);
@@ -635,7 +645,7 @@ class GameServer
         _completedTasks = new Map<String, CommandTask>();
         
         // Todo: change back to this logic.
-        int perClient = (taskTypes.length/max(1,numClientsReady)).ceil();
+        int perClient = min(5, (taskTypes.length/max(1,numClientsReady)).ceil());
         //int perClient = 2;
         print("PER CLIENT $perClient");
         hotReload();
@@ -659,6 +669,10 @@ class GameServer
                 tasksForClient.add(taskTypes.removeAt(rand.nextInt(taskTypes.length)));
             }
             
+            for(CommandTask task in tasksForClient)
+            {
+                task.isPlayable = true;
+            }
             gc.startGame(tasksForClient);   
         }
         onGameStarted();
@@ -793,6 +807,15 @@ class GameServer
 
         // Advance app.
         _template = _taskList.completeTask(_template);
+        double progress = _taskList.progress;
+        if(_progress != progress)
+        {
+            _progress = progress;
+            if(onProgressChanged != null)
+            {
+                onProgressChanged(_progress);
+            }
+        }
     }
 
     void failTask(IssuedTask it)

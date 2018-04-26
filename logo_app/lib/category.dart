@@ -10,7 +10,8 @@ class CategorySimple extends StatelessWidget
 		Key key,
 		this.flare,
 		this.fontSize,
-		this.fontWeight
+		this.fontWeight,
+		this.fontFamily
 	}) : assert(name != null),
 			super(key: key);
 
@@ -18,6 +19,7 @@ class CategorySimple extends StatelessWidget
 	final String flare;
 	final double fontSize;
 	final FontWeight fontWeight;
+	final String fontFamily;
 
 	Widget build(BuildContext context) 
 	{
@@ -41,7 +43,7 @@ class CategorySimple extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
 						child:new Text("Category", 
-							style:new TextStyle(fontSize:fontSize,color:Colors.black, decoration: TextDecoration.none, fontWeight: fontWeight))
+							style:new TextStyle(fontFamily:fontFamily, fontSize:fontSize,color:Colors.black, decoration: TextDecoration.none, fontWeight: fontWeight))
 					)
 				]
 			)
@@ -56,7 +58,8 @@ class CategoryAligned extends StatelessWidget
 		Key key,
 		this.flare,
 		this.fontSize,
-		this.fontWeight
+		this.fontWeight,
+		this.fontFamily
 	}) : assert(name != null),
 			super(key: key);
 
@@ -64,6 +67,7 @@ class CategoryAligned extends StatelessWidget
 	final String flare;
 	final double fontSize;
 	final FontWeight fontWeight;
+	final String fontFamily;
 
 	Widget build(BuildContext context) 
 	{
@@ -87,7 +91,7 @@ class CategoryAligned extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
 						child:new Text(name, 
-							style:new TextStyle(fontSize:fontSize,color:Colors.grey, decoration: TextDecoration.none, fontWeight: fontWeight))
+							style:new TextStyle(fontFamily:fontFamily, fontSize:fontSize,color:Colors.grey, decoration: TextDecoration.none, fontWeight: fontWeight))
 					)
 				]
 			)
@@ -102,7 +106,8 @@ class CategoryDesigned extends StatelessWidget
 		Key key,
 		this.flare,
 		this.fontSize,
-		this.fontWeight
+		this.fontWeight,
+		this.fontFamily
 	}) : assert(name != null),
 			super(key: key);
 
@@ -110,6 +115,7 @@ class CategoryDesigned extends StatelessWidget
 	final String flare;
 	final double fontSize;
 	final FontWeight fontWeight;
+	final String fontFamily;
 
 	Widget build(BuildContext context) 
 	{
@@ -130,7 +136,7 @@ class CategoryDesigned extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
 						child:new Text(name, 
-							style:new TextStyle(fontSize:fontSize, fontFamily:"Roboto", color:const Color.fromARGB(255, 158, 164, 184), decoration: TextDecoration.none, fontWeight: fontWeight))
+							style:new TextStyle(fontSize:fontSize, fontFamily:fontFamily, color:const Color.fromARGB(255, 158, 164, 184), decoration: TextDecoration.none, fontWeight: fontWeight))
 					)
 				]
 			)

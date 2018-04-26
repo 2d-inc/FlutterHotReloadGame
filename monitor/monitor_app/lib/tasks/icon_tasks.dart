@@ -290,7 +290,6 @@ class CarouselIcons extends CommandTask
 	}
 }
 
-
 class AddImages extends CommandTask
 {
 	// @override
@@ -551,6 +550,63 @@ class CategoryFontWeight extends CommandTask
 	IssuedTask issue()
 	{
 		int v = value == 1 ? 0 : 1;
+
+		return new IssuedTask()
+								..task = this
+								..value = v;
+	}
+}
+
+class FontFamily extends CommandTask
+{
+	@override
+	bool isDelayed() { return true; }
+	
+	List<String> options = ["DEFAULT", "ROBOTO", "INCONSOLATA"];
+	List<String> values = ["null", "'Roboto'", "'Inconsolata'"];
+
+	Map serialize()
+	{
+		return CommandTask.makeBinary(this, options);
+	}
+
+	void complete(int value, String code)
+	{
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "FONT_FAMILY");
+		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		String name = options[value];
+		return "SET FONT FAMILY TO $name!";
+	}
+
+	String apply(String code)
+	{
+		return code.replaceAll("FONT_FAMILY", values[value]);
+	}
+
+	String taskType()
+	{
+		return "FontFamilyType";
+	}
+
+	String taskLabel()
+	{
+		return "Set Font Family";
+	}
+
+	IssuedTask issue()
+	{
+		Random rand = new Random();
+		int v = value;
+		while(v == value)
+		{
+			v = rand.nextInt(3);
+		}
 
 		return new IssuedTask()
 								..task = this
