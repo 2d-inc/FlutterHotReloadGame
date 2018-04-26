@@ -17,7 +17,7 @@ typedef void UpdateCodeCallback(String code, int line);
 typedef void OnTaskIssuedCallback(IssuedTask task, DateTime failTime);
 typedef void OnTaskCompletedCallback(IssuedTask task, DateTime failTime, String message);
 typedef void OnScoreIncCallback(int amount);
-typedef void OnProgressChangedCallback(double progress);
+typedef void ProgressChangeCallback(double value);
 
 List<String> completedMessages = <String>
 [
@@ -399,7 +399,8 @@ class GameServer
     VoidCallback onGameStarted;
     VoidCallback onLivesUpdated;
     VoidCallback onScoreChanged;
-    OnProgressChangedCallback onProgressChanged;
+    ProgressChangeCallback onProgressChanged;
+    
     int _lives = 0;
     int _score = 0;
     HighScore _highScore;

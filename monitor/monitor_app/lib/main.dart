@@ -25,6 +25,7 @@ import "score.dart";
 import "high_scores_screen.dart";
 import "high_scores.dart";
 import "score_dopamine.dart";
+import "progress_bar.dart";
 
 const double STDOUT_PADDING = 41.0;
 const double STDOUT_HEIGHT = 150.0 - STDOUT_PADDING;
@@ -122,6 +123,10 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	HighScore _highScore;
 	DateTime _reloadTime;
 
+	Animation<double> _progressAnimation;
+	AnimationController _progressController;
+	double _gameProgress = 0.0;
+
 	void showLobby()
 	{
 		_characterIndex = 0;
@@ -177,6 +182,20 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 					);
 				}
 			);
+
+		_progressController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 125))
+			..addListener(
+				()
+				{
+					setState(
+						()
+						{
+							this._gameProgress = _progressAnimation.value;
+						}
+					);
+				}
+			);
+
 		_scrollStatusListener = 
 		(AnimationStatus state)
 		{
@@ -265,6 +284,20 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 						{
 							_lives = _server.lives;
 						});
+					};
+
+					_server.onProgressChanged = (double progress)
+					{
+						 setState(()
+						 {
+							_progressAnimation = new Tween<double>(
+								begin: _gameProgress,
+								end: progress
+							).animate(_progressController);
+
+							_progressController ..value = 0.0..animateTo(1.0, curve: Curves.easeInOut);
+							_gameProgress = progress;
+						 });
 					};
 
 					_server.onScoreChanged = ()
@@ -414,6 +447,12 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 													new Container(margin:const EdgeInsets.only(right:10.0), child:new Flare("assets/flares/Heart", _lives < 4)),
 													new Container(margin:const EdgeInsets.only(right:10.0), child:new Flare("assets/flares/Heart", _lives < 5)),
 												]
+											),
+											new Container(margin: const EdgeInsets.only(top: 17.0), child: new ShadowText("PROGRESS:", spacing: 5.0, fontFamily: "Roboto", fontSize: 19.0)),
+											new Container
+											(
+												margin: const EdgeInsets.only(top: 5.0), 
+												child: new ProgressBar(_gameProgress),
 											)
 										]
 									),
