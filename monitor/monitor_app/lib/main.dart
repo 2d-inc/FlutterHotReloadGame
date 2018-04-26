@@ -95,7 +95,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	FlutterTask _flutterTask;
 	GameServer _server;
 	bool _ready = false;
-	bool _allowReinit = false;
 	String _contents;
 	ListQueue<String> _stdoutQueue;
 	IssuedTask _currentDisplayTask;
@@ -209,7 +208,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	initFlutterTask()
 	{
 		_ready = false;
-		_allowReinit = false;
 		if(_flutterTask != null)
 		{
 			_flutterTask.onReady(null);
@@ -254,7 +252,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 				// Start emulator.
 				_flutterTask.load(targetDevice).then((success)
 				{
-					_allowReinit = true;
 					_server = new GameServer(_flutterTask, _contents);
 					
 					_server.onProgressChanged = (double progress)
@@ -513,7 +510,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 											disabledColor: const Color.fromRGBO(255, 255, 255, 0.2),
 											disabledTextColor: const Color.fromRGBO(255, 255, 255, 0.5),
 											child:new Text("restart", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none)),
-											onPressed:!_allowReinit ? null : ()
+											onPressed:()
 											{
 												if(_server != null)
 												{
@@ -533,7 +530,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 											disabledColor: const Color.fromRGBO(255, 255, 255, 0.2),
 											disabledTextColor: const Color.fromRGBO(255, 255, 255, 0.5),
 											child:new Text("run", style: new TextStyle(color: new Color.fromARGB(255, 255, 255, 255), fontFamily: "Inconsolata", fontWeight: FontWeight.w700, fontSize: 16.0, decoration: TextDecoration.none)),
-											onPressed:!_allowReinit ? null : ()
+											onPressed:()
 											{
 												if(_server != null)
 												{
@@ -543,7 +540,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 
 													_flutterTask.load(targetDevice).then((success)
 													{
-														_allowReinit = true;
 														_server.flutterTask = _flutterTask;
 													});
 												}

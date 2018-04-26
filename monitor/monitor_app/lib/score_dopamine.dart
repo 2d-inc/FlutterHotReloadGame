@@ -233,7 +233,7 @@ class ScoreDopamineRenderObject extends RenderBox
 	bool get sizedByParent => true;
 	
 	@override
-	bool hitTestSelf(Offset screenOffset) => true;
+	bool hitTestSelf(Offset screenOffset) => false;
 
 	@override
 	void performResize() 
