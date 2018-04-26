@@ -749,7 +749,7 @@ class GameServer
     {
         
         _inGame = false;
-        bool isHighScore = saveScore && _highScores.isTopTen(_score);
+        bool isHighScore = saveScore && _score > 0 && _highScores.isTopTen(_score);
         if(isHighScore)
         {
             _highScore = _highScores.addScore("???", _score);
