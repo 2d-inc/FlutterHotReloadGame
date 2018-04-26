@@ -199,7 +199,15 @@ class ListRestaurantAligned extends StatelessWidget
 									new Row(
 										children:<Widget>[
 											showRating ? new Expanded(child:new Text(rating.round().toString() + "/10", style:const TextStyle(fontSize:13.0,color:Colors.grey, decoration: TextDecoration.none))) : new Container(),
-											new Expanded(child:new Text("\$"*min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns), style:const TextStyle(fontSize:13.0,color:Colors.black, decoration: TextDecoration.none))),
+											new Expanded(
+													child:new Row(
+            											mainAxisSize: MainAxisSize.min,
+														children: [
+															new Text("\$"*min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns), style:const TextStyle(fontSize:13.0, color:const Color.fromARGB(255, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
+															new Text("\$"*(totalDollarSigns-min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns)), style:const TextStyle(fontSize:13.0, color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
+														]
+													)
+												),
 											showDeliveryTime ? new Text(deliveryTime.toString() + " min", 
 												style:const TextStyle(fontSize:13.0,color:Colors.grey, decoration: TextDecoration.none)) : new Container(),
 										]
