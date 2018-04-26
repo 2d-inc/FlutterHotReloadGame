@@ -3,6 +3,11 @@ import "dart:math";
 import "dart:ui" as ui;
 
 const double LIST_CORNER_RADIUS = 0.0;
+const bool SHOW_RATINGS = true;
+const bool HAVE_IMAGES = true;
+const bool SHOW_DELIVERY_TIMES = true;
+const int DOLLAR_SIGNS = 4;
+const bool CONDENSE_LIST_ITEMS = false;
 
 class RestaurantsHeaderSimple extends StatelessWidget
 {
@@ -58,8 +63,13 @@ class ListRestaurantSimple extends StatelessWidget
 		this.deliveryTime,
 		this.rating,
 		this.img,
+		this.showImage,
+		this.showRating,
+		this.showDeliveryTime,
+		this.totalDollarSigns,
 		this.cornerRadius,
-		this.padding
+		this.padding,
+		this.isCondensed
 	}) : assert(name != null),
 			super(key: key);
 	
@@ -69,19 +79,24 @@ class ListRestaurantSimple extends StatelessWidget
 	final int deliveryTime;
 	final int rating;
 	final String img;
+	final bool showImage;
+	final bool showRating;
+	final bool showDeliveryTime;
+	final int totalDollarSigns;
 	final double cornerRadius;
 	final double padding;
+	final bool isCondensed;
 	
 	Widget build(BuildContext context) 
 	{
 		return new Container(
-			padding:new EdgeInsets.fromLTRB(padding, 0.0, 0.0, 10.0),
+			padding:new EdgeInsets.fromLTRB(padding, 0.0, 0.0, isCondensed ? 5.0 : 10.0),
 			child: new Column(
 				crossAxisAlignment: CrossAxisAlignment.start,
 				children: <Widget>[
-					new SizedBox(
+					showImage ? new SizedBox(
 						width:100.0, 
-						height:100.0, 
+						height:isCondensed ? 70.0 : 100.0, 
 						child:new Container(
 							decoration:new BoxDecoration(
 								border: new Border.all(
@@ -91,20 +106,20 @@ class ListRestaurantSimple extends StatelessWidget
 								borderRadius: new BorderRadius.circular(cornerRadius)
 							)
 						)
-					),
+					) : new Container(),
 					new Container(
-						padding:const EdgeInsets.fromLTRB(0.0, 5.0, 0.0, 0.0),
+						padding:new EdgeInsets.fromLTRB(0.0, isCondensed ? 0.0 : 5.0, 0.0, 0.0),
 						child:new Text("Restaurant Name", 
-							style:const TextStyle(fontSize:10.0,color:Colors.black, decoration: TextDecoration.none)),
+							style:new TextStyle(fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)),
 					),
 					new Text("Description", 
-						style:const TextStyle(fontSize:10.0,color:Colors.black, decoration: TextDecoration.none)),
-					new Text("0/10", 
-						style:const TextStyle(fontSize:10.0,color:Colors.black, decoration: TextDecoration.none)),
-					new Text("\$"*5, 
-						style:const TextStyle(fontSize:10.0,color:Colors.black, decoration: TextDecoration.none)),
-					new Text("0 min", 
-						style:const TextStyle(fontSize:10.0,color:Colors.black, decoration: TextDecoration.none)),
+						style:new TextStyle(fontSize:isCondensed ? 8.0 : 10.0,color:Colors.black, decoration: TextDecoration.none)),
+					showRating ? new Text("0/10", 
+						style:new TextStyle(fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)) : new Container(),
+					new Text("\$"*totalDollarSigns, 
+						style:new TextStyle(fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)),
+					showDeliveryTime ? new Text("0 min", 
+						style:new TextStyle(fontSize:isCondensed ? 8.0 : 10.0, color:Colors.black, decoration: TextDecoration.none)) : new Container(),
 				]
 			)
 		);
@@ -121,30 +136,40 @@ class ListRestaurantAligned extends StatelessWidget
 		this.deliveryTime,
 		this.rating,
 		this.img,
+		this.showImage,
+		this.showRating,
+		this.showDeliveryTime,
+		this.totalDollarSigns,
 		this.cornerRadius,
-		this.padding
+		this.padding,
+		this.isCondensed
 	}) : assert(name != null),
 			super(key: key);
 	
 	final String name;
 	final String description;
 	final String img;
+	final bool showImage;
+	final bool showRating;
+	final bool showDeliveryTime;
 	final int dollarSigns;
 	final int deliveryTime;
 	final int rating;
+	final int totalDollarSigns;
 	final double cornerRadius;
 	final double padding;
+	final bool isCondensed;
 
 	Widget build(BuildContext context) 
 	{
 		return new Container(
-			padding:new EdgeInsets.fromLTRB(padding, 0.0, 0.0, 10.0),
+			padding:new EdgeInsets.fromLTRB(padding, 0.0, 0.0, isCondensed ? 5.0 : 10.0),
 			child: new Row(
 				crossAxisAlignment: CrossAxisAlignment.start,
 				children: <Widget>[
-					new SizedBox(
+					showImage ? new SizedBox(
 						width:100.0, 
-						height:100.0, 
+						height:isCondensed ? 70.0 : 100.0, 
 						child:new Container(
 							decoration:new BoxDecoration(
 								border: new Border.all(
@@ -154,10 +179,10 @@ class ListRestaurantAligned extends StatelessWidget
 								borderRadius: new BorderRadius.circular(cornerRadius)
 							)
 						)
-					),
+					) : new Container(),
 					new Expanded(
 						child:new Container(
-							padding: new EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 0.0),
+							padding: new EdgeInsets.fromLTRB(20.0, 0.0, isCondensed ? 10.0 : 20.0, 0.0),
 							child:new Column(
 								crossAxisAlignment: CrossAxisAlignment.start,
 								children: <Widget>[
@@ -173,10 +198,10 @@ class ListRestaurantAligned extends StatelessWidget
 									),
 									new Row(
 										children:<Widget>[
-											new Expanded(child:new Text(rating.round().toString() + "/10", style:const TextStyle(fontSize:13.0,color:Colors.grey, decoration: TextDecoration.none))),
-											new Expanded(child:new Text("\$"*min(dollarSigns,5), style:const TextStyle(fontSize:13.0,color:Colors.black, decoration: TextDecoration.none))),
-											new Text(deliveryTime.toString() + " min", 
-												style:const TextStyle(fontSize:13.0,color:Colors.grey, decoration: TextDecoration.none)),
+											showRating ? new Expanded(child:new Text(rating.round().toString() + "/10", style:const TextStyle(fontSize:13.0,color:Colors.grey, decoration: TextDecoration.none))) : new Container(),
+											new Expanded(child:new Text("\$"*min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns), style:const TextStyle(fontSize:13.0,color:Colors.black, decoration: TextDecoration.none))),
+											showDeliveryTime ? new Text(deliveryTime.toString() + " min", 
+												style:const TextStyle(fontSize:13.0,color:Colors.grey, decoration: TextDecoration.none)) : new Container(),
 										]
 									)
 								]
@@ -196,27 +221,37 @@ class ListRestaurantDesigned extends StatelessWidget
 		Key key,
 		this.description,
 		this.dollarSigns,
+		this.totalDollarSigns,
 		this.deliveryTime,
 		this.rating,
 		this.img,
+		this.showImage,
+		this.showRating,
+		this.showDeliveryTime,
 		this.cornerRadius = 10.0,
-		this.padding
+		this.padding,
+		this.isCondensed
 	}) : assert(name != null),
 			super(key: key);
 	
 	final String name;
 	final String description;
 	final String img;
+	final bool showImage;
+	final bool showRating;
+	final bool showDeliveryTime;
 	final int dollarSigns;
+	final int totalDollarSigns;
 	final int deliveryTime;
 	final int rating;
 	final double cornerRadius;
 	final double padding;
+	final bool isCondensed;
 	
 	Widget build(BuildContext context) 
 	{
 		return new Container(
-			padding:new EdgeInsets.fromLTRB(padding, 0.0, 20.0, 20.0),
+			padding:new EdgeInsets.fromLTRB(padding, 0.0, isCondensed ? 10.0 : 20.0, isCondensed ? 10.0 : 20.0),
 			child:new Container(
 				decoration: new BoxDecoration(
 					color:Colors.white, 
@@ -231,9 +266,9 @@ class ListRestaurantDesigned extends StatelessWidget
 				child: new Row(
 					crossAxisAlignment: CrossAxisAlignment.start,
 					children: <Widget>[
-						new Container(
+						showImage ? new Container(
 							width:100.0,
-							height:100.0,
+							height:isCondensed ? 70.0 : 100.0,
 							decoration: new BoxDecoration(
 								borderRadius: new BorderRadius.only(topLeft:new Radius.circular(this.cornerRadius), bottomLeft:new Radius.circular(this.cornerRadius)),
 								
@@ -244,7 +279,7 @@ class ListRestaurantDesigned extends StatelessWidget
 									
 								),
 							)
-						),
+						) : new Container(),
 						new Expanded(
 							child:new Container(
 								padding: new EdgeInsets.fromLTRB(20.0, 11.0, 20.0, 0.0),
@@ -276,18 +311,18 @@ class ListRestaurantDesigned extends StatelessWidget
 										),
 										new Row(
 											children:<Widget>[
-												new Expanded(child:new Text(rating.round().toString() + "/10", style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), fontWeight: FontWeight.normal, decoration: TextDecoration.none))),
+												showRating ? new Expanded(child:new Text(rating.round().toString() + "/10", style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), fontWeight: FontWeight.normal, decoration: TextDecoration.none))) : new Container(),
 												new Expanded(
 													child:new Row(
             											mainAxisSize: MainAxisSize.min,
 														children: [
-															new Text("\$"*min(dollarSigns,5), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(255, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
-															new Text("\$"*(5-min(dollarSigns,5)), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
+															new Text("\$"*min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(255, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
+															new Text("\$"*(totalDollarSigns-min((dollarSigns/5.0*totalDollarSigns).round(),totalDollarSigns)), style:const TextStyle(fontSize:15.0, fontFamily:"Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
 														]
 													)
 												),
-												new Text(deliveryTime.toString() + " min", 
-													style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)),
+												showDeliveryTime ? new Text(deliveryTime.toString() + " min", 
+													style:const TextStyle(fontSize:15.0, fontFamily: "Roboto", color:const Color.fromARGB(102, 48, 44, 72), decoration: TextDecoration.none, fontWeight: FontWeight.normal)) : new Container(),
 											]
 										)
 									]

@@ -289,3 +289,271 @@ class CarouselIcons extends CommandTask
 								..value = v;
 	}
 }
+
+
+class AddImages extends CommandTask
+{
+	// @override
+	// bool isDelayed() { return true; }
+	
+	List<String> options = ["REMOVE IMAGES", "ADD IMAGES"];
+	List<String> values = ["false", "true"];
+
+	AddImages()
+	{
+		value = 1;
+	}
+
+	Map serialize()
+	{
+		return CommandTask.makeBinary(this, options);
+	}
+
+	void complete(int value, String code)
+	{
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "HAVE_IMAGES");
+		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		String name = options[value];
+		return "$name!";
+	}
+
+	String apply(String code)
+	{
+		return code.replaceAll("HAVE_IMAGES", values[this.value]);
+	}
+
+	String taskType()
+	{
+		return "ShowImagesType";
+	}
+
+	String taskLabel()
+	{
+		return "Images";
+	}
+
+	IssuedTask issue()
+	{
+		int v = value == 1 ? 0 : 1;
+
+		return new IssuedTask()
+								..task = this
+								..value = v;
+	}
+}
+
+class ShowRatings extends CommandTask
+{	
+	ShowRatings()
+	{
+		value = 1;
+	}
+	
+	List<String> options = ["HIDE RATINGS", "SHOW RATINGS"];
+	List<String> values = ["false", "true"];
+	Map serialize()
+	{
+		return CommandTask.makeBinary(this, options);
+	}
+
+	void complete(int value, String code)
+	{
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "SHOW_RATINGS");
+		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		String name = options[value];
+		return "$name!";
+	}
+
+	String apply(String code)
+	{
+		return code.replaceAll("SHOW_RATINGS", values[this.value]);
+	}
+
+	String taskType()
+	{
+		return "ShowRatingsType";
+	}
+
+	String taskLabel()
+	{
+		return "Ratings";
+	}
+
+	IssuedTask issue()
+	{
+		int v = value == 1 ? 0 : 1;
+
+		return new IssuedTask()
+								..task = this
+								..value = v;
+	}
+}
+
+class ShowDeliveryTimes extends CommandTask
+{	
+	ShowDeliveryTimes()
+	{
+		value = 1;
+	}
+	
+	List<String> options = ["HIDE DELIVERY TIMES", "SHOW DELIVERY TIMES"];
+	List<String> values = ["false", "true"];
+	Map serialize()
+	{
+		return CommandTask.makeBinary(this, options);
+	}
+
+	void complete(int value, String code)
+	{
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "SHOW_DELIVERY_TIMES");
+		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		String name = options[value];
+		return "$name!";
+	}
+
+	String apply(String code)
+	{
+		return code.replaceAll("SHOW_DELIVERY_TIMES", values[this.value]);
+	}
+
+	String taskType()
+	{
+		return "ShowDeliveryTimesType";
+	}
+
+	String taskLabel()
+	{
+		return "Delivery Times";
+	}
+
+	IssuedTask issue()
+	{
+		int v = value == 1 ? 0 : 1;
+
+		return new IssuedTask()
+								..task = this
+								..value = v;
+	}
+}
+
+class CondenseListItems extends CommandTask
+{	
+	CondenseListItems()
+	{
+		value = 0;
+	}
+	
+	List<String> options = ["EXPANDED", "CONDENSED"];
+	List<String> values = ["false", "true"];
+	Map serialize()
+	{
+		return CommandTask.makeBinary(this, options);
+	}
+
+	void complete(int value, String code)
+	{
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "CONDENSE_LIST_ITEMS");
+		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		return value == 0 ? "EXPAND LIST ITEMS!" : "CONDENSE LIST ITEMS!";
+	}
+
+	String apply(String code)
+	{
+		return code.replaceAll("CONDENSE_LIST_ITEMS", values[this.value]);
+	}
+
+	String taskType()
+	{
+		return "CondenseListItemsType";
+	}
+
+	String taskLabel()
+	{
+		return "List Item Size";
+	}
+
+	IssuedTask issue()
+	{
+		int v = value == 1 ? 0 : 1;
+
+		return new IssuedTask()
+								..task = this
+								..value = v;
+	}
+}
+
+class CategoryFontWeight extends CommandTask
+{	
+	CategoryFontWeight()
+	{
+		value = 0;
+	}
+	
+	List<String> options = ["NORMAL", "BOLD"];
+	List<String> values = ["FontWeight.normal", "FontWeight.w700"];
+	Map serialize()
+	{
+		return CommandTask.makeBinary(this, options);
+	}
+
+	void complete(int value, String code)
+	{
+		if(!hasLineOfInterest)
+		{
+			findLineOfInterest(code, "CATEGORY_FONT_WEIGHT");
+		}
+	}
+
+	String getIssueCommand(int value)
+	{
+		return "SET CATEGORY FONT WEIGHT TO ${options[value]}!";
+	}
+
+	String apply(String code)
+	{
+		return code.replaceAll("CATEGORY_FONT_WEIGHT", values[this.value]);
+	}
+
+	String taskType()
+	{
+		return "CategoryFontWeightType";
+	}
+
+	String taskLabel()
+	{
+		return "Category Font Weight";
+	}
+
+	IssuedTask issue()
+	{
+		int v = value == 1 ? 0 : 1;
+
+		return new IssuedTask()
+								..task = this
+								..value = v;
+	}
+}

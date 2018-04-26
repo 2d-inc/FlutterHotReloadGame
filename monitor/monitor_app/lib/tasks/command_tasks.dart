@@ -1,5 +1,6 @@
 abstract class CommandTask
 {
+    DateTime lastIssued = new DateTime.now().subtract(const Duration(days:7));
     int value = 0;
     int _lineOfInterest;
 	String apply(String code);

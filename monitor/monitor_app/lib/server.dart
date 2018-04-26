@@ -521,6 +521,19 @@ class GameServer
             });
     }
 
+    int get playerCount
+    {
+        return _clients.fold<int>(0, 
+            (int count, GameClient client) 
+            { 
+                if(client.isInGame)
+                {
+                    count++;
+                }
+                return count; 
+            });
+    }
+
     bool get allReadyToStart
     {
         return _clients.fold<bool>(readyCount >= 2, 
@@ -830,6 +843,8 @@ class GameServer
                 avoid.add(gc.currentTask.task);
             }
         }
-        return _taskList.nextTask(avoid, lowerChance:client.commands);
+
+    
+        return _taskList.nextTask(avoid, timeMultiplier:lerpDouble(1.0, 2.0, min(1.0, (playerCount-2.0)/6)), lowerChance:client.commands);
     }
 }

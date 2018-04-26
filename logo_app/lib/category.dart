@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import "flare_widget.dart";
 
+const FontWeight CATEGORY_FONT_WEIGHT = FontWeight.normal;
+
 class CategorySimple extends StatelessWidget
 {
 	const CategorySimple(this.name, 
 	{
 		Key key,
 		this.flare,
-		this.fontSize
+		this.fontSize,
+		this.fontWeight
 	}) : assert(name != null),
 			super(key: key);
 
 	final String name;
 	final String flare;
 	final double fontSize;
+	final FontWeight fontWeight;
 
 	Widget build(BuildContext context) 
 	{
@@ -37,7 +41,7 @@ class CategorySimple extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
 						child:new Text("Category", 
-							style:new TextStyle(fontSize:fontSize,color:Colors.black, decoration: TextDecoration.none))
+							style:new TextStyle(fontSize:fontSize,color:Colors.black, decoration: TextDecoration.none, fontWeight: fontWeight))
 					)
 				]
 			)
@@ -51,13 +55,15 @@ class CategoryAligned extends StatelessWidget
 	{
 		Key key,
 		this.flare,
-		this.fontSize
+		this.fontSize,
+		this.fontWeight
 	}) : assert(name != null),
 			super(key: key);
 
 	final String name;
 	final String flare;
 	final double fontSize;
+	final FontWeight fontWeight;
 
 	Widget build(BuildContext context) 
 	{
@@ -81,7 +87,7 @@ class CategoryAligned extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
 						child:new Text(name, 
-							style:new TextStyle(fontSize:fontSize,color:Colors.grey, decoration: TextDecoration.none))
+							style:new TextStyle(fontSize:fontSize,color:Colors.grey, decoration: TextDecoration.none, fontWeight: fontWeight))
 					)
 				]
 			)
@@ -95,13 +101,15 @@ class CategoryDesigned extends StatelessWidget
 	{
 		Key key,
 		this.flare,
-		this.fontSize
+		this.fontSize,
+		this.fontWeight
 	}) : assert(name != null),
 			super(key: key);
 
 	final String name;
 	final String flare;
 	final double fontSize;
+	final FontWeight fontWeight;
 
 	Widget build(BuildContext context) 
 	{
@@ -122,7 +130,7 @@ class CategoryDesigned extends StatelessWidget
 					new Container(
 						padding:new EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
 						child:new Text(name, 
-							style:new TextStyle(fontSize:fontSize, fontFamily:"Roboto", color:const Color.fromARGB(255, 158, 164, 184), decoration: TextDecoration.none, fontWeight: FontWeight.normal))
+							style:new TextStyle(fontSize:fontSize, fontFamily:"Roboto", color:const Color.fromARGB(255, 158, 164, 184), decoration: TextDecoration.none, fontWeight: fontWeight))
 					)
 				]
 			)

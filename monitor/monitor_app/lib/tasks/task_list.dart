@@ -20,7 +20,13 @@ class TaskList
 		new SetBackgroundColor(),
 		new AddIconATask(),
 		new AddIconBTask(),
-		new CarouselIcons()
+		new CarouselIcons(),
+		new AddImages(),
+		new ShowRatings(),
+		new ShowDeliveryTimes(),
+		new DollarSigns(),
+		new CondenseListItems(),
+		new CategoryFontWeight()
 	];
 
 	int _tasksCompleted = 0;
@@ -59,11 +65,12 @@ class TaskList
 		},
 		(String code, List<CommandTask> availableTasks)
 		{
+			availableTasks.add(new CarouselIcons());
 			return code.replaceAll("FEATURED_RESTAURANT_SIZE", "304.0");
 		},
 		(String code, List<CommandTask> availableTasks)
 		{
-			availableTasks.add(new CarouselIcons());
+			//availableTasks.add(new AddImages());
 			return code.replaceAll("ListRestaurantAligned", "ListRestaurantDesigned");
 		}
 	];
@@ -113,7 +120,7 @@ class TaskList
 		return null;
 	}
 	
-	IssuedTask nextTask(List<CommandTask> avoid, {List<CommandTask> lowerChance})
+	IssuedTask nextTask(List<CommandTask> avoid, {double timeMultiplier = 1.0, List<CommandTask> lowerChance})
 	{
 		if(isEmpty)
 		{
@@ -121,7 +128,9 @@ class TaskList
 		}
 		const int highChanceWeight = 3;
 		const int lowChanceWeight = 1;
+		const int lowerWeightSeconds = 8;
 
+		DateTime now = new DateTime.now();
 		//List<String> avoidTypes = avoid.map((CommandTask task) { return task.taskType(); });
 		for(int sanity = 0; sanity < 100; sanity++)
 		{
@@ -148,6 +157,20 @@ class TaskList
 					}, orElse:()=>null);
 					
 					int weight = lowChanceTask == null ? highChanceWeight : lowChanceWeight;
+
+					int secondsSinceIssue = now.difference(task.lastIssued).inSeconds;
+					
+					if(secondsSinceIssue < lowerWeightSeconds)
+					{
+						// Task was issued recently, don't re-issue it.
+						weight = 0;
+					}
+					else
+					{
+						// Weight task by lowerWeightSeconds since issue (provided it's less than the currently established weight).
+						// This lets task gradually come back to high chance after 30 seconds.
+						weight = min(weight, ((secondsSinceIssue-lowerWeightSeconds)/lowerWeightSeconds).floor());
+					}
 					
 					for(int i = 0; i < weight; i++)
 					{
@@ -159,7 +182,9 @@ class TaskList
 			IssuedTask issuedTask = chosenTask.issue();
 			if(issuedTask != null)
 			{
+				chosenTask.lastIssued = new DateTime.now();
 				_tasksAssigned++;
+				issuedTask.expires = (issuedTask.expires*timeMultiplier).round();
 				return issuedTask;
 			}
 			else
