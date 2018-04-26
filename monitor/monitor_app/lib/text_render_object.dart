@@ -72,7 +72,7 @@ class TextRenderObject extends RenderBox
 		this._codeParagraphs = [],
 		this._linesParagraphs = [],
 		this._lineScrollOffset = 0.0,
-		this._highlight = new Highlight(-1, 0, 0),
+		this._highlight = new Highlight(100, 0, 0),
 		this._highlightAlpha = 56
 	{
 		// Initialize the Line Height for this style
@@ -138,9 +138,10 @@ class TextRenderObject extends RenderBox
 		double alpha = isOpaque ? 1.0 : 0.6;
 		StringBuffer buf = new StringBuffer();
 		RegExp alphabetic = new RegExp(r"[a-zA-Z]+");
-		for(int i = 0; i < line.length; i++)
+		for(int i = 0; i <= line.length; i++)
 		{
-			String currentChar = line[i];
+			// If the last character on the line is an alpabetic char, make sure that the buffer is emptied
+			String currentChar = i < line.length ?  line[i] : ""; 
 			bool isAlphabetic = alphabetic.hasMatch(currentChar);
 			if(isAlphabetic)
 			{
@@ -185,21 +186,6 @@ class TextRenderObject extends RenderBox
 					codePB.addText(word + currentChar);
 					codePB.pop();
 				}
-			}
-		}
-		if(buf.isNotEmpty)
-		{
-			String word = buf.toString();
-			if(dartKeywords.contains(word))
-			{
-				final ui.TextStyle keyword = new ui.TextStyle(color: new Color.fromRGBO(133, 226, 255, alpha), fontWeight: FONT_WEIGHT);
-				codePB.pushStyle(keyword);
-				codePB.addText(word);
-				codePB.pop();
-			}
-			else
-			{
-				codePB.addText(word); 
 			}
 		}
 
