@@ -14,6 +14,8 @@ import "dart:math";
 import "package:path_provider/path_provider.dart";
 import "package:uuid/uuid.dart";
 import "flare_heart_widget.dart";
+import "package:audioplayers/audioplayer.dart";
+import "package:crypto/crypto.dart";
 
 void main() 
 {
@@ -94,6 +96,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			setState(()
 			{
 				_isConnected = _client.isConnected;
+				playAudio(_isConnected ? "assets/audio/success.wav" : "assets/audio/fail.wav");
 			});
 		};
 	}
@@ -280,6 +283,47 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		{
 			_sceneMessage = msg;
 		});
+	}
+
+	Future<String> _loadFile(String from) async 
+	{
+		final dir = await getApplicationDocumentsDirectory();
+		ByteData data = await rootBundle.load(from);
+		var digest = sha1.convert(utf8.encode(from));	
+		String filename = "${dir.path}/${digest.toString()}";
+		final file = new File(filename);
+		if(await file.exists())
+		{
+			return filename;
+		}
+		
+		await file.writeAsBytes(data.buffer.asUint8List().toList());
+		return filename;
+	}
+
+	List<AudioPlayer> _audioPlayers = new List<AudioPlayer>();
+	void playAudio(String url) async
+	{
+		String filename = await _loadFile(url);
+		AudioPlayer player = new AudioPlayer();
+		player.completionHandler = ()
+		{
+			_audioPlayers.remove(player);
+		};
+		_audioPlayers.add(player);
+		player.play(filename, isLocal: true);
+	}
+
+	void onScoreContribution(int score)
+	{
+		if(score < 0)
+		{
+			playAudio("assets/audio/fail.wav");
+		}
+		else
+		{
+			playAudio("assets/audio/success.wav");
+		}
 	}
 
 	void onTaskComplete(String msg)
@@ -780,6 +824,9 @@ class SocketClient
 											if(b is bool) boolList.add(b);
 										}
 										_terminal.arePlayersReady = boolList;
+										break;
+									case "contribution":
+										_terminal.onScoreContribution(payload as int);
 										break;
 									case "taskFail":
 										_terminal.onTaskFail(payload as String);

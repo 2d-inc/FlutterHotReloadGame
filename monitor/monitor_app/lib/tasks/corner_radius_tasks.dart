@@ -159,7 +159,7 @@ class AppPadding extends CommandTask
 {
 	AppPadding()
 	{
-		value = 4;
+		value = 8;
 	}
 
 	int get finalValue
@@ -169,7 +169,7 @@ class AppPadding extends CommandTask
 
 	Map serialize()
 	{
-		return CommandTask.makeRadial(this, 4, 26);
+		return CommandTask.makeRadial(this, 8, 24);
 	}
 
 	void complete(int value, String code)
@@ -210,19 +210,19 @@ class AppPadding extends CommandTask
 			switch(rand.nextInt(5))
 			{
 				case 0:
-					v = 4;
+					v = 8;
 					break;
 				case 1:
 					v = 12;
 					break;
 				case 2:
-					v = 20;
+					v = 16;
 					break;
 				case 3:
-					v = 28;
+					v = 20;
 					break;
 				case 4:
-					v = 36;
+					v = 24;
 					break;
 			}
 		}

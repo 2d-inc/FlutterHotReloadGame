@@ -128,7 +128,7 @@ class GameClient
                 break;
             case "clientInput":
                 var payload = jsonMsg['payload'];
-                _server.onClientInput(payload);
+                _server.onClientInput(this, payload);
                 break;
             case "hi":
                 _lastHello = new DateTime.now();
@@ -189,12 +189,12 @@ class GameClient
         _sendJSONMessage("gameOver", {"highscore":isHighScore, "died":isDead});
     }
 
-    void _completeTask()
+    void _completeTask(GameClient completer)
     {
         String message = completedMessages[new Random().nextInt(completedMessages.length)];
 
         _server.onTaskCompleted(_currentTask, _failTaskTime, message);
-        _server.completeTask(_currentTask, _failTaskTime == null ? new Duration(seconds:0) : _failTaskTime.difference(DateTime.now()));
+        _server.completeTask(this, completer, _currentTask, _failTaskTime == null ? new Duration(seconds:0) : _failTaskTime.difference(DateTime.now()));
         _taskStatus = TaskStatus.complete;
         _currentTask = null;
         _failTaskTime = null;
@@ -226,6 +226,11 @@ class GameClient
         _currentTask = null;
 
         _sendJSONMessage("taskFail", failedMessages[new Random().nextInt(failedMessages.length)]);
+    }
+
+    void notifyContribution(int scoreInc)
+    {
+        _sendJSONMessage("contribution", scoreInc);
     }
 
     get isReady => _isReady;
@@ -334,7 +339,7 @@ class GameClient
                     else//test auto complete
                     {
                         _server.forceCompleteTask(_currentTask);
-                        _completeTask();
+                        _completeTask(null);
                     }
                 }
                 break;
@@ -348,7 +353,7 @@ class GameClient
         }
     }
 
-    bool performTask(String type, int value)
+    bool performTask(GameClient completer, String type, int value)
     {
         if(_currentTask == null)
         {
@@ -359,7 +364,7 @@ class GameClient
         {
             if(_currentTask.value == value)
             {
-                _completeTask();
+                _completeTask(completer);
                 return true;
             }
         }
@@ -730,7 +735,7 @@ class GameServer
         sendReadyState();
     }
 
-    onClientInput(Map input)
+    onClientInput(GameClient client, Map input)
     {
         var inputType = input['type'];
         var inputValue = input['value'];
@@ -754,7 +759,7 @@ class GameServer
             // Attempt to perform the task in the context of the game (determine if the task was one someone requested).
             for(var gc in _clients)
             {
-                if(gc.performTask(inputType, inputValue))
+                if(gc.performTask(client, inputType, inputValue))
                 {
                     wasCompletion = true;
                     break;
@@ -764,6 +769,7 @@ class GameServer
             if(!wasCompletion)
             {
                 _setScore(_score+mistakePenalty);
+                client.notifyContribution(mistakePenalty);
             }
         }
     }
@@ -843,7 +849,7 @@ class GameServer
         }
     }
 
-    void completeTask(IssuedTask it, Duration remaining)
+    void completeTask(GameClient owner, GameClient completer, IssuedTask it, Duration remaining)
     {
         // Assign score.        
         double factor = (remaining.inSeconds/it.expires).clamp(0.0, 1.0);
@@ -851,7 +857,7 @@ class GameServer
         double multiplier = lerpDouble(minMultiplier, maxMultiplier, factor);
         int scoreInc = (taskScore * multiplier).floor();
         _setScore(_score+scoreInc);
-
+        completer.notifyContribution(scoreInc);
         // Advance app.
         _template = _taskList.completeTask(_template);
 
