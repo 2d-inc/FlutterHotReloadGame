@@ -34,12 +34,15 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
 {
     Color _backgroundColor;
     Color _textColor;
+    Color _borderColor;
 
     AnimationController _pressedColorController;
     Animation<Color> _buttonBackgroundAnimation;
     Animation<Color> _buttonTextAnimation;
+    Animation<Color> _buttonBorderAnimation;
     Color _currentBgColor;
     Color _currentTxtColor;
+    Color _currentBorderColor;
 
     @override
     initState()
@@ -53,6 +56,7 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                         {
                             _currentBgColor = _buttonBackgroundAnimation.value;
                             _currentTxtColor = _buttonTextAnimation.value;
+                            _currentBorderColor = _buttonBorderAnimation.value;
                         });
                     }
                 );
@@ -78,6 +82,10 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                     begin: _textColor,
                     end: GameColors.buttonPressedText,
                 ).animate(_pressedColorController);
+                _buttonBorderAnimation = new ColorTween(
+                    begin: _currentBorderColor,
+                    end: GameColors.buttonPressedText,
+                ).animate(_pressedColorController);
                 _pressedColorController
                     ..value = 0.0
                     ..animateTo(1.0, curve: Curves.decelerate, duration: const Duration(milliseconds: 50));
@@ -97,6 +105,10 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                     begin: _currentTxtColor,
                     end: _textColor,
                 ).animate(_pressedColorController);
+                _buttonBorderAnimation = new ColorTween(
+                    begin: _currentBorderColor,
+                    end: _borderColor,
+                ).animate(_pressedColorController);
                 _pressedColorController
                     ..value = 0.0
                     ..animateTo(1.0, curve: Curves.easeOut, duration: const Duration(milliseconds: 150));
@@ -110,8 +122,10 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
     {
         _backgroundColor = (widget.isAccented ? GameColors.buttonAccentedBackground : (widget.isEnabled ? GameColors.buttonEnabledBackground : GameColors.buttonDisabledBackground));
         _textColor = (widget.isAccented ? GameColors.buttonAccentedText : (widget.isEnabled ? GameColors.buttonEnabledText : GameColors.buttonDisabledText));
+        _borderColor = _backgroundColor;
         _currentBgColor = _backgroundColor;
         _currentTxtColor = _textColor;
+        _currentBorderColor = _backgroundColor;
     }
 
     @override
@@ -132,6 +146,7 @@ class PanelButtonState extends State<PanelButton> with SingleTickerProviderState
                         margin: widget._margin,
                         decoration: new BoxDecoration(
                             borderRadius: new BorderRadius.circular(3.0), 
+                            border: new Border.all(color:_currentBorderColor, width:2.0),
                             color: _currentBgColor
                         ),
                         child: new Container(

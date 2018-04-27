@@ -13,6 +13,6 @@ class GameColors
     static const Color buttonAccentedBackground = const Color.fromARGB(255, 0, 236, 255);
     static const Color buttonAccentedText = Colors.black;
     // TODO: should check these colors
-    static const Color buttonPressedBackground = const Color.fromARGB(255, 144, 8, 62);
-    static const Color buttonPressedText = const Color.fromARGB(255, 242, 220, 253);
+    static const Color buttonPressedBackground = const Color.fromARGB(255, 0, 0, 0);
+    static const Color buttonPressedText = const Color.fromARGB(255, 0, 236, 255);
 }
