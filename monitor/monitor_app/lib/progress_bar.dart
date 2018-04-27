@@ -23,6 +23,10 @@ class ProgressRenderer extends RenderBox
 
     ProgressRenderer(this._progress);
 
+    static const int numTicks = 8;
+    static const double width = 490.0;
+    static const double height = 12.1;
+
     set progress(double v)
     {
         if(v != _progress)
@@ -34,23 +38,26 @@ class ProgressRenderer extends RenderBox
     }
 
     @override
-    bool get sizedByParent => true;
+    bool get sizedByParent => false;
 
     @override
     bool hitTestSelf(Offset screenOffset) => true;
 
     @override
-    void performResize() => size = constraints.biggest;
+    void performResize() => size = new Size(ProgressRenderer.width, ProgressRenderer.height);
+
+    @override
+    void performLayout() 
+    {
+        size = new Size(ProgressRenderer.width, ProgressRenderer.height);
+    }
 
     @override
     void paint(PaintingContext context, Offset offset)
     {
         final Canvas canvas = context.canvas;
 
-        const int numTicks = 8;
-        const double width = 490.0;
-        const double height = 12.1;
-        const Size barSize = const Size(width, height);    
+        const Size barSize = const Size(ProgressRenderer.width, ProgressRenderer.height);    
 
         Offset shadowOffset = new Offset(offset.dx + 4, offset.dy + 7);
         canvas.drawRRect(new RRect.fromRectAndRadius(shadowOffset&barSize, const Radius.circular(6.0)), new Paint()..color = const Color.fromARGB(48, 0, 19, 28));
