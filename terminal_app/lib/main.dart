@@ -16,6 +16,7 @@ import "package:uuid/uuid.dart";
 import "flare_heart_widget.dart";
 import "package:audioplayers/audioplayer.dart";
 import "package:crypto/crypto.dart";
+import "terminal_dopamine.dart";
 
 void main() 
 {
@@ -44,7 +45,7 @@ class Terminal extends StatefulWidget
 	_TerminalState createState() => new _TerminalState();
 }
 
-class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
+class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin implements DopamineDelegate
 {	
 	static const double gamePanelRatio = 0.33;
 	static const double lobbyPanelRatio = 0.66;
@@ -67,6 +68,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	String _batteryLevel = "LOADING%";
 	DateTime _commandStartTime = new DateTime.now();
 	DateTime _commandEndTime = new DateTime.now().add(const Duration(seconds:10));
+	DopamineCallback onScored;
+	Offset _lastGlobalTouchPosition;
 
 	SocketClient _client;
 	bool _isConnected = false;
@@ -96,7 +99,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			setState(()
 			{
 				_isConnected = _client.isConnected;
-				playAudio(_isConnected ? "assets/audio/success.wav" : "assets/audio/fail.wav");
+				//playAudio(_isConnected ? "assets/audio/success.wav" : "assets/audio/fail.wav");
 			});
 		};
 	}
@@ -316,6 +319,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	void onScoreContribution(int score)
 	{
+		if(onScored != null)
+		{
+			onScored(score);
+		}
 		if(score < 0)
 		{
 			playAudio("assets/audio/fail.wav");
@@ -421,6 +428,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			onPointerDown: 
 				(PointerDownEvent ev)
 				{
+					setState(() 
+					{
+						_lastGlobalTouchPosition = ev.position;	  
+					});
 					bool topLeftCorner = ev.position.dx < 75.0 && ev.position.dy < 75.0;
 					if(topLeftCorner)
 					{
@@ -556,6 +567,14 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 								]	
 							)
 						)
+					),
+					new Positioned
+					(
+						left: 0.0,
+						top: 0.0,
+						bottom: 0.0,
+						right: 0.0,
+						child: new TerminalDopamine(this, touchPosition:_lastGlobalTouchPosition),
 					)
 				],
 			)
