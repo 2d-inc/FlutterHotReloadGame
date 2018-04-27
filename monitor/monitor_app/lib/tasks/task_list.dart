@@ -34,6 +34,7 @@ class TaskList
 	int _completionsPerUpdate = 0;
 	int _appliedUpdateIndex = -1;
 	bool _isDone = false;
+	int _finalTaskCount = -1;
 
 	Random _rand = new Random();
 
@@ -108,6 +109,18 @@ class TaskList
 		return true;
 	}
 
+	int get finalTaskCount
+	{
+		return allTasks.fold(0, (int value, CommandTask task)
+		{
+			if(task.isPlayable && task.finalValue != -1 && task.value != task.finalValue)
+			{
+				value++;
+			}
+			return value;
+		});
+	}
+
 	bool get isIssuingFinalValues
 	{
 		return (_tasksCompleted ~/ _completionsPerUpdate) >= _automaticUpdates.length;
@@ -141,9 +154,16 @@ class TaskList
 		_tasksCompleted++;
 		int idx = _tasksCompleted ~/ _completionsPerUpdate;
 
-		if(isIssuingFinalValues && gotFinalValues)
+		if(isIssuingFinalValues)
 		{
-			_isDone = true;
+			if(_finalTaskCount == -1)
+			{
+				_finalTaskCount = finalTaskCount;
+			}
+			if(gotFinalValues)
+			{
+				_isDone = true;
+			}
 		}
 
 		if(_appliedUpdateIndex != idx)
@@ -160,7 +180,17 @@ class TaskList
 
 	double get progress
 	{
-		return (_tasksCompleted / (_completionsPerUpdate*_automaticUpdates.length)).clamp(0.0, 1.0);
+		const double FinalTaskFactor = 0.2;
+		double p = (_tasksCompleted / (_completionsPerUpdate*_automaticUpdates.length)).clamp(0.0, 1.0) * (1.0-FinalTaskFactor);
+		if(_finalTaskCount > 0)
+		{
+			p += (1.0-(finalTaskCount/_finalTaskCount).clamp(0.0, 1.0))*FinalTaskFactor;
+		}
+		else if(_finalTaskCount == 0)
+		{
+			p += FinalTaskFactor;
+		}
+		return p;
 	}
 
 	void setNonPlayableToFinal()

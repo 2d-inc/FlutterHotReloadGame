@@ -857,7 +857,10 @@ class GameServer
         double multiplier = lerpDouble(minMultiplier, maxMultiplier, factor);
         int scoreInc = (taskScore * multiplier).floor();
         _setScore(_score+scoreInc);
-        completer.notifyContribution(scoreInc);
+        if(completer != null)
+        {
+            completer.notifyContribution(scoreInc);
+        }
         // Advance app.
         _template = _taskList.completeTask(_template);
 
