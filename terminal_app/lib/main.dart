@@ -738,6 +738,11 @@ class SocketClient
 			return;
 		}
 
+		if(_reconnectTimer != null)
+		{
+			_reconnectTimer.cancel();
+		}
+
 		print("Attempting connection to " + address + " on port 8080");
 		Socket.connect(address, 8080, timeout:new Duration(seconds: 5))
 			.catchError
