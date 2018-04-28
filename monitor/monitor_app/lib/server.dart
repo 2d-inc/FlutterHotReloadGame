@@ -128,6 +128,7 @@ class GameClient
                 break;
             case "clientInput":
                 var payload = jsonMsg['payload'];
+                print("CLIENT INPUT $payload");
                 _server.onClientInput(this, payload);
                 break;
             case "hi":
@@ -282,7 +283,7 @@ class GameClient
     {
         assert(_sendTaskTime == null);
         _currentTask = _server.getNextTask(this);
-        //print("ASSIGNED TASK $_currentTask to $_idx");
+        print("ASSIGNED TASK ${_currentTask.task}");
         _taskStatus = _currentTask == null ? TaskStatus.noMore : TaskStatus.inProgress;
         _sendTaskTime = null;
         if(delaySend)
@@ -297,12 +298,16 @@ class GameClient
         if(_currentTask != null)
         {
             int expiry = _currentTask.expires;
+
+            const double minExpiryFactor = 0.5;
+            expiry = lerpDouble(expiry, expiry * minExpiryFactor, _server._progress).round();
             if(_isFirstTask)
             {
                 expiry = (expiry * 1.5).round();
                 _currentTask.expires = expiry;
                 _isFirstTask = false;
             }
+
             _failTaskTime = new DateTime.now().add(new Duration(seconds:delaySend ? expiry + timeBetweenTasks.inSeconds : expiry));
 
             _server.onTaskIssued(_currentTask, _failTaskTime);
@@ -414,6 +419,7 @@ class GameServer
     bool _inGame = false;
     bool _isHotReloading = false;
     bool _waitingToHotReload = false;
+    String _originalTemplate;
     String _template;
     int _lineOfInterest = 0;
     UpdateCodeCallback onUpdateCode;
@@ -439,7 +445,9 @@ class GameServer
     Map<String, CommandTask> _completedTasks;
     HighScores _highScores;
 
-    GameServer(FlutterTask flutterTask, this._template)
+    double get progress => _progress;
+
+    GameServer(FlutterTask flutterTask, this._originalTemplate)
     {
         this.flutterTask = flutterTask;
         _highScores = new HighScores(flutterTask);
@@ -654,6 +662,7 @@ class GameServer
         _highScore = null;
         _setLives(5);
         _setScore(0, callIncreased: false);
+        _template = _originalTemplate;
 
         int numClientsReady = readyCount;
 
