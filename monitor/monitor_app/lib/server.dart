@@ -283,7 +283,10 @@ class GameClient
     {
         assert(_sendTaskTime == null);
         _currentTask = _server.getNextTask(this);
-        print("ASSIGNED TASK ${_currentTask.task}");
+		if(_currentTask != null)
+		{
+        	print("ASSIGNED TASK ${_currentTask.task}");
+		}
         _taskStatus = _currentTask == null ? TaskStatus.noMore : TaskStatus.inProgress;
         _sendTaskTime = null;
         if(delaySend)
@@ -343,8 +346,15 @@ class GameClient
                     }
                     else//test auto complete
                     {
-                        _server.forceCompleteTask(_currentTask);
-                        _completeTask(null);
+						if(_lives > 0 && new Random().nextInt(10) > 6)
+						{
+							_failTask();
+						}
+						else
+						{
+                        	_server.forceCompleteTask(_currentTask);
+                        	_completeTask(null);
+						}
                     }
                 }
                 break;
@@ -397,6 +407,11 @@ class GameClient
 
     set lives(int livesLeft)
     {
+		if(_lives == livesLeft)
+		{
+			return;
+		}
+		_lives = livesLeft;
         _sendJSONMessage("teamLives", livesLeft);
     }
 
@@ -538,8 +553,8 @@ class GameServer
 
         for(var gc in _clients)
         {
-            // Don't spam possible zombie sockets.
-            if(!gc.isReal)
+            // Don't spam possible zombie sockets or in-game clients.
+            if(!gc.isReal || gc.isInGame)
             {
                 continue;
             }
@@ -589,6 +604,11 @@ class GameServer
 
     void _setScore(int score, {bool callIncreased = true})
     {
+		if(score == _score)
+		{
+			return;
+		}
+
         int lastScore = _score;
         _score = max(0, score);
         if(callIncreased && onScoreIncreased != null)
@@ -608,6 +628,10 @@ class GameServer
 
     void _setLives(int lives)
     {
+		if(_lives == lives)
+		{
+			return;
+		}
         _lives = lives;
         if(onLivesUpdated != null)
         {
@@ -650,19 +674,11 @@ class GameServer
         {
             return;
         }
-        
-        _gotInitials = false;
-        _progress = 0.0;
 
         if(onProgressChanged != null)
         {
             onProgressChanged(_progress);
         }
-        
-        _highScore = null;
-        _setLives(5);
-        _setScore(0, callIncreased: false);
-        _template = _originalTemplate;
 
         int numClientsReady = readyCount;
 
@@ -676,6 +692,15 @@ class GameServer
             print("Received start, but already in an active game.");
             return;
         }
+
+		print("Starting game!");
+        _gotInitials = false;
+		_isIssuingFinalValues = false;
+        _progress = 0.0;
+        _highScore = null;
+        _setLives(5);
+        _setScore(0, callIncreased: false);
+        _template = _originalTemplate;
 
         // Build the full list.
         _taskList = new TaskList(numClientsReady);
@@ -717,7 +742,7 @@ class GameServer
         onGameStarted();
     }
 
-    onHello(GameClient client)
+    void onHello(GameClient client)
     {
         List<GameClient> impostors = new List<GameClient>();
 
@@ -744,7 +769,7 @@ class GameServer
         sendReadyState();
     }
 
-    onClientInput(GameClient client, Map input)
+    void onClientInput(GameClient client, Map input)
     {
         var inputType = input['type'];
         var inputValue = input['value'];
@@ -819,7 +844,6 @@ class GameServer
 
     void _onGameOver(bool isDead, {bool saveScore = true})
     {
-        
         _inGame = false;
         bool isHighScore = saveScore && _score > 0 && _highScores.isTopTen(_score);
         if(isHighScore)

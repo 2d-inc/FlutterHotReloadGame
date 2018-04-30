@@ -289,7 +289,7 @@ class CarouselIcons extends CommandTask
 	
 	int get finalValue
 	{
-		return 1;
+		return 2;
 	}
 
 	Map serialize()

@@ -1,0 +1,4 @@
+name: terminal_cli
+dependencies:
+  args: 
+  uuid:

@@ -886,6 +886,12 @@ class SocketClient
 					{
 						debugPrint("Socket done.");
 						reconnect();
+					},
+					
+					onError: ()
+					{
+						debugPrint("Socket error.");
+						reconnect();
 					});
 				});
 	}
