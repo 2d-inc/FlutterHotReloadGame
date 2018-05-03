@@ -412,16 +412,31 @@ class GameStatsRenderObject extends RenderBox
 	{
 		//const int duration = 7000;
 		//double seconds = new DateTime.now().millisecondsSinceEpoch%duration/1000.0;
-		double seconds = max(0.0, (new DateTime.now().millisecondsSinceEpoch - _showTime.millisecondsSinceEpoch)/1000.0);
+		//double seconds = max(0.0, ((new DateTime.now().millisecondsSinceEpoch - _showTime.millisecondsSinceEpoch)%7000)/1000.0);
+		double seconds = max(0.0, ((new DateTime.now().millisecondsSinceEpoch - _showTime.millisecondsSinceEpoch))/1000.0);
 
 		int ix = index(seconds);
-		if(ix != _lastIndex && ix > 0 && ix <= 11)
+		if(ix != _lastIndex && ix >= 0 && ix <= 11)
 		{
 			_lastIndex = ix;
-			_shakeTime = new DateTime.now();
-			if(player != null)
+			if(ix > 0)
 			{
-				player.playAudio("assets/audio/fail.wav");
+				_shakeTime = new DateTime.now();
+				if(player != null)
+				{
+					player.playAudio("assets/audio/hit${rand.nextInt(2)+1}.wav");
+				}
+			}
+
+			switch(ix)
+			{
+				case 0:
+					player.playAudio(_lives == 0 ? "assets/audio/game_over_lose.wav" : "assets/audio/game_over_win.wav");
+					break;
+				case 4:
+				case 8:
+					//player.playAudio("assets/audio/point_counting.wav");
+					break;
 			}
 		}
 

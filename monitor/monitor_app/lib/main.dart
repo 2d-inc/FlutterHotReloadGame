@@ -139,7 +139,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		_startTaskTime = null;
 		_failTaskTime = null;
 		_showHighScores = true;
-		_highScore = null;
 		_showStats = true;
 
 		_statsDropTime = new DateTime.now().add(const Duration(seconds:1));
@@ -163,7 +162,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		_startTaskTime = null;
 		_failTaskTime = null;
 		_showHighScores = true;
-		_highScore = null;
 		_showStats = false;
 	}
 

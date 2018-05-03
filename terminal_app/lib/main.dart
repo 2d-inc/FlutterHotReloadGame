@@ -274,6 +274,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	{
 		String msg = task['message'] as String;
 		int time = task['expiry'] as int;
+		playAudio("assets/audio/new_command.wav");
 
 		setState(
 			() 
@@ -288,6 +289,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	void onTalk(String msg)
 	{
+		playAudio("assets/audio/new_command.wav");
 		setState(()
 		{
 			_sceneMessage = msg;
@@ -363,6 +365,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	{
 		if(_lives != value)
 		{
+			if(value < _lives)
+			{
+				playAudio("assets/audio/life_lost.wav");
+			}
 			setState( () => _lives = value);
 		}
 	}

@@ -41,6 +41,13 @@ flutter:
     - assets/flares/Heart.flr
     - assets/audio/success.wav
     - assets/audio/fail.wav
+    - assets/audio/game_over_lose.wav
+    - assets/audio/game_over_win.wav
+    - assets/audio/hit1.wav
+    - assets/audio/hit2.wav
+    - assets/audio/life_lost.wav
+    - assets/audio/new_command.wav
+    - assets/audio/point_counting.wav
   fonts:
   - family: RobotoMono
     fonts:

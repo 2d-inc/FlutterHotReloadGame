@@ -42,9 +42,10 @@ List<String> failedMessages = <String>
 ];
 
 const double minMultiplier = 1.0;
-const double maxMultiplier = 5.0;
-const int taskScore = 1000;
-const int mistakePenalty = -1500;
+const double maxMultiplier = 6.0;
+const int taskScore = 2000;
+const int mistakePenalty = -2000;
+const int LifeMultiplier = 6000;
 
 class GameClient
 {

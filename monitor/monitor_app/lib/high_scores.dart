@@ -17,7 +17,6 @@ class HighScore
 }
 
 const highScoreFile = "/../highscores.json";
-const int LifeMultiplier = 5000;
 
 class HighScores
 {
