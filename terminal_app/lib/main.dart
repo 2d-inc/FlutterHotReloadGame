@@ -25,6 +25,15 @@ void main()
 }
 
 class MyApp extends StatelessWidget {
+    
+    MyApp()
+    {
+        SystemChrome.setPreferredOrientations([
+            DeviceOrientation.landscapeRight,
+            DeviceOrientation.landscapeLeft,
+        ]);
+    }
+
 	@override
 	Widget build(BuildContext context) {
 		return new MaterialApp(
