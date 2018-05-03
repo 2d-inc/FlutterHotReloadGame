@@ -26,6 +26,7 @@ import "high_scores_screen.dart";
 import "high_scores.dart";
 import "score_dopamine.dart";
 import "progress_bar.dart";
+import "game_over_screen.dart";
 
 const double STDOUT_PADDING = 41.0;
 const double STDOUT_HEIGHT = 150.0 - STDOUT_PADDING;
@@ -120,12 +121,40 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	int _score = 0;
 	String _characterMessage;
 	bool _showHighScores = true;
+	bool _showStats = false;
 	HighScore _highScore;
 	DateTime _reloadTime;
 
 	Animation<double> _progressAnimation;
 	AnimationController _progressController;
 	double _gameProgress = 0.0;
+	DateTime _statsDropTime = new DateTime.fromMicrosecondsSinceEpoch(0);
+	Timer _highScoreTimer;
+	static const int statsDropSeconds = 15;
+
+	void showStats()
+	{
+		_characterIndex = 0;
+		_characterMessage = "IT'S OVER!";
+		_startTaskTime = null;
+		_failTaskTime = null;
+		_showHighScores = true;
+		_highScore = null;
+		_showStats = true;
+
+		_statsDropTime = new DateTime.now().add(const Duration(seconds:1));
+		if(_highScoreTimer != null)
+		{
+			_highScoreTimer.cancel();
+		}
+		_highScoreTimer = new Timer(const Duration(seconds:statsDropSeconds), ()
+		{
+			setState(()
+			{
+				showLobby();
+			});
+		});
+	}
 
 	void showLobby()
 	{
@@ -135,6 +164,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		_failTaskTime = null;
 		_showHighScores = true;
 		_highScore = null;
+		_showStats = false;
 	}
 
 	@override
@@ -282,7 +312,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 					{
 						setState(()
 						{
-							_lives = _server.lives;
+							_lives = max(0, _server.lives);
 						});
 					};
 
@@ -360,6 +390,10 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 
 					_server.onGameStarted = ()
 					{
+						if(_highScoreTimer != null)
+						{
+							_highScoreTimer.cancel();
+						}
 						setState(()
 						{
 							_showHighScores = false;
@@ -371,7 +405,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 					{
 						setState(()
 						{
-							showLobby();
+							showStats();
 							_highScore = _server.highScore;
 						});
 					};
@@ -400,6 +434,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		final double CODE_BOX_MARGIN_LEFT = hasMonitorCoordinates ? _monitorTopLeft.dx : 0.0;
 		final double CODE_BOX_MARGIN_TOP = hasMonitorCoordinates ? _monitorTopLeft.dy : 0.0;
 
+		final double secondsSinceDrop = max(0.0, (new DateTime.now().millisecondsSinceEpoch - _statsDropTime.millisecondsSinceEpoch)/1000.0);
 		Stack stack = new Stack(
 					children: 
 					[
@@ -524,7 +559,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							child:new Container
 							(
 								margin:const EdgeInsets.only(left:20.0, top: 15.0, right:300.0, bottom:20.0),
-								child:new HighScoresScreen(_server?.highScores?.scores, _highScore)
+								child: _showStats ? new GameOverScreen(_statsDropTime, _gameProgress, _score, _lives, _highScore == null ? 0 : _highScore.idx + 1 , _score+(_lives * LifeMultiplier), LifeMultiplier) : new HighScoresScreen(_server?.highScores?.topTen, _highScore)
 							)
 						),
 						!hasMonitorCoordinates ? new Container() : new Positioned

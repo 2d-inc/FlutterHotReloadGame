@@ -17,12 +17,15 @@ class HighScore
 }
 
 const highScoreFile = "/../highscores.json";
+const int LifeMultiplier = 5000;
 
 class HighScores
 {
 	List<HighScore> _scores = new List<HighScore>();
 
 	List<HighScore> get scores => _scores;
+	List<HighScore> get topTen => _scores.sublist(0, min(10, _scores.length));
+
 	FlutterTask _flutterTask;
 
 	HighScores(this._flutterTask)
@@ -62,7 +65,7 @@ class HighScores
 			return b.value-a.value;
 		});
 
-		_scores = _scores.sublist(0, min(10, _scores.length));
+		//_scores = _scores.sublist(0, min(10, _scores.length));
 		
 		int idx = 0;
 		for(HighScore score in _scores)
@@ -75,7 +78,7 @@ class HighScores
 	{
 		return _scores.indexWhere((HighScore score)
 		{
-			return score.value < value;
+			return value > score.value;
 		}) < 10;
 	}
 

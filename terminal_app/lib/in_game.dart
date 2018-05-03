@@ -9,6 +9,7 @@ import "package:flutter/rendering.dart";
 import "game_controls/game_slider.dart";
 import "game_controls/game_radial.dart";
 import "game_controls/game_command_widget.dart";
+import "game_over_stats.dart";
 
 typedef void StringCallback(String msg);
 final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
@@ -21,11 +22,21 @@ class InGame extends StatelessWidget
     final double _opacity;
 	final bool isOver;
 	final bool hasWon;
+	final bool showStats;
+	final DateTime statsTime;
 	final bool canEnterInitials;
 	final List _gridDescription;
 	final IssueCommandCallback _issueCommand;
 	final int _seed;	
 	final int score;
+	final int statsScore;
+
+	final double progress;
+	final int rank;
+	final int lives;
+	final int finalScore;
+	final int lifeScore;
+	final AudioPlayerDelegate player;
 
 	static const Map gameWidgetsMap = const {
 		"GameBinaryButton" : GameBinaryButton,
@@ -33,7 +44,7 @@ class InGame extends StatelessWidget
 		"GameRadial": GameRadial,
 	};
 
-    const InGame(this._opacity, this._onRetry, this._gridDescription, this._issueCommand, this._seed, this._onInitialsSet, { this.isOver: false, this.hasWon: false, this.canEnterInitials: false, this.score: 0, Key key } ) : super(key: key);
+    const InGame(this._opacity, this._onRetry, this._gridDescription, this._issueCommand, this._seed, this._onInitialsSet, { this.player, this.progress, this.rank, this.lives, this.finalScore, this.statsScore, this.lifeScore, this.showStats:false, this.statsTime, this.isOver: false, this.hasWon: false, this.canEnterInitials: false, this.score: 0, Key key } ) : super(key: key);
 
 	Widget buildGrid(BuildContext context, BoxConstraints constraints)
 	{
@@ -155,12 +166,24 @@ class InGame extends StatelessWidget
 		return new Expanded(
 					child:new Opacity(
                     	opacity: _opacity,
-						child:new Container(
-							margin:new EdgeInsets.only(top:43.0), 
+						child:new Container
+						(
+							margin:this.isOver ? new EdgeInsets.all(80.0) : new EdgeInsets.only(top:43.0), 
 							child:
-							this.hasWon ? new HighScore(_onRetry, _onInitialsSet, score, canEnterInitials) :
-							this.isOver ? new GameOver(_onRetry) : new LayoutBuilder(builder: buildGrid)
-							// new ControlGrid(
+								this.isOver ? 
+									new Column( children:<Widget>
+									[
+										new Expanded(child:new GameStats(this.statsTime, progress, statsScore, lives, rank, finalScore, lifeScore, player)),
+										this.hasWon ? new HighScore(_onRetry, _onInitialsSet, score, canEnterInitials) : new GameOver(_onRetry)
+									])
+									: 
+									new LayoutBuilder(builder: buildGrid)
+							
+							// new Column(children:<Widget>[
+							// 	new GameStats(this.statsTime, progress, statsScore, lives, rank, finalScore, lifeScore),
+							// 	this.hasWon ? new HighScore(_onRetry, _onInitialsSet, score, canEnterInitials) :
+							// 	this.isOver ? new GameOver(_onRetry) : new LayoutBuilder(builder: buildGrid)
+							// // new ControlGrid(
 							// 	children: grid
 							// )
 						)
@@ -325,16 +348,16 @@ class GameOver extends StatelessWidget
 				child: new Column(
 					children: 
 					[
-						new Expanded(child: new Container()),
-						new Text("GAME\nOVER", 
-							textAlign: TextAlign.center,
-							style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), 
-								fontFamily: "RalewayDots",
-								fontWeight: FontWeight.w100,
-								fontSize: 144.0, 
-								decoration: TextDecoration.none
-							)
-						),
+						// new Expanded(child: new Container()),
+						// new Text("GAME\nOVER", 
+						// 	textAlign: TextAlign.center,
+						// 	style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), 
+						// 		fontFamily: "RalewayDots",
+						// 		fontWeight: FontWeight.w100,
+						// 		fontSize: 144.0, 
+						// 		decoration: TextDecoration.none
+						// 	)
+						// ),
 						new Container(
 							width: 274.0,
 							child: new PanelButton("Try Again", 18.0, 1.3, const EdgeInsets.only(top:95.0, bottom: 90.0), _onRetry, height:60.0)
@@ -362,37 +385,37 @@ class HighScore extends StatelessWidget
 				child: new Column(
 					children: 
 					[
-						new Container(
-							margin: new EdgeInsets.only(top: 68.0),
-							child:new Text("HIGH\nSCORE!", 
-								textAlign: TextAlign.center,
-								style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), 
-									fontFamily: "RalewayDots",
-									fontWeight: FontWeight.w100,
-									fontSize: 144.0, 
-									height: 0.8,
-									decoration: TextDecoration.none
-								)
-							)
-						),
-						new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:30.0, left:73.0, right:73.0), color: Colors.white, height: 2.0)) ]),
-						new Container(
-							height: 105.0,
-							child:new Center(
-								child: new Text(
-									_score,
-									style: new TextStyle(
-										color: Colors.white,
-										fontFamily: "Inconsolata",
-										fontWeight: FontWeight.normal,
-										fontSize: 36.0,
-										height: 42.0/36.0,
-										decoration: TextDecoration.none
-									),
-								)
-							)
-						),
-						new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(left:73.0, right:73.0, top: 10.0), color: Colors.white, height: 2.0)) ]),
+						// new Container(
+						// 	margin: new EdgeInsets.only(top: 68.0),
+						// 	child:new Text("HIGH\nSCORE!", 
+						// 		textAlign: TextAlign.center,
+						// 		style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), 
+						// 			fontFamily: "RalewayDots",
+						// 			fontWeight: FontWeight.w100,
+						// 			fontSize: 144.0, 
+						// 			height: 0.8,
+						// 			decoration: TextDecoration.none
+						// 		)
+						// 	)
+						// ),
+						// new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:30.0, left:73.0, right:73.0), color: Colors.white, height: 2.0)) ]),
+						// new Container(
+						// 	height: 105.0,
+						// 	child:new Center(
+						// 		child: new Text(
+						// 			_score,
+						// 			style: new TextStyle(
+						// 				color: Colors.white,
+						// 				fontFamily: "Inconsolata",
+						// 				fontWeight: FontWeight.normal,
+						// 				fontSize: 36.0,
+						// 				height: 42.0/36.0,
+						// 				decoration: TextDecoration.none
+						// 			),
+						// 		)
+						// 	)
+						// ),
+						// new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(left:73.0, right:73.0, top: 10.0), color: Colors.white, height: 2.0)) ]),
 						new Container(
 							width: 274.0,
 							child: new PanelButton("ENTER YOUR INITIALS", 18.0, 1.3, const EdgeInsets.only(top:40.0), () => showDialog(

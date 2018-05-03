@@ -132,9 +132,11 @@ class GameClient
                 _server.onClientInput(this, payload);
                 break;
             case "hi":
+			
                 _lastHello = new DateTime.now();
                 String payload = jsonMsg['payload'];
                 _name = payload;
+				print("GOT HI  $_name");
                 _server.onHello(this);
                 break;
             case "initials":
@@ -184,10 +186,10 @@ class GameClient
         _failTaskTime = null;
     }
 
-    gameOver(bool isDead, bool isHighScore)
+    gameOver(bool isDead, bool isHighScore, int score, int lifeScore, int rank, int lives, double progress)
     {
         reset();
-        _sendJSONMessage("gameOver", {"highscore":isHighScore, "died":isDead});
+        _sendJSONMessage("gameOver", {"highscore":isHighScore, "died":isDead, "score":score, "lifeScore":lifeScore, "rank":rank, "lives":lives, "progress":progress});
     }
 
     void _completeTask(GameClient completer)
@@ -286,20 +288,6 @@ class GameClient
 		if(_currentTask != null)
 		{
         	print("ASSIGNED TASK ${_currentTask.task}");
-		}
-        _taskStatus = _currentTask == null ? TaskStatus.noMore : TaskStatus.inProgress;
-        _sendTaskTime = null;
-        if(delaySend)
-        {
-            _sendTaskTime = new DateTime.now().add(timeBetweenTasks);
-        }
-        else
-        {
-            _sendTask();
-        }
-        
-        if(_currentTask != null)
-        {
             int expiry = _currentTask.expires;
 
             const double minExpiryFactor = 0.5;
@@ -307,13 +295,24 @@ class GameClient
             if(_isFirstTask)
             {
                 expiry = (expiry * 1.5).round();
-                _currentTask.expires = expiry;
                 _isFirstTask = false;
             }
+			_currentTask.expires = expiry;
 
             _failTaskTime = new DateTime.now().add(new Duration(seconds:delaySend ? expiry + timeBetweenTasks.inSeconds : expiry));
 
             _server.onTaskIssued(_currentTask, _failTaskTime);
+		}
+        _taskStatus = _currentTask == null ? TaskStatus.noMore : TaskStatus.inProgress;
+        _sendTaskTime = null;
+
+        if(delaySend)
+        {
+            _sendTaskTime = new DateTime.now().add(timeBetweenTasks);
+        }
+        else
+        {
+            _sendTask();
         }
     }
 
@@ -389,6 +388,7 @@ class GameClient
 
     set readyList(List<bool> readyPlayers)
     {
+		print("SENDING READY $readyPlayers");
         _sendJSONMessage("playerList", readyPlayers);
     }
 
@@ -402,6 +402,7 @@ class GameClient
             "isReady":_isReady,
             "markedStart":_markedStart
         });
+		print("SENDING MESSAGE $message");
         _socket.writeln(message);
     }
 
@@ -526,7 +527,6 @@ class GameServer
                     GameClient client = new GameClient(this, socket, _clients.length);
                     _clients.add(client);
                     sendReadyState();
-
                 });
         });
     }
@@ -845,15 +845,12 @@ class GameServer
     void _onGameOver(bool isDead, {bool saveScore = true})
     {
         _inGame = false;
-        bool isHighScore = saveScore && _score > 0 && _highScores.isTopTen(_score);
-        if(isHighScore)
-        {
-            _highScore = _highScores.addScore("???", _score);
-        }
+        bool isHighScore = saveScore && _score > 0 && _highScores.isTopTen(_score + max(0, _lives) * LifeMultiplier);
+		_highScore = _highScores.addScore("???", _score + max(0, _lives) * LifeMultiplier);
         print("GAME OVER! $isHighScore");
         for(var gc in _clients)
         {
-            gc.gameOver(isDead, isHighScore);
+            gc.gameOver(isDead, isHighScore, _score, LifeMultiplier, _highScore.idx+1, max(0,_lives), progress);
         }
         onGameOver();
 

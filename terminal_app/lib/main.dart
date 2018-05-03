@@ -17,6 +17,7 @@ import "flare_heart_widget.dart";
 import "package:audioplayers/audioplayer.dart";
 import "package:crypto/crypto.dart";
 import "terminal_dopamine.dart";
+import "game_over_stats.dart";
 
 void main() 
 {
@@ -45,7 +46,7 @@ class Terminal extends StatefulWidget
 	_TerminalState createState() => new _TerminalState();
 }
 
-class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin implements DopamineDelegate
+class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin implements DopamineDelegate, AudioPlayerDelegate
 {	
 	static const double gamePanelRatio = 0.33;
 	static const double lobbyPanelRatio = 0.66;
@@ -90,6 +91,15 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	int _tapCount = 0;
 
 	int _randomSeed = 1;
+
+	int _statsScore = 0;
+	int _statsLifeScore = 0;
+	int _statsRank = 0;
+	double _statsProgress = 0.0;
+	int _statsLives = 0;
+	bool _showStats = false;
+	DateTime _statsTime = new DateTime.fromMillisecondsSinceEpoch(0);
+	Timer _highScoreTimer;
 
 	initSocketClient(String uniqueId)
 	{
@@ -173,6 +183,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 	void showGameOver(bool isHighScore, bool didDie)
 	{
+		if(_highScoreTimer != null)
+		{
+			_highScoreTimer.cancel();
+		}
 		setState(()
 		{
 			_isHighScore = isHighScore;
@@ -305,16 +319,18 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	}
 
 	List<AudioPlayer> _audioPlayers = new List<AudioPlayer>();
-	void playAudio(String url) async
+	void playAudio(String url)
 	{
-		String filename = await _loadFile(url);
-		AudioPlayer player = new AudioPlayer();
-		player.completionHandler = ()
+		_loadFile(url).then((String filename)
 		{
-			_audioPlayers.remove(player);
-		};
-		_audioPlayers.add(player);
-		player.play(filename, isLocal: true);
+			AudioPlayer player = new AudioPlayer();
+			player.completionHandler = ()
+			{
+				_audioPlayers.remove(player);
+			};
+			_audioPlayers.add(player);
+			player.play(filename, isLocal: true);
+		});
 	}
 
 	void onScoreContribution(int score)
@@ -367,9 +383,29 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		}
 	}
 
-	void gameOver(isHighScore, didDie)
+	static const int statsDropSeconds = 15;
+
+	void gameOver(bool isHighScore, bool didDie, int score, int lifeScore, int rank, int lives, double progress)
 	{
 		showGameOver(isHighScore, didDie);
+		setState(()
+		{
+			_statsScore = score;
+			_statsLifeScore = lifeScore;
+			_statsRank = rank;
+			_statsProgress = progress;
+			_statsLives = lives;
+			_showStats = true;
+			_statsTime = new DateTime.now().add(const Duration(seconds:1));
+		});
+		
+		_highScoreTimer = new Timer(const Duration(seconds:statsDropSeconds), ()
+		{
+			setState(()
+			{
+				_showStats = false;
+			});
+		});
 
 		//_backToLobby(); // TODO: show the game over screen instead
 	}
@@ -518,7 +554,28 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
 										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
 										_isPlaying ? 
-											new InGame(_gameOpacity, _backToLobby, _gameCommands, _issueCommand, _randomSeed, _onInitialsSet, isOver: _gameOver, hasWon: _isHighScore, score: _score, canEnterInitials: _initials.isEmpty)
+											new InGame(
+												_gameOpacity, 
+												_backToLobby, 
+												_gameCommands, 
+												_issueCommand, 
+												_randomSeed, 
+												_onInitialsSet, 
+												isOver: _gameOver, 
+												hasWon: _isHighScore, 
+												score: _score, 
+												canEnterInitials: _initials.isEmpty,
+												// Stats
+												showStats: _showStats,
+												statsTime: _statsTime,
+												lifeScore: _statsLifeScore,
+												finalScore: _statsLives * _statsLifeScore + _score,
+												progress: _statsProgress,
+												lives: _statsLives,
+												statsScore: _statsScore,
+												rank: _statsRank,
+												player: this
+												)
 											: new LobbyWidget(_isConnected && _canBeReady, _isReady, _markedStart, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
 										new Container(
 											margin: new EdgeInsets.only(top: 10.0),
@@ -833,9 +890,14 @@ class SocketClient
 									case "gameOver":
 										var isHighScore = payload["highscore"];
 										var didDie = payload["died"];
-										if(isHighScore is bool && didDie is bool)
+										var score = payload["score"];
+										var lifeScore = payload["lifeScore"];
+										var rank = payload["rank"];
+										var lives = payload["lives"];
+										var progress = payload["progress"];
+										if(isHighScore is bool && didDie is bool && score is int && lifeScore is int && rank is int && lives is int && progress is double)
 										{
-											_terminal.gameOver(isHighScore, didDie);
+											_terminal.gameOver(isHighScore, didDie, score, lifeScore, rank, lives, progress);
 										}
 										break;
 									case "newTask":
@@ -888,9 +950,9 @@ class SocketClient
 						reconnect();
 					},
 					
-					onError: ()
+					onError: (Object error)
 					{
-						debugPrint("Socket error.");
+						debugPrint("Socket error. $error");
 						reconnect();
 					});
 				});

@@ -49,26 +49,19 @@ class ScoreParagraph
 	static final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
 	static final Function matchFunc = (Match match) => "${match[1]},";
 
-	static const List<Color> colors = <Color>
-	[
-		const Color.fromRGBO(255, 76, 205, 1.0),
-		const Color.fromRGBO(124, 253, 245, 1.0)
-	];
+	static const PositiveScoreColor = const Color.fromRGBO(124, 253, 245, 1.0);
+	static const NegativeScoreColor = const Color.fromRGBO(255, 76, 205, 1.0);
 
 	ScoreParagraph(int score)
 	{
-		Random rand = new Random();
-
-		color = colors[rand.nextInt(colors.length)];
+		color = score < 0 ? NegativeScoreColor : PositiveScoreColor;
 		label = (score > 0 ? "+" : "") + score.round().toString().replaceAllMapped(reg, matchFunc);
 		setLife(0.0);
 	}
 
-	ScoreParagraph.withText(String text)
+	ScoreParagraph.withText(String text, bool positive)
 	{
-		Random rand = new Random();
-
-		color = colors[rand.nextInt(colors.length)];
+		color = positive ? PositiveScoreColor : NegativeScoreColor;
 		label = text;
 		setLife(0.0);
 	}
@@ -122,8 +115,6 @@ class ScoreDopamineRenderObject extends RenderBox
 	Offset _lowerRight;
 	double _lastFrameTime = 0.0;
 
-	double _testTimer = 0.0;
-
 	List<ScoreParagraph> _scores = new List<ScoreParagraph>();
 
 	ScoreDopamineRenderObject(GameServer server, Offset upperLeft, Offset lowerRight)
@@ -155,7 +146,7 @@ class ScoreDopamineRenderObject extends RenderBox
 
 	void onIssuingFinalValues()
 	{
-		showScoreParagraph(new ScoreParagraph.withText("FINAL STRETCH!!"));
+		showScoreParagraph(new ScoreParagraph.withText("FINAL STRETCH!!", true));
 	}
 
 	GameServer get server

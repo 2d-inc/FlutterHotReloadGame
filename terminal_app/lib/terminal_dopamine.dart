@@ -54,17 +54,12 @@ class ScoreParagraph
 	static final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
 	static final Function matchFunc = (Match match) => "${match[1]},";
 
-	static const List<Color> colors = <Color>
-	[
-		const Color.fromRGBO(255, 76, 205, 1.0),
-		const Color.fromRGBO(124, 253, 245, 1.0)
-	];
+	static const PositiveScoreColor = const Color.fromRGBO(124, 253, 245, 1.0);
+	static const NegativeScoreColor = const Color.fromRGBO(255, 76, 205, 1.0);
 
 	ScoreParagraph(int score)
 	{
-		Random rand = new Random();
-
-		color = colors[rand.nextInt(colors.length)];
+		color = score > 0 ? PositiveScoreColor : NegativeScoreColor;
 		label = (score > 0 ? "+" : "") + score.round().toString().replaceAllMapped(reg, matchFunc);
 		if(score > 0)
 		{
@@ -77,11 +72,9 @@ class ScoreParagraph
 		setLife(0.0);
 	}
 
-	ScoreParagraph.withText(String text)
+	ScoreParagraph.withText(String text, bool isPositive)
 	{
-		Random rand = new Random();
-
-		color = colors[rand.nextInt(colors.length)];
+		color = isPositive ? PositiveScoreColor : NegativeScoreColor;
 		label = text;
 		setLife(0.0);
 	}
@@ -164,7 +157,7 @@ class TerminalDopamineRenderObject extends RenderBox
 
 	void onIssuingFinalValues()
 	{
-		showScoreParagraph(new ScoreParagraph.withText("FINAL STRETCH!!"));
+		showScoreParagraph(new ScoreParagraph.withText("FINAL STRETCH!!", true));
 	}
 
 	DopamineDelegate get delegate
