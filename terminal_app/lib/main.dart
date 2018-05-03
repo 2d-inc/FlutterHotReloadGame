@@ -396,11 +396,11 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		showGameOver(isHighScore, didDie);
 		setState(()
 		{
-			_statsScore = score;
+			_statsScore = max(score, 0);
 			_statsLifeScore = lifeScore;
 			_statsRank = rank;
 			_statsProgress = progress;
-			_statsLives = lives;
+			_statsLives = max(0, lives);
 			_showStats = true;
 			_statsTime = new DateTime.now().add(const Duration(seconds:1));
 		});
