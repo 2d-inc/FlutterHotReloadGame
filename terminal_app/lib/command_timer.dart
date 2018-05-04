@@ -180,22 +180,22 @@ class CommandTimerRenderer extends RenderBox
 		canvas.drawRRect(new RRect.fromRectAndRadius(barOffset & new Size(width, BarHeight), const Radius.circular(6.0)), new ui.Paint()..color = Colors.white.withAlpha(alpha));
 		
 		Color barColor;
-		if(fi < 0.25)
+		if(fi < 0.34)
 		{
 			barColor = angryTime.withAlpha(alpha);
 		}
 		else if(fi < 0.35)
 		{
-			double t = (0.35 - fi)*10;
+			double t = (0.35 - fi)*10*(10/1);
 			barColor = Color.lerp(urgentTime, angryTime, t).withAlpha(alpha);
 		}
-		else if(fi < 0.6)
+		else if(fi < 0.74)
 		{
 			barColor = urgentTime.withAlpha(alpha);
 		}
 		else if(fi < 0.75)
 		{
-			double t = (0.75 - fi)*10*(2/3);
+			double t = (0.75 - fi)*10*(10/1);
 			barColor = Color.lerp(relaxedTime, urgentTime, t).withAlpha(alpha);
 		}
 		else

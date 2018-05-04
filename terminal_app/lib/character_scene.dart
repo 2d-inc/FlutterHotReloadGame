@@ -628,15 +628,15 @@ class TerminalSceneRenderer extends RenderBox
 			double f = _endTime == null ? 1.0 : (now.difference(_startTime).inMilliseconds/_endTime.difference(_startTime).inMilliseconds).clamp(0.0, 1.0);
 			double fi = 1.0-f;
 			double stopLerp = 0.0;
-			// print("F: $f, FI: $fi, elapsed: $elapsed");
+
 			if(fi < 0.35 && fi > 0.0)
 			{
 				_colorAccumulator = 0.0;
 				double n = (1.0 - (fi - 0.25)/ (0.35-0.25)).clamp(0.0, 1.0);
 				stopLerp = 0.27*n;
-				_angryBackground = Color.lerp(Colors.transparent, new Color.fromARGB(100, 246, 220, 156), n);
-				_midStepGradient = Color.lerp(new Color.fromRGBO(255, 209, 0, 0.23), new Color.fromRGBO(250, 202, 88, 0.14), n);
-				_topStepGradient = Color.lerp(new Color.fromRGBO(255, 179, 0, 1.0), new Color.fromRGBO(251, 33, 33, 1.0), n);
+				_angryBackground = Color.lerp(Colors.transparent, new Color.fromRGBO(255, 0, 0, 0.0), n);
+				_midStepGradient = Color.lerp(new Color.fromRGBO(255, 209, 0, 0.23), new Color.fromRGBO(255, 0, 0, 0.2), n);
+				_topStepGradient = Color.lerp(new Color.fromRGBO(255, 179, 0, 1.0), new Color.fromRGBO(255, 0, 0, 1.0), n);
 			}
 			else if(fi < 0.75 && fi >= 0.35)
 			{
