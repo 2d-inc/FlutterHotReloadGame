@@ -146,13 +146,13 @@ class TerminalDopamineRenderObject extends RenderBox
 		showScoreParagraph(new ScoreParagraph(amount));
 	}
 
-	void showScoreParagraph(ScoreParagraph paragraph)
+	void showScoreParagraph(ScoreParagraph paragraph, {Offset customPosition})
 	{
-		if(_touchPosition == null)
+		if(_touchPosition == null && customPosition == null)
 		{
 			return;
 		}
-		paragraph.center = _touchPosition;
+		paragraph.center = customPosition ?? _touchPosition;
 		paragraph.velocity = new Offset(0.0, -100.0);
 		_scores.add(paragraph);
 	}
@@ -167,9 +167,7 @@ class TerminalDopamineRenderObject extends RenderBox
         double w = ui.window.physicalSize.width/2;
         double h = ui.window.physicalSize.height/2;
         double dpr = ui.window.devicePixelRatio;
-        touchPosition = new Offset(w/dpr, h/dpr);
-        showScoreParagraph(new ScoreParagraph.withText("TOO SLOW!!\n-1 LIFE", false));
-        touchPosition = null;
+        showScoreParagraph(new ScoreParagraph.withText("TOO SLOW!!\n-1 LIFE", false), customPosition: new Offset(w/dpr, h/dpr));
     }
 
 	DopamineDelegate get delegate
