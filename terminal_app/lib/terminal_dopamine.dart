@@ -6,11 +6,13 @@ import "package:flare/animation/actor_animation.dart";
 import "dart:typed_data";
 import "package:flutter/scheduler.dart";
 
-typedef void DopamineCallback(int score);
+typedef void DopamineScoreCallback(int score);
+typedef void DopamineLifeLostCallback();
 
 class DopamineDelegate
 {
-	DopamineCallback onScored;
+	DopamineScoreCallback onScored;
+    DopamineLifeLostCallback onLifeLost;
 }
 
 class TerminalDopamine extends LeafRenderObjectWidget
@@ -160,6 +162,16 @@ class TerminalDopamineRenderObject extends RenderBox
 		showScoreParagraph(new ScoreParagraph.withText("FINAL STRETCH!!", true));
 	}
 
+    void onLifeLost()
+    {
+        double w = ui.window.physicalSize.width/2;
+        double h = ui.window.physicalSize.height/2;
+        double dpr = ui.window.devicePixelRatio;
+        touchPosition = new Offset(w/dpr, h/dpr);
+        showScoreParagraph(new ScoreParagraph.withText("TOO SLOW!!\n-1 LIFE", false));
+        touchPosition = null;
+    }
+
 	DopamineDelegate get delegate
 	{
 		return _delegate;
@@ -177,6 +189,7 @@ class TerminalDopamineRenderObject extends RenderBox
 		}
 		_delegate = d;
 		_delegate.onScored = onScoreIncreased;
+        _delegate.onLifeLost = onLifeLost;
 	}
 
 	Offset get touchPosition

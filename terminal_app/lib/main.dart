@@ -78,7 +78,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	String _batteryLevel = "LOADING%";
 	DateTime _commandStartTime = new DateTime.now();
 	DateTime _commandEndTime = new DateTime.now().add(const Duration(seconds:10));
-	DopamineCallback onScored;
+	DopamineScoreCallback onScored;
+    DopamineLifeLostCallback onLifeLost;
 	Offset _lastGlobalTouchPosition;
 
 	SocketClient _client;
@@ -377,6 +378,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			if(value < _lives)
 			{
 				playAudio("assets/audio/life_lost.wav");
+                if(onLifeLost != null)
+                {
+                    onLifeLost();
+                }
 			}
 			setState( () => _lives = value);
 		}
