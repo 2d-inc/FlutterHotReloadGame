@@ -418,7 +418,7 @@ class HighScore extends StatelessWidget
 						// new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(left:73.0, right:73.0, top: 10.0), color: Colors.white, height: 2.0)) ]),
 						new Container(
 							width: 274.0,
-							child: new PanelButton("ENTER YOUR INITIALS", 18.0, 1.3, const EdgeInsets.only(top:40.0), () => showDialog(
+							child: new PanelButton("ENTER TEAM INITIALS", 18.0, 1.3, const EdgeInsets.only(top:40.0), () => showDialog(
 								context: context,
 								builder: (_) => new AlertDialog(
 									title: new Text("INITIALS:"),
