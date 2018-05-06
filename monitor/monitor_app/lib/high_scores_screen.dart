@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "high_scores.dart";
 import "dart:ui" show PointMode;
 import "dart:math";
+import "flare_widget.dart";
 
 final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
 final Function matchFunc = (Match match) => "${match[1]},";
@@ -11,10 +12,11 @@ class HighScoreLine extends StatelessWidget
 	final String name;
 	final String value;
 	final int idx;
+    final int teamSize;
 	final bool isHighlit;
 
 
-	HighScoreLine(this.idx, this.name, int v, this.isHighlit) : value = v.toString().replaceAllMapped(reg, matchFunc);
+	HighScoreLine(this.idx, this.name, int v, this.teamSize, this.isHighlit) : value = v.toString().replaceAllMapped(reg, matchFunc);
 
 	@override
 	Widget build(BuildContext context)
@@ -40,7 +42,9 @@ class HighScoreLine extends StatelessWidget
 							margin: new EdgeInsets.only(left: 10.0, right: 0.0, bottom: 4.0),
 						),
 					),
-					new Container(margin:const EdgeInsets.only(right:40.0), child:new Text(value, textAlign: TextAlign.right, style: new TextStyle(color: isHighlit ? Colors.white : new Color.fromRGBO(133, 226, 255, 0.6), fontFamily: "Inconsolata", fontSize: 40.0, decoration: TextDecoration.none)))
+					new Container(margin:const EdgeInsets.only(right:20.0), child:new Text(value, textAlign: TextAlign.right, style: new TextStyle(color: isHighlit ? Colors.white : new Color.fromRGBO(133, 226, 255, 0.6), fontFamily: "Inconsolata", fontSize: 40.0, decoration: TextDecoration.none))),
+                    new Container(margin:const EdgeInsets.only(right:5.0, bottom: 6.0), child:new Flare("assets/flares/players_icon", false)),
+                    new Container(margin:const EdgeInsets.only(right:40.0), child:new Text(teamSize.toString(), textAlign: TextAlign.right, style: new TextStyle(color: isHighlit ? Colors.white : new Color.fromRGBO(253, 205, 242, 0.6), fontFamily: "Inconsolata", fontSize: 40.0, decoration: TextDecoration.none)))
 				]
 			)
 		);
@@ -90,7 +94,7 @@ class HighScoresScreen extends StatelessWidget
 							(
 								children:_highScores == null ? [] : _highScores.map((HighScore score)
 									{
-										return new HighScoreLine(score.idx+1, score.name, score.value, score == _highScore);	
+										return new HighScoreLine(score.idx+1, score.name, score.value, score.teamSize, score == _highScore);	
 									}).toList()
 							)
 						)

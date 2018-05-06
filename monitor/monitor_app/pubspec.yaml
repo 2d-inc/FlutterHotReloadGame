@@ -64,6 +64,7 @@ flutter:
     - assets/nima/HotReloadScene/HotReloadScene.nima
     - assets/nima/HotReloadScene/HotReloadScene.png
     - assets/flares/Heart.flr
+    - assets/flares/players_icon.flr
 
   # To add assets to your application, add an assets section, like this:
   # assets:

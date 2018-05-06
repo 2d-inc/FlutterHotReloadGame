@@ -8,11 +8,12 @@ class HighScore
 	String name;
 	int value;
 	int idx;
+    int teamSize;
 
 	@override
 	String toString()
 	{
-		return "$name: $value";
+		return "$name(\u{1F465}$teamSize): $value";
 	}
 }
 
@@ -40,11 +41,13 @@ class HighScores
 					{
 						var value = item["value"];
 						var name = item["name"];
+                        var size = item["teamSize"];
 						if(value is int && name is String)
 						{
 							_scores.add(new HighScore()
 											..name = name
-											..value = value);
+											..value = value
+                                            ..teamSize=size);
 						}
 					}
 				}
@@ -81,11 +84,12 @@ class HighScores
 		}) < 10;
 	}
 
-	HighScore addScore(String name, int value)
+	HighScore addScore(String name, int value, int teamSize)
 	{
 		HighScore score = new HighScore()
 									..name = name
-									..value = value;
+									..value = value
+                                    ..teamSize = teamSize;
 		_scores.add(score);
 		
 		sortScores();

@@ -847,7 +847,7 @@ class GameServer
     {
         _inGame = false;
         bool isHighScore = saveScore && _score > 0 && _highScores.isTopTen(_score + max(0, _lives) * LifeMultiplier);
-		_highScore = _highScores.addScore("???", _score + max(0, _lives) * LifeMultiplier);
+		_highScore = _highScores.addScore("???", _score + max(0, _lives) * LifeMultiplier, playerCount);
         print("GAME OVER! $isHighScore");
         for(var gc in _clients)
         {
