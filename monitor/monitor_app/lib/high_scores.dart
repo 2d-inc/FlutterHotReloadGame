@@ -110,4 +110,9 @@ class HighScores
 
 		_flutterTask.write(highScoreFile, json.encode(encodedScores));
 	}
+
+    void remove(HighScore value)
+    {
+        _scores.remove(value);
+    }
 }

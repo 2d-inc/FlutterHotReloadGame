@@ -655,7 +655,14 @@ class GameServer
         
         if(_highScore != null)
         {
-            _highScore.name = initials;
+            if(initials == "000")
+            {
+                _highScores.remove(_highScore);
+            }
+            else
+            {
+                _highScore.name = initials;
+            }
             _highScores.save();
         }
 
