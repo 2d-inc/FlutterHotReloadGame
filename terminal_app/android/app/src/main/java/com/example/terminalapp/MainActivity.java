@@ -7,19 +7,19 @@ import android.os.BatteryManager;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
+import android.view.WindowManager;
 
 import io.flutter.app.FlutterActivity;
-import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugins.GeneratedPluginRegistrant;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugins.GeneratedPluginRegistrant;
 
 
 
 public class MainActivity extends FlutterActivity {
-  private static final String CHANNEL = "2d.hot_reload.io/battery";
+  private static final String CHANNEL = "2d.hot_reload.io/android";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +44,18 @@ public class MainActivity extends FlutterActivity {
                         {
                             result.error("UNAVAILABLE", "Couldn't get the current battery level!", null);
                         }
+                    }
+                    else if(methodCall.method.equals("keepScreenOn"))
+                    {
+                        if(methodCall.argument("on"))
+                        {
+                            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                        }
+                        else
+                        {
+                            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                        }
+                        result.success(true);
                     }
                     else
                     {

@@ -59,7 +59,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 {	
 	static const double gamePanelRatio = 0.33;
 	static const double lobbyPanelRatio = 0.66;
-	static const MethodChannel platform = const MethodChannel('2d.hot_reload.io/battery');
+	static const MethodChannel platform = const MethodChannel('2d.hot_reload.io/android');
 	static const String _waitingMessage = "Waiting for 2-4 players!";
 
 	bool _isPlaying = false;
@@ -131,6 +131,19 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		_arePlayersReady = [_isReady];
 
 		initSocketClient(new Uuid().v4());
+
+        Future keepScreenOn = platform.invokeMethod("keepScreenOn", {"on": true});
+        keepScreenOn.then((isOk)
+        {
+            if(isOk)
+            {
+                print("Keeping your screen on!");
+            }
+            else
+            {
+                print("SOMETHING IS NOT WORKING RIGHT!");
+            }
+        });
 
 		Future batteryQuery = platform.invokeMethod('getBatteryLevel');
 		batteryQuery.then((percent) => setState(() => _batteryLevel = "$percent%")).
