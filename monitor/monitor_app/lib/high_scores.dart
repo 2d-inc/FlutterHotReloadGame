@@ -105,7 +105,7 @@ class HighScores
 	{
 		List<dynamic> encodedScores = _scores.map<dynamic>((HighScore score)
 		{
-			return {"name":score.name, "value":score.value};
+			return {"name":score.name, "value":score.value, "teamSize": score.teamSize};
 		}).toList();
 
 		_flutterTask.write(highScoreFile, json.encode(encodedScores));
