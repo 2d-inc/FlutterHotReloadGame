@@ -114,5 +114,6 @@ class HighScores
     void remove(HighScore value)
     {
         _scores.remove(value);
+        sortScores();
     }
 }
