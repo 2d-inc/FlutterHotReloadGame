@@ -132,19 +132,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 		initSocketClient(new Uuid().v4());
 
-        Future keepScreenOn = platform.invokeMethod("keepScreenOn", {"on": true});
-        keepScreenOn.then((isOk)
-        {
-            if(isOk)
-            {
-                print("Keeping your screen on!");
-            }
-            else
-            {
-                print("SOMETHING IS NOT WORKING RIGHT!");
-            }
-        });
-
 		Future batteryQuery = platform.invokeMethod('getBatteryLevel');
 		batteryQuery.then((percent) => setState(() => _batteryLevel = "$percent%")).
 			catchError(
