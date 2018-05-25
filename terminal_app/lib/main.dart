@@ -21,12 +21,12 @@ import "game_over_stats.dart";
 
 void main() 
 {
-	runApp(new MyApp());
+	runApp(new TerminalApp());
 }
 
-class MyApp extends StatelessWidget {
+class TerminalApp extends StatelessWidget {
     
-    MyApp()
+    TerminalApp()
     {
         SystemChrome.setPreferredOrientations([
             DeviceOrientation.landscapeRight,
@@ -119,7 +119,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			setState(()
 			{
 				_isConnected = _client.isConnected;
-				//playAudio(_isConnected ? "assets/audio/success.wav" : "assets/audio/fail.wav");
 			});
 		};
 	}
@@ -540,7 +539,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			child: new Stack
 			(
 				fit:StackFit.loose,
-				//alignment: Alignment.,
 				children:<Widget>
 				[
 					new Positioned
@@ -661,17 +659,48 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
 class SocketClient
 {
-	Socket _socket;
+	static const int ReconnectMinSeconds = 2;
+	static const int ReconnectMaxSeconds = 10;
+	
+    Socket _socket;
 	_TerminalState _terminal;
 	Timer _reconnectTimer;
 	Timer _pingTimer;
-	static const int ReconnectMinSeconds = 2;
-	static const int ReconnectMaxSeconds = 10;
 	int _reconnectSeconds = ReconnectMinSeconds;
 	bool _isConnected = false;
 	VoidCallback onConnectionChanged;
 	String _address;
 	String _uniqueId;
+
+    SocketClient(this._terminal, this._uniqueId)
+	{
+		if(Platform.isAndroid)
+		{
+			_address = "10.0.2.2";
+		}
+		else
+		{
+			_address = InternetAddress.LOOPBACK_IP_V4.address;
+		}
+
+		getApplicationDocumentsDirectory().then((Directory dir)
+		{
+			File file = new File("${dir.path}/ip.txt");
+			try
+			{
+				String ip = file.readAsStringSync();
+				if(_validateIpAddress(ip))
+				{
+					_address = ip;
+				}
+				connect();
+			}
+			catch(FileSystemException)
+			{
+				connect();
+			}
+		});
+	}
 
 	bool get isConnected
 	{
@@ -692,37 +721,6 @@ class SocketClient
 		{
 			File file = new File("${dir.path}/ip.txt");
 			file.writeAsStringSync(_address);
-		});
-	}
-
-	SocketClient(this._terminal, this._uniqueId)
-	{
-		if(Platform.isAndroid)
-		{
-			_address = "10.0.2.2";
-		}
-		else
-		{
-			_address = InternetAddress.LOOPBACK_IP_V4.address;
-		}
-		//address = "10.76.253.124";
-
-		getApplicationDocumentsDirectory().then((Directory dir)
-		{
-			File file = new File("${dir.path}/ip.txt");
-			try
-			{
-				String ip = file.readAsStringSync();
-				if(_validateIpAddress(ip))
-				{
-					_address = ip;
-				}
-				connect();
-			}
-			catch(FileSystemException)
-			{
-				connect();
-			}
 		});
 	}
 

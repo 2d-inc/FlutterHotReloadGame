@@ -7,7 +7,6 @@ import "game_radial.dart";
 
 class GameSliderNotched extends StatefulWidget implements GameCommand
 {
-	//GameSliderNotched({Key key, this.value = 40, this.min = 0, this.max = 200}) : super(key: key);
 	GameSliderNotched.make(this.issueCommand, this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
 
 	GameSliderNotched.fromRadial(GameRadial radial) :

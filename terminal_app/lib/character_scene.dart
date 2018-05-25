@@ -171,11 +171,8 @@ class TerminalCharacter
 		}
 
 		CharacterState renderState = state;
-		// if(state == TerminalSceneState.All)
-		// {
-		// 	renderState = TerminalSceneState.Happy;
-		// }
-		for(StateMix sm in states)
+		
+        for(StateMix sm in states)
 		{
 			if(sm.state != renderState)
 			{
@@ -465,10 +462,8 @@ class TerminalSceneRenderer extends RenderBox
 
 		
 		TerminalCharacter boss = _characters[_characterIndex];
-		//bool showOnlyBoss = _animation != null && _animationTime == _animation.duration;
 		
-		//boss.recomputeBounds();
-		bool focusBoss = _state != TerminalSceneState.All;
+        bool focusBoss = _state != TerminalSceneState.All;
 		bool recomputeBossBounds = false;
 		
 		if(_animation != null)
@@ -511,7 +506,7 @@ class TerminalSceneRenderer extends RenderBox
 		}
 		for(TerminalCharacter character in _characters)
 		{
-			character.advance(elapsed, true);//!showOnlyBoss || character == boss);
+			character.advance(elapsed, true);
 		}
 		// Recompute bounds while spread is in action.
 		if(recomputeBossBounds && _characters[_characterIndex] != null)
@@ -538,7 +533,6 @@ class TerminalSceneRenderer extends RenderBox
 		double x = -bounds[0] - width/2.0;
 		double y =  -bounds[1] - height/2.0;
 		
-		//print("H ${size.height} $height");
 		double mix = min(1.0, elapsed*MixSpeed);
 		_contentHeight += (height-_contentHeight) * mix;
 		_position += new Offset((x-_position.dx)*mix, (y-_position.dy)*mix);
@@ -667,15 +661,8 @@ class TerminalSceneRenderer extends RenderBox
 			return ((b.actor.root.y - a.actor.root.y) * 100.0).round();
 		});
 
-		//bool showOnlyBoss = _animation != null && _animationTime == _animation.duration;
-		
 		for(TerminalCharacter character in _renderCharacters)
 		{
-			// if(showOnlyBoss && character != boss)
-			// {
-			// 	continue;
-			// }
-			
 			canvas.save();		
 			if(boss != character)
 			{
@@ -700,7 +687,6 @@ class TerminalSceneRenderer extends RenderBox
 				if(_state != TerminalSceneState.All)
 				{
 					AABB.combine(_characterBounds, _characterBounds, talkCharacter.bounds);
-					//_characterBounds = talkCharacter.bounds;
 				}
 			}
 			
@@ -726,7 +712,7 @@ class TerminalSceneRenderer extends RenderBox
 													..style = PaintingStyle.stroke
 													..strokeWidth = 2.0);
 
-			canvas.drawParagraph(_messageParagraph, new Offset(BubblePaddingH, BubblePaddingV));// new Offset(talkBounds[0]*scale, talkBounds[1]*-scale));
+			canvas.drawParagraph(_messageParagraph, new Offset(BubblePaddingH, BubblePaddingV));
 		}
 		canvas.restore();
 	}

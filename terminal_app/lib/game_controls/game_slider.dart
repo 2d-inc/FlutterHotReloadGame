@@ -1,8 +1,5 @@
 import "package:flutter/material.dart";
 import "dart:ui" as ui;
-import "dart:math";
-import "dart:typed_data";
-import "package:flutter/scheduler.dart";
 import "game_colors.dart";
 import "game_command_widget.dart";
 import "game_radial.dart";
@@ -35,6 +32,8 @@ class GameSliderState extends State<GameSlider> with SingleTickerProviderStateMi
 	final int maxValue;
 	double accumulation = 0.0;
 	int targetValue = 0;
+
+    static const int NumSliderTicks = 5;
 
 	GameSliderState(this.value, this.minValue, this.maxValue);
 	
@@ -88,14 +87,6 @@ class GameSliderState extends State<GameSlider> with SingleTickerProviderStateMi
 	void dragEnd(DragEndDetails details)
 	{
 		widget.issueCommand(widget.taskType, targetValue);
-		// _slideAnimation = new Tween<double>(
-		// 	begin: scroll,
-		// 	end: -min((data.length-1).toDouble(), max(0.0, -scroll.roundToDouble()))
-		// ).animate(_controller);
-	
-		// _controller
-		// 	..value = 0.0
-		// 	..fling(velocity: details.velocity.pixelsPerSecond.distance / 1000.0);
 	}
 
 	initState() 
@@ -160,7 +151,6 @@ class GameSliderNotches extends LeafRenderObjectWidget
 	}
 }
 
-const int NumSliderTicks = 5;
 class SliderTickParagraph
 {
 	ui.Paragraph paragraph;
@@ -202,7 +192,7 @@ class GameSliderNotchesRenderObject extends RenderBox
 	{
 		super.performLayout();
 		
-		_tickParagraphs = new List<SliderTickParagraph>(NumSliderTicks);
+		_tickParagraphs = new List<SliderTickParagraph>(GameSliderState.NumSliderTicks);
 
 		String valueLabel = (_minValue + _value*(_maxValue-_minValue)).round().toString();
 		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
@@ -218,9 +208,9 @@ class GameSliderNotchesRenderObject extends RenderBox
 		List<ui.TextBox> boxes = _valueParagraph.getBoxesForRange(0, valueLabel.length);
 		_valueLabelSize = new Size(boxes.last.right-boxes.first.left, boxes.last.bottom - boxes.first.top);
 
-		for(int i = 0; i < NumSliderTicks; i++)
+		for(int i = 0; i < GameSliderState.NumSliderTicks; i++)
 		{
-			String tickLabel = (_minValue + (1.0/(NumSliderTicks-1) * i) * (_maxValue-_minValue)).round().toString();
+			String tickLabel = (_minValue + (1.0/(GameSliderState.NumSliderTicks-1) * i) * (_maxValue-_minValue)).round().toString();
 			ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
 				textAlign:TextAlign.start,
 				fontFamily: "Inconsolata",
@@ -254,9 +244,9 @@ class GameSliderNotchesRenderObject extends RenderBox
 		double tickX = offset.dx+padding;
 		double moveDown = size.height*0.75;
 
-		for(int i = 0; i < NumSliderTicks; i++)
+		for(int i = 0; i < GameSliderState.NumSliderTicks; i++)
 		{
-			double x = tickX + i*tickHorizonalSpace/(NumSliderTicks-1);
+			double x = tickX + i*tickHorizonalSpace/(GameSliderState.NumSliderTicks-1);
 
 			Offset p1 = new Offset(x, offset.dy+moveDown-strokeWidth/2.0);
 			Offset p2 = new Offset(x, offset.dy+moveDown-strokeWidth/2.0-tickHeight);
@@ -276,49 +266,6 @@ class GameSliderNotchesRenderObject extends RenderBox
 		canvas.drawLine(new Offset(offset.dx+padding, offset.dy+moveDown-strokeWidth/2.0), new Offset(upToX, offset.dy+moveDown-strokeWidth/2.0), new ui.Paint()..color = GameColors.highValueContent..strokeWidth = 10.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
 		canvas.drawCircle(new Offset(upToX, offset.dy+moveDown-strokeWidth/2.0), 15.0, new ui.Paint()..color = Colors.white..strokeWidth = 2.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
 		canvas.drawCircle(new Offset(upToX, offset.dy+moveDown-strokeWidth/2.0), 5.0, new ui.Paint()..color = Colors.white..strokeWidth = 2.0..style=PaintingStyle.fill..strokeCap = StrokeCap.round);
-		// double open = 0.25;
-		// double sweep = pi*2.0*(1.0-open);
-
-		// Offset pos = new Offset(padding+offset.dx, padding + offset.dy);
-		// Size arcSize = new Size(size.width-padding*2, size.height-padding*2);
-
-		
-		// final double startAngle = pi/2.0+(pi*open);
-		// const double tickLength = 25.0;
-		// const double tickTextLength = 35.0;
-		// final double radius = min(arcSize.width, arcSize.height)/2.0;
-
-		// final double radiusTickStart = radius-tickLength/2.0;
-		// final double radiusTickEnd = radius+tickLength/2.0;
-		// final double radiusTickText = radius+tickTextLength;
-
-		// ui.Paint tickPaint = new ui.Paint()..color = GameColors.lowValueContent..strokeWidth = 2.0..style=PaintingStyle.stroke;
-
-		// Offset center = new Offset(pos.dx + arcSize.width/2.0, pos.dy + arcSize.height/2.0);
-		// Offset arcPaintOffset = new Offset(pos.dx + arcSize.width/2.0 - radius, pos.dy + arcSize.height/2.0 - radius);
-		// Size arcPaintSize = new Size(radius*2.0, radius*2.0);
-		// for(int i = 0; i < NumSliderTicks; i++)
-		// {
-		// 	double angle = startAngle + i * sweep/(NumSliderTicks-1);
-
-		// 	double c = cos(angle);
-		// 	double s = sin(angle);
-
-		// 	Offset p1 = new Offset(center.dx+c * radiusTickStart, center.dy+s * radiusTickStart);
-		// 	Offset p2 = new Offset(center.dx+c * radiusTickEnd, center.dy+s * radiusTickEnd);
-
-		// 	if(_tickParagraphs != null)
-		// 	{
-		// 		SliderTickParagraph tickParagraph = _tickParagraphs[i];
-		// 		Offset tickTextPosition = new Offset(center.dx+c * radiusTickText, center.dy+s * radiusTickText);
-		// 		canvas.drawParagraph(tickParagraph.paragraph, new Offset(tickTextPosition.dx - tickParagraph.size.width/2.0, tickTextPosition.dy - tickParagraph.size.height/2.0));
-		// 	}
-			
-
-		// 	canvas.drawLine(p1, p2, tickPaint);
-		// }
-		// canvas.drawArc(arcPaintOffset & arcPaintSize, startAngle, sweep, false, new ui.Paint()..color = GameColors.lowValueContent..strokeWidth = 10.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
-		// canvas.drawArc(arcPaintOffset & arcPaintSize, startAngle, sweep*value, false, new ui.Paint()..color = GameColors.highValueContent..strokeWidth = 10.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
 	}
 
 	double get value
@@ -351,15 +298,6 @@ class GameSliderNotchesRenderObject extends RenderBox
 		}
 		_minValue = v;
 
-		// ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
-		// 	textAlign:TextAlign.start,
-		// 	fontFamily: "Inconsolata",
-		// 	fontSize: 18.0,
-		// 	fontWeight: FontWeight.w700
-		// ))..pushStyle(new ui.TextStyle(color:GameColors.highValueContent));
-		// builder.addText((_valueLabel=_value.toString()));
-		// _valueParagraph = builder.build();
-
 		markNeedsLayout();
 		markNeedsPaint();
 	}
@@ -376,15 +314,6 @@ class GameSliderNotchesRenderObject extends RenderBox
 			return;
 		}
 		_maxValue = v;
-
-		// ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
-		// 	textAlign:TextAlign.start,
-		// 	fontFamily: "Inconsolata",
-		// 	fontSize: 18.0,
-		// 	fontWeight: FontWeight.w700
-		// ))..pushStyle(new ui.TextStyle(color:GameColors.highValueContent));
-		// builder.addText((_valueLabel=_value.toString()));
-		// _valueParagraph = builder.build();
 
 		markNeedsLayout();
 		markNeedsPaint();

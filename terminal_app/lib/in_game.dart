@@ -2,7 +2,6 @@ import "dart:math";
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import "command_panel.dart";
-import "panel_button.dart";
 import "package:flutter/material.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/rendering.dart";
@@ -10,10 +9,11 @@ import "game_controls/game_slider.dart";
 import "game_controls/game_radial.dart";
 import "game_controls/game_command_widget.dart";
 import "game_over_stats.dart";
+import "high_score.dart";
+import "game_over.dart";
+import "game_buttons.dart";
 
 typedef void StringCallback(String msg);
-final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
-final Function matchFunc = (Match match) => "${match[1]},";
 
 class InGame extends StatelessWidget
 {
@@ -177,75 +177,11 @@ class InGame extends StatelessWidget
 										this.hasWon ? new HighScore(_onRetry, _onInitialsSet, score, canEnterInitials) : new GameOver(_onRetry)
 									])
 									: 
-									new LayoutBuilder(builder: buildGrid)
-							
-							// new Column(children:<Widget>[
-							// 	new GameStats(this.statsTime, progress, statsScore, lives, rank, finalScore, lifeScore),
-							// 	this.hasWon ? new HighScore(_onRetry, _onInitialsSet, score, canEnterInitials) :
-							// 	this.isOver ? new GameOver(_onRetry) : new LayoutBuilder(builder: buildGrid)
-							// // new ControlGrid(
-							// 	children: grid
-							// )
+									new LayoutBuilder(builder: buildGrid)	
 						)
 					)
 				);
     }   
-}
-
-class GameBinaryButton extends StatelessWidget implements GameCommand
-{
-	final List<String> _labels;
-	final String taskType;
-	final IssueCommandCallback issueCommand;
-	bool isTall;
-
-	GameBinaryButton.make(this.issueCommand, this.taskType, Map params, {this.isTall: false}) : _labels = new List<String>(params['buttons'].length)
-	{
-		List l = params['buttons'];
-		for(int i = 0; i < l.length; i++)
-		{
-			_labels[i] = (l[i] as String);
-		}
-	}
-
-	@override
-	Widget build(BuildContext context)
-	{
-		bool hasThree = _labels.length > 2;
-		List<Widget> buttons = [];
-		const EdgeInsets horizontalPlacement = const EdgeInsets.only(right:10.0, bottom: 10.0);
-		const EdgeInsets verticalPlacement = const EdgeInsets.only(bottom: 10.0);
-		for(int i = 0; i < _labels.length; i++)
-		{
-			buttons.add(
-				new Expanded(
-					child:
-						new PanelButton(_labels[i], 16.0, 1.1, 
-							!hasThree ? horizontalPlacement : (isTall ? verticalPlacement : (i < 1) ? horizontalPlacement : verticalPlacement),
-					() 
-					{
-						issueCommand(taskType, i);
-					}, isAccented: true)
-				)
-			);
-		}
-		if(!hasThree)
-		{
-			return new Row(children: buttons);
-		}
-		else if(isTall)
-		{
-			return new Column(children:buttons);
-		}
-		else //!isTall && hasThree
-		{
-			return new Column(children:
-			[
-				new Expanded(child:new Row(children: buttons.sublist(0, 2))),
-				new Expanded(child:new Row(children: [buttons.last]))
-			]);
-		}
-	}
 }
 
 class ControlGrid extends MultiChildRenderObjectWidget
@@ -333,129 +269,4 @@ class RenderControlGrid extends RenderBox with ContainerRenderObjectMixin<Render
 		//context.canvas.drawRect(offset & size, new Paint()..color = new Color.fromARGB(255, 125, 152, 165));
 		defaultPaint(context, offset);
 	}
-}
-
-class GameOver extends StatelessWidget
-{
-	final VoidCallback _onRetry;
-
-	GameOver(this._onRetry, {Key key}) : super(key: key);
-
-	@override
-	Widget build(BuildContext context) 
-	{
-		return new Center(
-				child: new Column(
-					children: 
-					[
-						// new Expanded(child: new Container()),
-						// new Text("GAME\nOVER", 
-						// 	textAlign: TextAlign.center,
-						// 	style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), 
-						// 		fontFamily: "RalewayDots",
-						// 		fontWeight: FontWeight.w100,
-						// 		fontSize: 144.0, 
-						// 		decoration: TextDecoration.none
-						// 	)
-						// ),
-						new Container(
-							width: 274.0,
-							child: new PanelButton("Try Again", 18.0, 1.3, const EdgeInsets.only(top:95.0, bottom: 90.0), _onRetry, height:60.0)
-						)
-					],
-				)
-		);
-	}	
-}
-
-class HighScore extends StatelessWidget
-{
-	final VoidCallback _onRetry;
-	final StringCallback _onInitialsSet;
-	final String _score;
-	final TextEditingController _initialsController = new TextEditingController();
-	final bool _canEnterInitials;
-
-	HighScore(this._onRetry, this._onInitialsSet, int s, this._canEnterInitials) : _score = s.toString().replaceAllMapped(reg, matchFunc);
-
-	@override
-	Widget build(BuildContext context) 
-	{
-		return new Center(
-				child: new Column(
-					children: 
-					[
-						// new Container(
-						// 	margin: new EdgeInsets.only(top: 68.0),
-						// 	child:new Text("HIGH\nSCORE!", 
-						// 		textAlign: TextAlign.center,
-						// 		style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), 
-						// 			fontFamily: "RalewayDots",
-						// 			fontWeight: FontWeight.w100,
-						// 			fontSize: 144.0, 
-						// 			height: 0.8,
-						// 			decoration: TextDecoration.none
-						// 		)
-						// 	)
-						// ),
-						// new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:30.0, left:73.0, right:73.0), color: Colors.white, height: 2.0)) ]),
-						// new Container(
-						// 	height: 105.0,
-						// 	child:new Center(
-						// 		child: new Text(
-						// 			_score,
-						// 			style: new TextStyle(
-						// 				color: Colors.white,
-						// 				fontFamily: "Inconsolata",
-						// 				fontWeight: FontWeight.normal,
-						// 				fontSize: 36.0,
-						// 				height: 42.0/36.0,
-						// 				decoration: TextDecoration.none
-						// 			),
-						// 		)
-						// 	)
-						// ),
-						// new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(left:73.0, right:73.0, top: 10.0), color: Colors.white, height: 2.0)) ]),
-						new Container(
-							width: 274.0,
-							child: new PanelButton("ENTER TEAM INITIALS", 18.0, 1.3, const EdgeInsets.only(top:40.0), () => showDialog(
-								context: context,
-								builder: (_) => new AlertDialog(
-									title: new Text("INITIALS:"),
-									content: new TextFormField(
-										controller: _initialsController,
-										decoration: new InputDecoration(hintText: "___"),
-										autofocus: true,
-										maxLength: 3,
-										maxLines: 1
-									),
-									actions:
-									[
-										new FlatButton(
-											child: new Text("OK"),
-											onPressed: ()
-											{
-												String initials = _initialsController.text;
-												if(initials.length == 3)
-												{
-													_onInitialsSet(initials);
-													Navigator.of(context).pop();
-												}
-											},
-										)
-									]
-								)
-							), 
-							isAccented: _canEnterInitials,
-							isEnabled: _canEnterInitials, 
-							height:60.0)
-						),
-						new Container(
-							width: 274.0,
-							child: new PanelButton("TRY AGAIN", 18.0, 1.3, const EdgeInsets.only(top:10.0), _onRetry, height:60.0)
-						)
-					],
-				)
-		);
-	}	
 }

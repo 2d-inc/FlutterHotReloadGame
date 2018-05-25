@@ -1,14 +1,11 @@
 import "package:flutter/material.dart";
 import "dart:ui" as ui;
 import "dart:math";
-import "dart:typed_data";
-import "package:flutter/scheduler.dart";
 import "game_colors.dart";
 import "game_command_widget.dart";
 
 class GameRadial extends StatefulWidget implements GameCommand
 {
-	//GameRadial({Key key, this.value = 40, this.min = 0, this.max = 200}) : super(key: key);
 	GameRadial.make(this.issueCommand, this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
 	
 	final String taskType;
@@ -32,6 +29,7 @@ const double tickLength = 25.0;
 const double tickTextLength = 35.0;
 final double startAngle = pi/2.0+(pi*open);
 const double arrowPadding = 30.0;
+
 double normalizeAngle(double angle)
 {
 	return (angle+pi*2)%(pi*2);
@@ -380,15 +378,6 @@ class GameRadialNotchesRenderObject extends RenderBox
 		}
 		_minValue = v;
 
-		// ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
-		// 	textAlign:TextAlign.start,
-		// 	fontFamily: "Inconsolata",
-		// 	fontSize: 18.0,
-		// 	fontWeight: FontWeight.w700
-		// ))..pushStyle(new ui.TextStyle(color:GameColors.highValueContent));
-		// builder.addText((_valueLabel=_value.toString()));
-		// _valueParagraph = builder.build();
-
 		markNeedsLayout();
 		markNeedsPaint();
 	}
@@ -405,15 +394,6 @@ class GameRadialNotchesRenderObject extends RenderBox
 			return;
 		}
 		_maxValue = v;
-
-		// ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
-		// 	textAlign:TextAlign.start,
-		// 	fontFamily: "Inconsolata",
-		// 	fontSize: 18.0,
-		// 	fontWeight: FontWeight.w700
-		// ))..pushStyle(new ui.TextStyle(color:GameColors.highValueContent));
-		// builder.addText((_valueLabel=_value.toString()));
-		// _valueParagraph = builder.build();
 
 		markNeedsLayout();
 		markNeedsPaint();
