@@ -2,13 +2,9 @@ import "package:flutter/material.dart";
 import "dart:ui" as ui;
 import "dart:math";
 import "package:flare/flare.dart" as flr;
-import "package:flare/animation/actor_animation.dart";
 import "dart:typed_data";
-import "package:flutter/scheduler.dart";
-import "package:flare/flare.dart" as flr;
-import "package:flare/animation/actor_animation.dart";
 
-class AudioPlayerDelegate
+abstract class AudioPlayerDelegate
 {
 	void playAudio(String url);
 }

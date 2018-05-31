@@ -1,9 +1,5 @@
 import "package:flutter/material.dart";
 import "dart:ui" as ui;
-import "dart:math";
-import "package:flare/flare.dart" as flr;
-import "package:flare/animation/actor_animation.dart";
-import "dart:typed_data";
 import "package:flutter/scheduler.dart";
 
 typedef void DopamineScoreCallback(int score);
@@ -220,13 +216,6 @@ class TerminalDopamineRenderObject extends RenderBox
 		double elapsed = (t - _lastFrameTime).clamp(0.0, 1.0);
 		_lastFrameTime = t;
 
-		// _testTimer += elapsed;
-		// if(_testTimer > 2.0)
-		// {
-		// 	_testTimer = 0.0;
-		// 	onScoreIncreased(new Random().nextInt(10000));
-		// }
-		
 		List<ScoreParagraph> removeScores = new List();
 		for(ScoreParagraph score in _scores)
 		{
@@ -271,8 +260,6 @@ class TerminalDopamineRenderObject extends RenderBox
 		for(ScoreParagraph score in _scores)
 		{
 			canvas.drawParagraph(score.paragraph, new Offset(score.center.dx-ScoreParagraph.MaxWidth/2.0, score.center.dy - score.size.height/2.0));
-		}
-		
-		
+		}		
 	}
 }
