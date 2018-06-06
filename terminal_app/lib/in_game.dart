@@ -12,31 +12,20 @@ import "game_over_stats.dart";
 import "high_score.dart";
 import "game_over.dart";
 import "game_buttons.dart";
+import "game/game_provider.dart";
+import "game/game.dart";
+import "game/blocs/in_game_bloc.dart";
+import "game/blocs/game_stats_bloc.dart";
 
 typedef void StringCallback(String msg);
 
 class InGame extends StatelessWidget
 {
-    final VoidCallback _onRetry;
-    final StringCallback _onInitialsSet;
-    final double _opacity;
-	final bool isOver;
-	final bool hasWon;
-	final bool showStats;
-	final DateTime statsTime;
-	final bool canEnterInitials;
-	final List _gridDescription;
-	final IssueCommandCallback _issueCommand;
-	final int _seed;	
-	final int score;
-	final int statsScore;
+    final List _gridDescription = [];
 
-	final double progress;
-	final int rank;
-	final int lives;
-	final int finalScore;
-	final int lifeScore;
-	final AudioPlayerDelegate player;
+    final VoidCallback _onRetry;
+    final double _opacity;
+	final int _seed;
 
 	static const Map gameWidgetsMap = const {
 		"GameBinaryButton" : GameBinaryButton,
@@ -44,7 +33,11 @@ class InGame extends StatelessWidget
 		"GameRadial": GameRadial,
 	};
 
-    const InGame(this._opacity, this._onRetry, this._gridDescription, this._issueCommand, this._seed, this._onInitialsSet, { this.player, this.progress, this.rank, this.lives, this.finalScore, this.statsScore, this.lifeScore, this.showStats:false, this.statsTime, this.isOver: false, this.hasWon: false, this.canEnterInitials: false, this.score: 0, Key key } ) : super(key: key);
+    InGame(
+        this._opacity, 
+        this._onRetry, 
+        this._seed, 
+        { Key key } ) : super(key: key);
 
 	Widget buildGrid(BuildContext context, BoxConstraints constraints)
 	{
@@ -76,14 +69,14 @@ class InGame extends StatelessWidget
 					{
 						priority = 1;
 					}
-					w = new GameBinaryButton.make(_issueCommand, taskType, description);
+					w = new GameBinaryButton.make(taskType, description);
 					break;
 				case "GameSlider":
-					w = new GameSlider.make(_issueCommand, taskType, description);
+					w = new GameSlider.make(taskType, description);
 					priority = 1;
 					break;
 				case "GameRadial":
-					w = new GameRadial.make(_issueCommand, taskType, description);
+					w = new GameRadial.make(taskType, description);
 					priority = 5;
 					break;
 
@@ -160,28 +153,77 @@ class InGame extends StatelessWidget
 		return new Stack(children: grid);
 	}
 
+    set gridDescription(List gd)
+    {
+        if(gd != _gridDescription)
+        {
+            // Keep the list final
+            _gridDescription.clear();
+            _gridDescription.addAll(gd);
+        }
+    }
+
+    Widget buildInGame(BuildContext context, AsyncSnapshot<InGameStatus> snapshot)
+    {
+        Game game = GameProvider.of(context);
+        InGameStatus status = snapshot.data;
+        if(status == null)
+        {
+            return Container();
+        }
+        this.gridDescription = status.gridDescription;
+        return new Container
+        (
+            margin:status.isOver ? new EdgeInsets.all(80.0) : new EdgeInsets.only(top:43.0), 
+            child:
+                status.isOver ? 
+                    new Column( children:<Widget>
+                    [
+                        new Expanded(child:
+                            new StreamBuilder(
+                                stream: game.gameStatsBloc.stream,
+                                builder: (BuildContext ctx, AsyncSnapshot<GameStatistics> statsSnapshot)
+                                {
+                                    GameStatistics gs = statsSnapshot.data;
+                                    if(gs == null)
+                                    {
+                                        return Container();
+                                    }
+                                    return new GameStats(
+                                        gs.time, 
+                                        gs.progress, 
+                                        gs.score, 
+                                        gs.lives, 
+                                        gs.rank, 
+                                        gs.finalScore, 
+                                        gs.lifeScore
+                                    );
+                                }
+                            )
+                        ),
+                        status.hasWon ? new HighScore(_onRetry) : new GameOver(_onRetry)
+                    ])
+                    : 
+                    new LayoutBuilder(builder: buildGrid)
+        );
+    }
+
     @override
     Widget build(BuildContext context)
     {
+        Game game = GameProvider.of(context);
 		return new Expanded(
 					child:new Opacity(
                     	opacity: _opacity,
-						child:new Container
-						(
-							margin:this.isOver ? new EdgeInsets.all(80.0) : new EdgeInsets.only(top:43.0), 
-							child:
-								this.isOver ? 
-									new Column( children:<Widget>
-									[
-										new Expanded(child:new GameStats(this.statsTime, progress, statsScore, lives, rank, finalScore, lifeScore, player)),
-										this.hasWon ? new HighScore(_onRetry, _onInitialsSet, score, canEnterInitials) : new GameOver(_onRetry)
-									])
-									: 
-									new LayoutBuilder(builder: buildGrid)	
-						)
+						child:
+                        new StreamBuilder(
+                            stream: game.inGameBloc.stream,
+                            builder: buildInGame
+                        )
 					)
 				);
-    }   
+    }
+
 }
 
 class ControlGrid extends MultiChildRenderObjectWidget

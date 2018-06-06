@@ -1,24 +1,22 @@
 import 'dart:async';
-import 'dart:convert';
 import "package:flutter/material.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/rendering.dart";
 import 'package:flutter/services.dart';
-import "dart:io";
 import "decorations/dotted_grid.dart";
 import "lobby.dart";
 import "in_game.dart";
 import "character_scene.dart";
 import "command_timer.dart";
 import "dart:math";
-import "package:path_provider/path_provider.dart";
-import "package:uuid/uuid.dart";
 import "flare_heart_widget.dart";
-import "package:audioplayers/audioplayer.dart";
-import "package:crypto/crypto.dart";
-import "terminal_dopamine.dart";
-import "game_over_stats.dart";
 import "socket_client.dart";
+import "terminal_dopamine.dart";
+import "game/game_provider.dart";
+import "game/game.dart";
+import "game/blocs/connection_bloc.dart";
+import "game/blocs/scene_bloc.dart";
+import "game/blocs/game_stats_bloc.dart";
 
 void main() 
 {
@@ -29,6 +27,7 @@ class TerminalApp extends StatelessWidget {
     
     TerminalApp()
     {
+        /// Lock the App in landscape.
         SystemChrome.setPreferredOrientations([
             DeviceOrientation.landscapeRight,
             DeviceOrientation.landscapeLeft,
@@ -37,12 +36,18 @@ class TerminalApp extends StatelessWidget {
 
 	@override
 	Widget build(BuildContext context) {
-		return new MaterialApp(
-			title: "Terminal",
-			home: new Terminal(
-				title: "Terminal"
-			)
-		);
+        /// The [GameProvider] wrapper exposes the [Game] object
+        /// to the rest of our app, so that the necessary Widgets 
+        /// will be able to access [SocketClient], [ValueNotifier]s,
+        /// [Sink]s and [Stream]s as neede
+		return GameProvider(
+                child: MaterialApp(
+                title: "Terminal",
+                home: new Terminal(
+                    title: "Terminal",
+                )
+            ),
+        );
 	}
 }
 
@@ -56,93 +61,43 @@ class Terminal extends StatefulWidget
 	_TerminalState createState() => new _TerminalState();
 }
 
-class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin implements DopamineDelegate, AudioPlayerDelegate, SocketDelegate
+class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin implements DopamineDelegate
 {	
 	static const double gamePanelRatio = 0.33;
 	static const double lobbyPanelRatio = 0.66;
 	static const MethodChannel platform = const MethodChannel('2d.hot_reload.io/android');
-	static const String _waitingMessage = "Waiting for 2-4 players!";
 
-	bool _isPlaying = false;
 	double _panelRatio = 0.66;
 	double _lobbyOpacity = 1.0;
 	double _gameOpacity = 0.0;
+    
+    ValueNotifier<bool> notifier;
+
+    DopamineScoreCallback onScored;
+    DopamineLifeLostCallback onLifeLost;
 
 	AnimationController _panelController;
 	VoidCallback _fadeCallback;
 	Animation<double> _slideAnimation;
 	Animation<double> _fadeLobbyAnimation;
 	Animation<double> _fadeGameAnimation;
-	TerminalSceneState _sceneState = TerminalSceneState.All;
-	int _sceneCharacterIndex = 0;
-	String _sceneMessage = _waitingMessage;
 	String _batteryLevel = "LOADING%";
-	DateTime _commandStartTime = new DateTime.now();
-	DateTime _commandEndTime = new DateTime.now().add(const Duration(seconds:10));
-	DopamineScoreCallback onScored;
-    DopamineLifeLostCallback onLifeLost;
-    SocketMessageCallback onMessage;
-    SocketReadyCallback onReady;
 	Offset _lastGlobalTouchPosition;
-
-	SocketClient _client;
-	bool _isConnected = false;
-	bool _canBeReady = false;
-
-	bool _isReady = false;
-	bool _markedStart = false;
-	bool _gameOver = false;
-	List<bool> _arePlayersReady;
-	int _lives = 0;
-	int _score = 0;
-	String _initials = "";
-	bool _isHighScore = false;
-
-	List _gameCommands = [];
 
 	int _lastTap = 0;
 	int _tapCount = 0;
-
 	int _randomSeed = 1;
-
-	int _statsScore = 0;
-	int _statsLifeScore = 0;
-	int _statsRank = 0;
-	double _statsProgress = 0.0;
-	int _statsLives = 0;
-	bool _showStats = false;
-	DateTime _statsTime = new DateTime.fromMillisecondsSinceEpoch(0);
-	Timer _highScoreTimer;
-
-	initSocketClient(String uniqueId)
-	{
-        onReady = handleReady;
-        onMessage = onSocketMessage;
-		_client = new SocketClient(this, uniqueId);
-		_client.onConnectionChanged = ()
-		{
-			setState(()
-			{
-				_isConnected = _client.isConnected;
-			});
-		};
-	}
 
 	@override
 	initState()
 	{
 		super.initState();
-		_arePlayersReady = [_isReady];
-
-		initSocketClient(new Uuid().v4());
-
 		Future batteryQuery = platform.invokeMethod('getBatteryLevel');
 		batteryQuery.then((percent) => setState(() => _batteryLevel = "$percent%")).
 			catchError(
 				(e) => debugPrint("Just got an error!====\n$e"), 
 				test: (e) => e is FormatException
 			);
-		resetSceneMessage();
 		_panelController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 		_fadeCallback = () 
 		{
@@ -162,84 +117,24 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	@override
 	void dispose()
 	{
-		if(_client != null)
-		{
-			_client.dispose();
-		}
 		_panelController.dispose();
+        notifier.removeListener(_onGameStateChanged);
 		super.dispose();
 	}
 
-	bool handleReady()
-	{
-		bool readyState = !_isReady;
-		setState(() => _isReady = readyState);
-		return readyState;
-	}
+    _onGameStateChanged()
+    {
+        bool isPlaying = notifier.value;
+        print("Game State Changed! $isPlaying");
+        if(isPlaying)
+        {
+            onGameStart();
+        }
+    }
 
-	void _backToLobby()
+	void onGameStart()
 	{
-		setState(() 
-		{
-			_gameCommands = [];
-			_gameOver = false;
-			_isReady = false;
-			_markedStart = false;
-			if(_isPlaying)
-			{
-				_panelController.reverse();
-				_isPlaying = false;
-			}
-			_sceneState = TerminalSceneState.All;
-			resetSceneMessage();
-		});
-	}
-
-	void showGameOver(bool isHighScore, bool didDie)
-	{
-		if(_highScoreTimer != null)
-		{
-			_highScoreTimer.cancel();
-		}
-		setState(()
-		{
-			_isHighScore = isHighScore;
-			_gameOver = true;
-
-			_sceneMessage = null;
-			_commandStartTime = null;
-			_commandEndTime = null;
-		});
-	}
-
-	void setGameStatus(bool isServerInGame, bool isClientInGame, bool doesServerThinkImReady, bool doesServerThinkStart)
-	{
-		setState(() 
-		{
-			_isReady = doesServerThinkImReady;
-			_markedStart = doesServerThinkStart;
-			// we can only mark ready if the server isn't already in a game.
-			_canBeReady = !isServerInGame;
-			if(!_gameOver && _isPlaying && !isClientInGame)
-			{
-				//_backToLobby();
-				showGameOver(false, false);
-			}
-		});
-	}
-
-	void onGameStart(List commands)
-	{
-		if(!_isReady)
-		{
-			return;
-		}
-		if(_isPlaying)
-		{
-			return;
-		}
 		_randomSeed = new Random().nextInt(19890926);
-		setState(() => _gameCommands = commands);
 
 		_fadeLobbyAnimation = new Tween<double>(
 			begin: _lobbyOpacity,
@@ -268,294 +163,39 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		));
 
 		_panelController.forward();
+	}	
 
-		setState(() 
-		{
-			_gameOver = false;
-			_isPlaying = true;
-			_sceneState = TerminalSceneState.BossOnly;
-			_sceneCharacterIndex = new Random().nextInt(4);
-			_sceneMessage = null;
-			_commandStartTime = null;
-			_commandEndTime = null;
-			_initials = "";
-			_isHighScore = false;
-			print("PLAYING AND SETTING CHARACTER TO $_sceneCharacterIndex");
-		});
-	}
-
-	void onNewTask(Map task)
-	{
-		String msg = task['message'] as String;
-		int time = task['expiry'] as int;
-		playAudio("assets/audio/new_command.wav");
-
-		setState(
-			() 
-			{
-				_sceneCharacterIndex = new Random().nextInt(4);
-				_sceneMessage = msg;
-				_commandStartTime = time == 0 ? null : new DateTime.now();
-				_commandEndTime = time == 0 ? null :  new DateTime.now().add(new Duration(seconds: time));
-			}
-		);
-	}
-
-	void onTalk(String msg)
-	{
-		playAudio("assets/audio/new_command.wav");
-		setState(()
-		{
-			_sceneMessage = msg;
-		});
-	}
-
-	void onTaskFail(String msg)
-	{
-		setState(()
-		{
-			_sceneMessage = msg;
-		});
-	}
-
-	Future<String> _loadFile(String from) async 
-	{
-		final dir = await getApplicationDocumentsDirectory();
-		ByteData data = await rootBundle.load(from);
-		var digest = sha1.convert(utf8.encode(from));	
-		String filename = "${dir.path}/${digest.toString()}";
-		final file = new File(filename);
-		if(await file.exists())
-		{
-			return filename;
-		}
-		
-		await file.writeAsBytes(data.buffer.asUint8List().toList());
-		return filename;
-	}
-
-	List<AudioPlayer> _audioPlayers = new List<AudioPlayer>();
-	void playAudio(String url)
-	{
-		_loadFile(url).then((String filename)
-		{
-			AudioPlayer player = new AudioPlayer();
-			player.completionHandler = ()
-			{
-				_audioPlayers.remove(player);
-			};
-			_audioPlayers.add(player);
-			player.play(filename, isLocal: true);
-		});
-	}
-
-	void onScoreContribution(int score)
-	{
-		if(onScored != null)
-		{
-			onScored(score);
-		}
-		if(score < 0)
-		{
-			playAudio("assets/audio/fail.wav");
-		}
-		else
-		{
-			playAudio("assets/audio/success.wav");
-		}
-	}
-
-	void onTaskComplete(String msg)
-	{
-		setState(()
-		{
-			_sceneMessage = msg;
-			_commandStartTime = null;
-			_commandEndTime = null;
-		});
-	}
-
-	void onLivesChanged(int value)
-	{
-		if(_lives != value)
-		{
-			if(value < _lives)
-			{
-				playAudio("assets/audio/life_lost.wav");
-                if(onLifeLost != null)
-                {
-                    onLifeLost();
-                }
-			}
-			setState( () => _lives = value);
-		}
-	}
-
-	void onScoreChanged(int value)
-	{
-		if(_score != value)
-		{
-			setState(() => _score = value);
-		}
-	}
-
-	void onServerInitials(String initials)
-	{
-		if(_initials != initials)
-		{
-			setState(() => _initials = initials);
-		}
-	}
-
-	static const int statsDropSeconds = 15;
-
-	void gameOver(bool isHighScore, bool didDie, int score, int lifeScore, int rank, int lives, double progress)
-	{
-		showGameOver(isHighScore, didDie);
-		setState(()
-		{
-			_statsScore = max(score, 0);
-			_statsLifeScore = lifeScore;
-			_statsRank = rank;
-			_statsProgress = progress;
-			_statsLives = max(0, lives);
-			_showStats = true;
-			_statsTime = new DateTime.now().add(const Duration(seconds:1));
-		});
-		
-		_highScoreTimer = new Timer(const Duration(seconds:statsDropSeconds), ()
-		{
-			setState(()
-			{
-				_showStats = false;
-			});
-		});
-	}
-
-	// Should be called within a set state.
-	resetSceneMessage()
-	{
-		if(_isPlaying)
-		{
-			return;
-		}
-		String message = _arePlayersReady.fold<int>(0, (int count, bool value) { if(value) { count++; } return count;} ) >= 2 ? "Come on, we've got a deadline to meet!" : _waitingMessage;
-		if(message != _sceneMessage)
-		{
-			_sceneMessage = message;
-		}
-	}
-
-	set arePlayersReady(List<bool> readyList)
-	{
-		setState(()
-		{
-			_arePlayersReady = readyList;
-			resetSceneMessage();
-		});
-	}
-
-	set isReady(bool isIt)
-	{
-		setState(() => _isReady = isIt);
-	}
-
-	final TextEditingController _ipInputController = new TextEditingController();
-
-	void _issueCommand(String taskType, int value)
-	{
-		if(_client == null)
-		{
-			return;
-		}
-		print("SEND COMMAND $taskType $value");
-		_client.sendCommand(taskType, value);
-	}
-
-	void _onInitialsSet(String initials)
-	{
-		_client.initials = initials;
-	}
-
-    onSocketMessage(jsonMsg)
+    _backToLobby(Game game)
     {
-        var payload = jsonMsg['payload'];
-        String msg = jsonMsg['message'];
-
-        var gameActive = jsonMsg['gameActive'];
-        var inGame = jsonMsg['inGame'];
-        var isClientReady = jsonMsg['isReady'];
-        var didClientMarkStart = jsonMsg['markedStart'];
-        
-        if(gameActive is bool && inGame is bool)
+        game.backToLobby();
+        setState(()
         {
-            setGameStatus(gameActive, inGame, isClientReady, didClientMarkStart);
-        }
-        
-        switch(msg)
-        {
-            case "talk":
-                onTalk(payload as String);
-                break;
-            case "commandsList":
-                onGameStart(payload as List);
-                break;
-            case "gameOver":
-                var isHighScore = payload["highscore"];
-                var didDie = payload["died"];
-                var score = payload["score"];
-                var lifeScore = payload["lifeScore"];
-                var rank = payload["rank"];
-                var lives = payload["lives"];
-                var progress = payload["progress"];
-                if(isHighScore is bool && didDie is bool && score is int && lifeScore is int && rank is int && lives is int && progress is double)
-                {
-                    gameOver(isHighScore, didDie, score, lifeScore, rank, lives, progress);
-                }
-                break;
-            case "newTask":
-                onNewTask(payload as Map);
-                break;
-            case "playerList":
-                List<bool> boolList = [];
-                for(var b in payload) // Workaround for Dart throw
-                {
-                    if(b is bool) boolList.add(b);
-                }
-                arePlayersReady = boolList;
-                break;
-            case "contribution":
-                onScoreContribution(payload as int);
-                break;
-            case "taskFail":
-                onTaskFail(payload as String);
-                break;
-            case "taskComplete":
-                onTaskComplete(payload as String);
-                break;
-            case "teamLives":
-                onLivesChanged(payload as int);
-                break;
-            case "score":
-                onScoreChanged(payload as int);
-                break;
-            case "initials":
-                onServerInitials(payload as String);
-                break;
-            default:
-                print("UNKNOWN MESSAGE: $jsonMsg");
-                break;
-        }
+            _panelController.reverse();
+        });
     }
 
+	static const int statsDropSeconds = 15;
+	final TextEditingController _ipInputController = new TextEditingController();
+    
 	@override
 	Widget build(BuildContext context) 
 	{
-		// Hide Sofkteys&Status bar
+        final Game game = GameProvider.of(context);
+        if(notifier == null && !game.isInGame.hasListeners)
+        {
+            /// Check if the current notifier has any listeners and 
+            /// register our one for swapping the state of the app
+            /// upon game start
+            this.notifier = game.isInGame;
+            notifier.addListener(_onGameStateChanged);
+        }
+		/// Hide Sofkteys&Status bar
 		SystemChrome.setEnabledSystemUIOverlays([]);
 		return new Listener(
-			onPointerDown: 
-				(PointerDownEvent ev)
+            /// The Terminal app has a hidden menu accessible via a triple-tap
+            /// on the top left corner of the screen. This menu allows users to specify
+            /// an IP address to connect to the server locally.
+			onPointerDown: (PointerDownEvent ev)
 				{
 					setState(() 
 					{
@@ -589,9 +229,9 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 														String ip = _ipInputController.text;
 														if(validateIpAddress(ip))
 														{
-															if(_client != null)
+															if(game.client != null)
 															{
-																_client.address = ip;
+																game.client.address = ip;
 															}
 															Navigator.of(context).pop();
 														}
@@ -621,102 +261,115 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 						top:0.0,
 						bottom:0.0,
 						right:0.0, 
-						child:new Container
+						child: new Container
 						(
 							padding: new EdgeInsets.all(12.0),
-							decoration:new DottedGrid(),
-							child:new Container
+							decoration: new DottedGrid(),
+							child: new Container
 							(
 								decoration: new BoxDecoration(border: new Border.all(color: const Color.fromARGB(127, 72, 196, 206)), borderRadius: new BorderRadius.circular(3.0)),
 								padding: new EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 6.0),
-								child: new Column
-								(
-									children: 
-									[
-										// Title Row
-										new Row(children: 
-											[	
-												new Text(_isConnected ? "SYSTEM ONLINE" : "SYSTEM OFFLINE", style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
-												new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5)),
-												new Expanded(child: new Container()),
-												new Text(_batteryLevel, style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4))
-											]
-										),
-										// Two decoration lines underneath the title
-										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
-										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-										_isPlaying ? 
-											new InGame(
-												_gameOpacity, 
-												_backToLobby, 
-												_gameCommands, 
-												_issueCommand, 
-												_randomSeed, 
-												_onInitialsSet, 
-												isOver: _gameOver, 
-												hasWon: _isHighScore, 
-												score: _score, 
-												canEnterInitials: _initials.isEmpty,
-												// Stats
-												showStats: _showStats,
-												statsTime: _statsTime,
-												lifeScore: _statsLifeScore,
-												finalScore: _statsLives * _statsLifeScore + _score,
-												progress: _statsProgress,
-												lives: _statsLives,
-												statsScore: _statsScore,
-												rank: _statsRank,
-												player: this
-												)
-											: new LobbyWidget(_isConnected && _canBeReady, _isReady, _markedStart, _arePlayersReady, _lobbyOpacity, _client?.onReady, _client?.onStart),
-										new Container(
-											margin: new EdgeInsets.only(top: 10.0),
-											alignment: Alignment.bottomRight,
-											child: new Text("V0.2", style: const TextStyle(color: const Color.fromARGB(255, 50, 69, 71), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 12.0, decoration: TextDecoration.none, letterSpacing: 0.9))
-										),
-										new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
-									]
-								)
-							)
-						)
-					),
-					new Positioned
-					(
-						left: 0.0,
-						top: 0.0,
-						bottom: 0.0,
-						width: MediaQuery.of(context).size.width * _panelRatio,
-						child: new Container
-						(
-							child:new Stack
-							(
-								children:<Widget>
-								[
-									new TerminalScene(state:_sceneState, characterIndex: _sceneCharacterIndex, message:_sceneMessage, startTime:_commandStartTime, endTime:_commandEndTime),
-									new Container(
-										margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
-										child: new Row
-										(
-											children: 
-											[
-												new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 1, opacity: _gameOpacity)),
-												new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 2, opacity: _gameOpacity)),
-												new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 3, opacity: _gameOpacity)),
-												new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 4, opacity: _gameOpacity)),
-												new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", _lives < 5, opacity: _gameOpacity)),
-											],
-										)
-									),
-									new Container
-									(
-										margin: new EdgeInsets.only(left:20.0, right:20.0, top:48.0),
-										height: 15.0,
-										child:new CommandTimer(opacity:_gameOpacity, startTime:_commandStartTime, endTime:_commandEndTime)
-									)
-								]	
-							)
-						)
-					),
+								child: new StreamBuilder(
+                                        stream: game.gameConnectionBloc.stream,
+                                        builder: (BuildContext ctx, AsyncSnapshot<ConnectionInfo> snapshot)
+                                        {
+                                            ConnectionInfo ci = snapshot.data;
+                                            if(ci == null)
+                                            {
+                                                return Container();
+                                            }
+                                            String msg = snapshot.data.isConnected ? "SYSTEM ONLINE" : "SYSTEM OFFLINE";
+                                            return new Column
+                                                    (children: 
+                                                        [
+                                                            /// Title Row
+                                                            new Row(children: 
+                                                                [
+                                                                    new Text(msg, style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
+                                                                    new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5)),
+                                                                    new Expanded(child: new Container()),
+                                                                    new Text(_batteryLevel, style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4))
+                                                                ]
+                                                            ),
+                                                            /// Two decoration lines underneath the title
+                                                            new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
+                                                            new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
+                                                            ci.isPlaying ? 
+                                                                new InGame(_gameOpacity, () => _backToLobby(game), _randomSeed) :
+                                                                new LobbyWidget(ci.isConnected && ci.canBeReady, ci.isReady, ci.markedStart, ci.arePlayersReady, _lobbyOpacity, game.client?.onReady, game.client?.onStart),
+                                                            new Container(
+                                                                margin: new EdgeInsets.only(top: 10.0),
+                                                                alignment: Alignment.bottomRight,
+                                                                child: new Text("V0.2", style: const TextStyle(color: const Color.fromARGB(255, 50, 69, 71), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 12.0, decoration: TextDecoration.none, letterSpacing: 0.9))
+                                                            ),
+                                                            new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
+                                                        ]
+                                                    );
+                                        }
+                                
+                                )
+                            )
+                        )
+                    ),
+                    new Positioned
+                    (
+                        left: 0.0,
+                        top: 0.0,
+                        bottom: 0.0,
+                        width: MediaQuery.of(context).size.width * _panelRatio,
+                        child: new Container
+                        (
+                            child: new StreamBuilder(
+                                stream: game.sceneBloc.stream,
+                                builder: (BuildContext ctx, AsyncSnapshot<SceneInfo> snapshot)
+                                {
+                                    SceneInfo si = snapshot.data;
+                                    if (si == null)
+                                    {
+                                        return Container();
+                                    }
+                                    return new Stack
+                                        (
+                                            children:<Widget>
+                                            [
+                                                new TerminalScene(state:si.sceneState, characterIndex: si.sceneCharacterIndex, message:si.sceneMessage, startTime:si.commandStartTime, endTime:si.commandEndTime),
+                                                new Container(
+                                                    margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
+                                                    child: new StreamBuilder(
+                                                        stream: game.gameStatsBloc.stream,
+                                                        builder: (BuildContext ctx, AsyncSnapshot<GameStatistics> snapshot)
+                                                        {
+                                                            GameStatistics gs = snapshot.data;
+                                                            if(gs == null)
+                                                            {
+                                                                return Container();
+                                                            }
+                                                            return new Row
+                                                            (
+                                                                children: 
+                                                                [
+                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", gs.lives < 1, opacity: _gameOpacity)),
+                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", gs.lives < 2, opacity: _gameOpacity)),
+                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", gs.lives < 3, opacity: _gameOpacity)),
+                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", gs.lives < 4, opacity: _gameOpacity)),
+                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", gs.lives < 5, opacity: _gameOpacity)),
+                                                                ],
+                                                            );
+                                                        }
+                                                    )
+                                                ),
+                                                new Container
+                                                (
+                                                    margin: new EdgeInsets.only(left:20.0, right:20.0, top:48.0),
+                                                    height: 15.0,
+                                                    child:new CommandTimer(opacity:_gameOpacity, startTime: si.commandStartTime, endTime: si.commandEndTime)
+                                                )
+                                            ]	
+                                        );
+                                }
+                            )
+                        )
+                    ),
 					new Positioned
 					(
 						left: 0.0,

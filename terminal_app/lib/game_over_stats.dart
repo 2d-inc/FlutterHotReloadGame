@@ -1,8 +1,9 @@
-import "package:flutter/material.dart";
 import "dart:ui" as ui;
 import "dart:math";
-import "package:flare/flare.dart" as flr;
 import "dart:typed_data";
+import "package:flare/flare.dart" as flr;
+import "package:flutter/material.dart";
+import "game/game_provider.dart";
 
 abstract class AudioPlayerDelegate
 {
@@ -18,7 +19,6 @@ class GameStats extends LeafRenderObjectWidget
 	final int totalScore;
 	final int lifeScore;
 	final DateTime showTime;
-	final AudioPlayerDelegate player;
 
 	GameStats(
 		this.showTime,
@@ -28,7 +28,6 @@ class GameStats extends LeafRenderObjectWidget
 		this.rank,
 		this.totalScore,
 		this.lifeScore,
-		this.player,
 		{
 			Key key, 
 		}): super(key: key);
@@ -36,7 +35,8 @@ class GameStats extends LeafRenderObjectWidget
 	@override
 	RenderObject createRenderObject(BuildContext context) 
 	{
-		return new GameStatsRenderObject(showTime, progress, score, lives, rank, totalScore, lifeScore, player);
+
+		return new GameStatsRenderObject(showTime, progress, score, lives, rank, totalScore, lifeScore, GameProvider.of(context));
 	}
 
 	@override
@@ -48,7 +48,6 @@ class GameStats extends LeafRenderObjectWidget
 					..lives = lives
 					..rank = rank
 					..totalScore = totalScore
-					..player = player
 					..lifeScore = lifeScore;
 	}
 }

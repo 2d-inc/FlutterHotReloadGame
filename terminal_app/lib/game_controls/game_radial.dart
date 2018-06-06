@@ -3,16 +3,17 @@ import "dart:ui" as ui;
 import "dart:math";
 import "game_colors.dart";
 import "game_command_widget.dart";
+import "../game/game.dart";
+import "../game/game_provider.dart";
 
 class GameRadial extends StatefulWidget implements GameCommand
 {
-	GameRadial.make(this.issueCommand, this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
+	GameRadial.make(this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
 	
 	final String taskType;
 	final int value;
 	final int min;
 	final int max;
-	final IssueCommandCallback issueCommand;
 
 	@override
 	_GameRadialState createState() => new _GameRadialState(value.toDouble(), min, max);
@@ -86,7 +87,7 @@ class _GameRadialState extends State<GameRadial> with SingleTickerProviderStateM
 		return (minValue + (1.0/(NumRadialTicks-1) * i.clamp(0, NumRadialTicks-1)) * (maxValue-minValue)).round();
 	}
 
-	void dragStart(DragStartDetails details)
+	void dragStart(DragStartDetails details, Game game)
 	{
 		RenderBox ro = context.findRenderObject();
 		if(ro == null)
@@ -143,7 +144,10 @@ class _GameRadialState extends State<GameRadial> with SingleTickerProviderStateM
 			..animateTo(1.0, curve:Curves.easeInOut);
 
 		targetValue = closestValue;
-		widget.issueCommand(widget.taskType, targetValue);
+        if(game.issueCommand != null)
+        {
+		    game.issueCommand(widget.taskType, targetValue);
+        }
 	}
 
 	initState() 
@@ -169,8 +173,9 @@ class _GameRadialState extends State<GameRadial> with SingleTickerProviderStateM
 	@override
 	Widget build(BuildContext context) 
 	{
+        Game game = GameProvider.of(context);
 		return new GestureDetector(
-			onVerticalDragStart: dragStart,
+			onVerticalDragStart: (details) => dragStart(details, game),
 			child: new Container(
 				alignment:Alignment.center,
 				child:new GameRadialNotches((value-minValue)/(maxValue-minValue), minValue, maxValue)

@@ -3,13 +3,14 @@ import "dart:ui" as ui;
 import "game_colors.dart";
 import "game_command_widget.dart";
 import "game_radial.dart";
+import "../game/game.dart";
+import "../game/game_provider.dart";
 
 class GameSlider extends StatefulWidget implements GameCommand
 {
-	GameSlider.make(this.issueCommand, this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
+	GameSlider.make(this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
 	
 	GameSlider.fromRadial(GameRadial radial) :
-		issueCommand = radial.issueCommand,
 		taskType = radial.taskType,
 		value = radial.value, min = radial.min, max = radial.max;
 
@@ -17,7 +18,6 @@ class GameSlider extends StatefulWidget implements GameCommand
 	final int value;
 	final int min;
 	final int max;
-	final IssueCommandCallback issueCommand;
 
 	@override
 	GameSliderState createState() => new GameSliderState(value.toDouble(), min, max);
@@ -84,9 +84,13 @@ class GameSliderState extends State<GameSlider> with SingleTickerProviderStateMi
 		dragToGlobal(details.globalPosition);
 	}
 
-	void dragEnd(DragEndDetails details)
+	void dragEnd(DragEndDetails details, BuildContext context)
 	{
-		widget.issueCommand(widget.taskType, targetValue);
+        Game game = GameProvider.of(context);
+        if(game.issueCommand != null)
+        {
+		    game.issueCommand(widget.taskType, targetValue);
+        }
 	}
 
 	initState() 
@@ -115,7 +119,7 @@ class GameSliderState extends State<GameSlider> with SingleTickerProviderStateMi
 		return new GestureDetector(
 			onVerticalDragStart: dragStart,
 			onVerticalDragUpdate: dragUpdate,
-			onVerticalDragEnd: dragEnd,
+			onVerticalDragEnd: (details) => dragEnd(details, context),
 			child: new Container(
 				alignment:Alignment.center,
 				child:new GameSliderNotches((value-minValue)/(maxValue-minValue), minValue, maxValue)

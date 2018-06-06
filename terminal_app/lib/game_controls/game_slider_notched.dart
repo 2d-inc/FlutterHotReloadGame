@@ -4,13 +4,13 @@ import "dart:math";
 import "game_colors.dart";
 import "game_command_widget.dart";
 import "game_radial.dart";
+import "../game/game_provider.dart";
 
 class GameSliderNotched extends StatefulWidget implements GameCommand
 {
-	GameSliderNotched.make(this.issueCommand, this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
+	GameSliderNotched.make(this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
 
 	GameSliderNotched.fromRadial(GameRadial radial) :
-		issueCommand = radial.issueCommand,
 		taskType = radial.taskType,
 		value = radial.value, min = radial.min, max = radial.max;
 
@@ -18,7 +18,6 @@ class GameSliderNotched extends StatefulWidget implements GameCommand
 	final int min;
 	final int max;
 	final String taskType;
-	final IssueCommandCallback issueCommand;
 
 	@override
 	_GameSliderNotchedState createState() => new _GameSliderNotchedState(value, min, max);
@@ -76,7 +75,7 @@ class _GameSliderNotchedState extends State<GameSliderNotched> with TickerProvid
 
 	}
 
-	void commitValueChange()
+	void commitValueChange(BuildContext context)
 	{
 		if(targetValue != targetHighlightValue)
 		{
@@ -91,7 +90,7 @@ class _GameSliderNotchedState extends State<GameSliderNotched> with TickerProvid
 				..value = 0.0
 				..animateTo(1.0, curve:Curves.linear);
 		}
-		widget.issueCommand(widget.taskType, targetHighlightValue);
+		GameProvider.of(context).issueCommand(widget.taskType, targetHighlightValue);
 	}
 
 	@override
@@ -157,7 +156,7 @@ class _GameSliderNotchedState extends State<GameSliderNotched> with TickerProvid
 									decoration: TextDecoration.none)
 								)
 							),
-							new Expanded(child: new NotchedSlider((value-minValue)/(maxValue-minValue), (highlightValue-minValue)/(maxValue-minValue), valueChanged, commitValueChange)),
+							new Expanded(child: new NotchedSlider((value-minValue)/(maxValue-minValue), (highlightValue-minValue)/(maxValue-minValue), valueChanged, () => commitValueChange(context))),
 							new Container(
 								margin: new EdgeInsets.only(left: 10.0), 
 								child:new Text(maxValue.toString(), 
