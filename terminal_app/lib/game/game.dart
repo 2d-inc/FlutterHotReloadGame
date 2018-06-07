@@ -15,8 +15,9 @@ import "blocs/in_game_bloc.dart";
 import "blocs/game_stats_bloc.dart";
 import "blocs/connection_bloc.dart";
 import "blocs/scene_bloc.dart";
+import "../dopamine_delegate.dart";
 
-class Game implements SocketDelegate, AudioPlayerDelegate
+class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 {
 	static const int statsDropSeconds = 15;
     static const String _waitingMessage = "Waiting for 2-4 players!";
@@ -28,6 +29,9 @@ class Game implements SocketDelegate, AudioPlayerDelegate
     final GameStatsBloc gameStatsBloc;
     final GameConnectionBloc gameConnectionBloc;
     final SceneBloc sceneBloc;
+
+    DopamineScoreCallback onScored;
+    DopamineLifeLostCallback onLifeLost;
 
     Timer _highscoreTimer;
     List<AudioPlayer> _audioPlayers = new List<AudioPlayer>();
@@ -271,10 +275,10 @@ class Game implements SocketDelegate, AudioPlayerDelegate
 
 	void onScoreContribution(int score)
 	{
-		// if(onScored != null)
-		// {
-		// 	onScored(score);
-		// }
+		if(onScored != null)
+		{
+			onScored(score);
+		}
 		if(score < 0)
 		{
 			playAudio("assets/audio/fail.wav");
@@ -304,10 +308,10 @@ class Game implements SocketDelegate, AudioPlayerDelegate
 			if(value < l)
 			{
 				playAudio("assets/audio/life_lost.wav");
-                // if(onLifeLost != null)
-                // {
-                //     onLifeLost();
-                // }
+                if(onLifeLost != null)
+                {
+                    onLifeLost();
+                }
 			}
             gameStatsBloc.setLast(lives: value);
 		}
@@ -357,14 +361,11 @@ class Game implements SocketDelegate, AudioPlayerDelegate
 		var digest = sha1.convert(utf8.encode(from));	
 		String filename = "${dir.path}/${digest.toString()}";
 		final file = new File(filename);
-        print("LOOKING FOR FILE: $filename, $from");
 		if(await file.exists())
 		{
-            print("FILE FOUND!");
 			return filename;
 		}
 		
-        print("FILE NOT FOUND, CREATING!");
 		await file.writeAsBytes(data.buffer.asUint8List().toList());
 		return filename;
 	}

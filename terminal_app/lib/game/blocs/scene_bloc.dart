@@ -17,6 +17,7 @@ class SceneInfo
         commandEndTime = commandEndTime ?? new DateTime.now();
 }
 
+/// This BLOC is used to communicate with the [TerminalScene] and [CommandTimer] widgets.
 class SceneBloc
 {
     SceneInfo _last = SceneInfo.seed();
@@ -31,8 +32,7 @@ class SceneBloc
 
     setLast({ String sceneMessage, TerminalSceneState sceneState, DateTime commandStartTime, DateTime commandEndTime, int sceneCharacterIndex })
     {
-        // Check if parameter was provided, otherwise use last
-        var info = new SceneInfo(
+       var info = new SceneInfo(
             sceneMessage ?? last.sceneMessage, 
             commandStartTime ?? last.commandStartTime,
             commandEndTime ?? last.commandEndTime,
@@ -45,6 +45,7 @@ class SceneBloc
 
     SceneInfo get last => _last;
     
+    /// The [TerminalScene] relies on some parameters to be null when reset or not available.
     nullifyParams(bool message, bool start, bool end)
     {
         if(message || start || end)

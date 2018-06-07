@@ -7,7 +7,6 @@ import "package:flutter/foundation.dart";
 import "package:flutter/rendering.dart";
 import "game_controls/game_slider.dart";
 import "game_controls/game_radial.dart";
-import "game_controls/game_command_widget.dart";
 import "game_over_stats.dart";
 import "high_score.dart";
 import "game_over.dart";
@@ -39,10 +38,14 @@ class InGame extends StatelessWidget
         this._seed, 
         { Key key } ) : super(key: key);
 
+    /// This function builds a 3x2 grid of elements. 
+    /// In any game there'll be at most 5 elements in the grid, thus one widget
+    /// is going to occupy two vertical cells of the grid.
 	Widget buildGrid(BuildContext context, BoxConstraints constraints)
 	{
-		// Decide which elements have the highest priority
-		PriorityQueue pq = new PriorityQueue((e1, e2) {
+		PriorityQueue pq = new PriorityQueue(
+		/// Define how the priority is chosen when building the commands grid.
+        (e1, e2) {
 			int p1 = e1['priority'];
 			int p2 = e2['priority'];
 			return p2-p1;
@@ -56,6 +59,10 @@ class InGame extends StatelessWidget
 			String taskType = description["taskType"];
 			Widget w;
 			
+            /// Define the priority of the given elemtns as follows:
+            /// 1. 3 Buttons Control
+            /// 2. Radial control
+            /// 3. Game Slider & 2 Buttons Control
 			switch(type)
 			{
 				case "GameBinaryButton":
@@ -89,6 +96,8 @@ class InGame extends StatelessWidget
 		}
 
 		const int padding = 50;
+        /// Get the size of this Box by querying its constraints.
+        /// Then define the the constants needed to build the actual [Widget]s
 		final Size gridSize = constraints.biggest;
 		final double cellWidth = (gridSize.width - padding) / 2;
 		final double cellHeight = (gridSize.height - padding * 2) / 3;
@@ -98,7 +107,7 @@ class InGame extends StatelessWidget
 		int numRows = 3;
 		double left = 0.0;
 		double top = 0.0;
-		// Generate the list of widget positions
+		/// Generate the list of widget positions starting from the top-left corner.
 		List<Offset> positions = <Offset>[];
 		for(int i = 0; i < numCols; i++)
 		{
@@ -112,16 +121,22 @@ class InGame extends StatelessWidget
 			}
 		}
 		List<Widget> grid = [];
+        /// Start by placing the highest priority widget in a random 'double' vertical cell.
 		Random rand = new Random(_seed);
 		int randCol = rand.nextInt(numCols);
+        /// Can't place a 'double' vertical widget in the last row.
 		int randRow = rand.nextInt(numRows - 1);
 		int biggerIndex = randCol * numRows + randRow;
+        /// Extract the first position from the queue.
+        /// Remove also the following element since we're occupying two rows.
 		Offset bigStart = positions.removeAt(biggerIndex);
-		positions.removeAt(biggerIndex); // Remove also the following element since we're occupying two rows
+		positions.removeAt(biggerIndex); 
 		var biggest = pq.removeFirst();
 		Widget bw = biggest['widget'];
 		if(bw is GameBinaryButton)
 		{
+            /// If the highest priority widget in question is a [GameBinaryButton],
+            /// by passing it this flag, it'll be able to draw and occupy its vertical space fully.
 			bw.isTall = true;
 		}
 		grid.add(new Positioned(
@@ -132,6 +147,8 @@ class InGame extends StatelessWidget
 			child: new TitledCommandPanel(biggest['name'], bw, isExpanded: true)
 		));
 
+        /// Iterate until the queue and all the widgets in the [gridDescription] have been placed
+        /// in the available spots.
 		while(pq.isNotEmpty)
 		{
 			var next = pq.removeFirst();
@@ -157,7 +174,7 @@ class InGame extends StatelessWidget
     {
         if(gd != _gridDescription)
         {
-            // Keep the list final
+            /// By clearing and re-inserting all the elements, the list can be final
             _gridDescription.clear();
             _gridDescription.addAll(gd);
         }
@@ -177,6 +194,7 @@ class InGame extends StatelessWidget
             margin:status.isOver ? new EdgeInsets.all(80.0) : new EdgeInsets.only(top:43.0), 
             child:
                 status.isOver ? 
+                    /// Once the game is over, the game screen will display the stats.
                     new Column( children:<Widget>
                     [
                         new Expanded(child:
@@ -203,8 +221,8 @@ class InGame extends StatelessWidget
                         ),
                         status.hasWon ? new HighScore(_onRetry) : new GameOver(_onRetry)
                     ])
-                    : 
-                    new LayoutBuilder(builder: buildGrid)
+                    /// If the game has just started, build the commands on the screen.
+                    :  new LayoutBuilder(builder: buildGrid)
         );
     }
 
@@ -224,91 +242,4 @@ class InGame extends StatelessWidget
 				);
     }
 
-}
-
-class ControlGrid extends MultiChildRenderObjectWidget
-{
-	ControlGrid({
-    	Key key,
-		List<Widget> children: const <Widget>[],
-	}) : super(key: key, children: children);
-
-	@override
-	RenderControlGrid createRenderObject(BuildContext context) 
-	{
-		return new RenderControlGrid();
-	}
-
-	@override
-	void updateRenderObject(BuildContext context, covariant RenderControlGrid renderObject) 
-	{
-	}
-
-	
-	@override
-	void debugFillProperties(DiagnosticPropertiesBuilder description) 
-	{
-		super.debugFillProperties(description);
-	}
-}
-
-class ControlGridParentData extends ContainerBoxParentData<RenderBox> 
-{
-
-}
-/*class Flexible extends ParentDataWidget<Flex> {*/
-class RenderControlGrid extends RenderBox with ContainerRenderObjectMixin<RenderBox, ControlGridParentData>, RenderBoxContainerDefaultsMixin<RenderBox, ControlGridParentData> 
-{
-	 @override
-	bool get sizedByParent => true;
-
-	@override
-	void performResize() 
-	{
-		size = constraints.biggest;
-	}
-
-	@override
-	void setupParentData(RenderBox child) 
-	{
-    	if (child.parentData is! ControlGridParentData)
-		{
-			child.parentData = new ControlGridParentData();
-		}
-	}
-	@override
-  	void performLayout() 
-	{
-		// For now, just place them in a grid. Later we need to use MaxRects to figure out the best layout as some cells will be double height.
-		RenderBox child = firstChild;
-
-		const double padding = 50.0;
-		const double numColumns = 2.0;
-		final double childWidth = (size.height - (padding*(numColumns-1)))/numColumns;
-		final double rowHeight = childWidth;
-
-		int idx = 0;
-    	while (child != null) 
-		{
-			Constraints constraints = new BoxConstraints(minWidth: childWidth, maxWidth: childWidth, minHeight:rowHeight, maxHeight:rowHeight);
-			child.layout(constraints, parentUsesSize: true);
-			final ControlGridParentData childParentData = child.parentData;
-			childParentData.offset = new Offset((idx%numColumns) * (childWidth+padding), (idx/numColumns).floor()*(rowHeight+padding));
-        	child = childParentData.nextSibling;
-			idx++;
-		}
-	}
-
-	 @override
-	bool hitTestChildren(HitTestResult result, { Offset position }) 
-	{
-		return defaultHitTestChildren(result, position: position);
-	}
-
-	@override
-	void paint(PaintingContext context, Offset offset)
-	{
-		//context.canvas.drawRect(offset & size, new Paint()..color = new Color.fromARGB(255, 125, 152, 165));
-		defaultPaint(context, offset);
-	}
 }

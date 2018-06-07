@@ -1,7 +1,6 @@
 import "dart:async";
 import "package:rxdart/rxdart.dart";
 
-
 /// The [GameStatistics] object servers the purpose of maintaing all the data
 /// relevant to the game stats. This is going to be passed to Widgets such as 
 /// [GameOverStats] widget that is visible at the end of a game.

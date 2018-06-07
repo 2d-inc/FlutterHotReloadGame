@@ -61,8 +61,8 @@ class Terminal extends StatefulWidget
 	_TerminalState createState() => new _TerminalState();
 }
 
-class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin implements DopamineDelegate
-{	
+class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
+{
 	static const double gamePanelRatio = 0.33;
 	static const double lobbyPanelRatio = 0.66;
 	static const MethodChannel platform = const MethodChannel('2d.hot_reload.io/android');
@@ -72,10 +72,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	double _gameOpacity = 0.0;
     
     ValueNotifier<bool> notifier;
-
-    DopamineScoreCallback onScored;
-    DopamineLifeLostCallback onLifeLost;
-
+    
 	AnimationController _panelController;
 	VoidCallback _fadeCallback;
 	Animation<double> _slideAnimation;
@@ -344,15 +341,18 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
                                                             {
                                                                 return Container();
                                                             }
+
+                                                            int ls = gs.lives;
+
                                                             return new Row
                                                             (
                                                                 children: 
                                                                 [
-                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", gs.lives < 1, opacity: _gameOpacity)),
-                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", gs.lives < 2, opacity: _gameOpacity)),
-                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", gs.lives < 3, opacity: _gameOpacity)),
-                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", gs.lives < 4, opacity: _gameOpacity)),
-                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", gs.lives < 5, opacity: _gameOpacity)),
+                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 1, opacity: _gameOpacity)),
+                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 2, opacity: _gameOpacity)),
+                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 3, opacity: _gameOpacity)),
+                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 4, opacity: _gameOpacity)),
+                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 5, opacity: _gameOpacity)),
                                                                 ],
                                                             );
                                                         }
@@ -376,7 +376,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 						top: 0.0,
 						bottom: 0.0,
 						right: 0.0,
-						child: new TerminalDopamine(this, touchPosition:_lastGlobalTouchPosition),
+                        /// The [TerminalDopamine] Widget wraps a [TerminalDopamineRenderObject] in order to 
+                        /// display flashing messages in the [Terminal] Widget in the Main Screen. 
+                        /// It necessitates of a [DopaminDelegate].
+						child: new TerminalDopamine(game, touchPosition:_lastGlobalTouchPosition),
 					)
 				],
 			)

@@ -3,6 +3,8 @@ import "package:rxdart/rxdart.dart";
 
 class InGameStatus
 {
+    /// The Server sends over the [gridDescription] which is the list of commands that a 
+    /// player will have on the screen for a single game.
     final List gridDescription;
     final bool isOver;
     final bool hasWon;
@@ -25,6 +27,7 @@ class InGameStatus
     );
 }
 
+/// This BLOC is used to communicate with the [InGame] widget.
 class InGameBloc
 {
     InGameStatus _last = InGameStatus.seed();

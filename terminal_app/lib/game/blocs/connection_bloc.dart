@@ -18,11 +18,12 @@ class ConnectionInfo
             this.isReady: false,
             this.canBeReady: false,
             this.markedStart: false,
-            this.arePlayersReady: const [false] // Value corresponding to this player not being ready.
+            this.arePlayersReady: const [false] /// Initialization value corresponding to the local player not being ready.
         }
     );
 }
 
+/// This BLOC is used to communicate with the [_TerminalState] and [LobbyWidget].
 class GameConnectionBloc
 {
     ConnectionInfo _last = ConnectionInfo.seed();
@@ -38,16 +39,16 @@ class GameConnectionBloc
 
     setLast({ bool isConnected, bool isPlaying, bool isReady, bool canBeReady, bool markedStart, List<bool> arePlayersReady })
     {
-        // Check if parameter was provided, otherwise use last
-        isConnected = isConnected ?? last.isConnected;
-        isPlaying = isPlaying ?? last.isPlaying;
-        isReady = isReady ?? last.isReady;
-        canBeReady = canBeReady ?? last.canBeReady;
-        markedStart = markedStart ?? last.markedStart;
-        arePlayersReady = arePlayersReady ?? last.arePlayersReady;
-        var info = new ConnectionInfo(isConnected, isPlaying, isReady, canBeReady, markedStart, arePlayersReady);
-        _last = info;
-        _connectionInfoController.add(info);
+        var ci = new ConnectionInfo(
+            isConnected ?? last.isConnected, 
+            isPlaying ?? last.isPlaying, 
+            isReady ?? last.isReady, 
+            canBeReady ?? last.canBeReady, 
+            markedStart ?? last.markedStart, 
+            arePlayersReady ?? last.arePlayersReady
+        );
+        _last = ci;
+        _connectionInfoController.add(ci);
     }
 
     ConnectionInfo get last => _last;
