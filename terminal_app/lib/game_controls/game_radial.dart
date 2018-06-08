@@ -3,9 +3,9 @@ import "dart:ui" as ui;
 
 import "package:flutter/material.dart";
 
+import "../decorations/game_colors.dart";
 import "../game/game.dart";
 import "../game/game_provider.dart";
-import "game_colors.dart";
 import "game_command_widget.dart";
 
 class GameRadial extends StatefulWidget implements GameCommand

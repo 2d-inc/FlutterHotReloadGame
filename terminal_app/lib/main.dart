@@ -6,19 +6,19 @@ import "package:flutter/material.dart";
 import "package:flutter/rendering.dart";
 import 'package:flutter/services.dart';
 
-import "character_scene.dart";
-import "command_timer.dart";
 import "decorations/dotted_grid.dart";
-import "flare_heart_widget.dart";
 import "game/blocs/connection_bloc.dart";
 import "game/blocs/game_stats_bloc.dart";
 import "game/blocs/scene_bloc.dart";
 import "game/game.dart";
 import "game/game_provider.dart";
-import "in_game.dart";
-import "lobby.dart";
-import "socket_client.dart";
-import "terminal_dopamine.dart";
+import "game/widgets/character_scene.dart";
+import "game/widgets/command_timer.dart";
+import "game/widgets/flare_heart_widget.dart";
+import "game/widgets/in_game.dart";
+import "game/widgets/lobby_widget.dart";
+import "game/widgets/terminal_dopamine.dart";
+import "game/socket_client.dart";
 
 void main() 
 {

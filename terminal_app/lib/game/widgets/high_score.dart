@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import "game/blocs/game_stats_bloc.dart";
-import "game/game.dart";
-import "game/game_provider.dart";
+import "../blocs/game_stats_bloc.dart";
+import "../game.dart";
+import "../game_provider.dart";
 import "panel_button.dart";
 
 typedef void StringCallback(String msg);

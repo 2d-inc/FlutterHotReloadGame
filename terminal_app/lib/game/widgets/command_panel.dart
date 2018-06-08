@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import "game_controls/game_colors.dart";
+import "../../decorations/game_colors.dart";
 
 class CommandPanel extends StatelessWidget
 {

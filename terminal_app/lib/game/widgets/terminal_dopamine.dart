@@ -3,7 +3,7 @@ import "dart:ui" as ui;
 import "package:flutter/material.dart";
 import "package:flutter/scheduler.dart";
 
-import "delegates/dopamine_delegate.dart";
+import "../../delegates/dopamine_delegate.dart";
 
 /// A [LeafRenderObjectWidget] is a [Widget] that can be instered into into a Widget tree.
 class TerminalDopamine extends LeafRenderObjectWidget
@@ -236,7 +236,7 @@ class ScoreParagraph
 	bool setLife(double v)
 	{
 		life = v.clamp(0.0, 1.0);
-		double opacity;// = (1.0-life).clamp(0.0, 1.0);
+		double opacity;
 		const double fadeIn = 0.5;
 		const double fadeHold = 0.2;
 		const double fadeOut = 1.0-(fadeIn+fadeHold);

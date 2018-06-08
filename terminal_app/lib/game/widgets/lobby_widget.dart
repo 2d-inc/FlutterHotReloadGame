@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import "../../decorations/game_colors.dart";
 import "command_panel.dart";
-import "game_controls/game_colors.dart";
 import "panel_button.dart";
 import "players_widget.dart";
 

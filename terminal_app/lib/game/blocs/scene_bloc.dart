@@ -2,7 +2,7 @@ import "dart:async";
 
 import "package:rxdart/rxdart.dart";
 
-import "../../character_scene.dart";
+import "../widgets/character_scene.dart";
 
 class SceneInfo
 {
