@@ -4,15 +4,7 @@ import "dart:async";
 import "dart:convert";
 import "package:flutter/foundation.dart";
 import "package:path_provider/path_provider.dart";
-
-typedef void SocketMessageCallback(jsonMessage);
-typedef bool SocketReadyCallback();
-
-class SocketDelegate
-{
-    SocketMessageCallback onMessage;
-    SocketReadyCallback onReady;
-}
+import "delegates/socket_delegate.dart";
 
 class SocketClient
 {

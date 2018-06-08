@@ -1,33 +1,37 @@
-import "dart:io";
-import 'dart:math';
 import 'dart:async';
 import "dart:convert";
-import 'package:flutter/services.dart';
-import "package:uuid/uuid.dart";
-import "package:crypto/crypto.dart";
+import "dart:io";
+import 'dart:math';
+
 import "package:audioplayers/audioplayer.dart";
+import "package:crypto/crypto.dart";
+import 'package:flutter/services.dart';
 import "package:path_provider/path_provider.dart";
-import "../game_over_stats.dart";
-import "../socket_client.dart";
+import "package:uuid/uuid.dart";
+
 import "../character_scene.dart";
-import "blocs/in_game_bloc.dart";
-import "blocs/game_stats_bloc.dart";
+import "../delegates/audio_player_delegate.dart";
+import "../delegates/dopamine_delegate.dart";
+import "../delegates/socket_delegate.dart";
+import "../socket_client.dart";
 import "blocs/connection_bloc.dart";
+import "blocs/game_stats_bloc.dart";
+import "blocs/in_game_bloc.dart";
 import "blocs/scene_bloc.dart";
-import "../dopamine_delegate.dart";
 
 class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 {
 	static const int statsDropSeconds = 15;
     static const String _waitingMessage = "Waiting for 2-4 players!";
 
-    SocketClient _client;
-    SocketMessageCallback onMessage;
-    SocketReadyCallback onReady;
     final InGameBloc inGameBloc;
     final GameStatsBloc gameStatsBloc;
     final GameConnectionBloc gameConnectionBloc;
     final SceneBloc sceneBloc;
+
+    SocketClient _client;
+    SocketMessageCallback onMessage;
+    SocketReadyCallback onReady;
 
     DopamineScoreCallback onScored;
     DopamineLifeLostCallback onLifeLost;

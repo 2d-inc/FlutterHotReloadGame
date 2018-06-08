@@ -4,11 +4,7 @@ import "dart:typed_data";
 import "package:flare/flare.dart" as flr;
 import "package:flutter/material.dart";
 import "game/game_provider.dart";
-
-abstract class AudioPlayerDelegate
-{
-	void playAudio(String url);
-}
+import "delegates/audio_player_delegate.dart";
 
 class GameStats extends LeafRenderObjectWidget
 {

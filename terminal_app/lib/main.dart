@@ -66,23 +66,26 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	static const double gamePanelRatio = 0.33;
 	static const double lobbyPanelRatio = 0.66;
 	static const MethodChannel platform = const MethodChannel('2d.hot_reload.io/android');
+	static const int statsDropSeconds = 15;
+	final TextEditingController _ipInputController = new TextEditingController();
 
+    bool _isPlaying = false;
 	double _panelRatio = 0.66;
 	double _lobbyOpacity = 1.0;
 	double _gameOpacity = 0.0;
     
 	AnimationController _panelController;
-	VoidCallback _fadeCallback;
 	Animation<double> _slideAnimation;
 	Animation<double> _fadeLobbyAnimation;
 	Animation<double> _fadeGameAnimation;
+	VoidCallback _fadeCallback;
 	String _batteryLevel = "LOADING%";
-	Offset _lastGlobalTouchPosition;
-
+	
+    Offset _lastGlobalTouchPosition;
 	int _lastTap = 0;
 	int _tapCount = 0;
+
 	int _randomSeed = 1;
-    bool _isPlaying = false;
 
 	@override
 	initState()
@@ -116,10 +119,13 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 		_panelController.dispose();
 		super.dispose();
 	}
+
 	void onGameStart()
 	{
 		_randomSeed = new Random().nextInt(19890926);
 
+        /// There are three animations that start playing when a Game begins:
+        /// 1. Fade out the lobby widgets by altering their opacity;
 		_fadeLobbyAnimation = new Tween<double>(
 			begin: _lobbyOpacity,
 			end: 0.0,
@@ -129,15 +135,17 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			)
 		);
 
+        /// 2. Slide out the panel by making it occupy 2/3 of the screen;
 		_slideAnimation = new Tween<double>(
 			begin: _panelRatio,
 			end: gamePanelRatio
 		).animate(new CurvedAnimation(
 				parent: _panelController,
-				curve: new Interval(0.34, 0.66, curve: Curves.easeInOut)
+				curve: new Interval(0.34, gamePanelRatio, curve: Curves.easeInOut)
 			)
 		);
 
+        /// 3. Increase the opacity of all the game widgets so they become gradually visible.
 		_fadeGameAnimation = new Tween<double>(
 			begin: _gameOpacity,
 			end: 1.0
@@ -151,7 +159,10 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 
     _backToLobby(Game game)
     {
+        /// Alert the [Game] that the Terminal is showing again the [LobbyWidget].
         game.backToLobby();
+        /// Use the same controller as in [onGameStart()] so that all the animations play in reverse,
+        /// and the [LobbyWidget] is shown instead of [InGame].
         _panelController.reverse();
     }
 
@@ -167,9 +178,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
             _isPlaying = isIt;
         }
     }
-
-	static const int statsDropSeconds = 15;
-	final TextEditingController _ipInputController = new TextEditingController();
 
     Widget inGameHeartsBuilder(BuildContext ctx, AsyncSnapshot<GameStatistics> snapshot)
     {
