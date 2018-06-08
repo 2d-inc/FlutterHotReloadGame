@@ -71,8 +71,6 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	double _lobbyOpacity = 1.0;
 	double _gameOpacity = 0.0;
     
-    ValueNotifier<bool> notifier;
-    
 	AnimationController _panelController;
 	VoidCallback _fadeCallback;
 	Animation<double> _slideAnimation;
@@ -84,6 +82,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	int _lastTap = 0;
 	int _tapCount = 0;
 	int _randomSeed = 1;
+    bool _isPlaying = false;
 
 	@override
 	initState()
@@ -115,20 +114,8 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 	void dispose()
 	{
 		_panelController.dispose();
-        notifier.removeListener(_onGameStateChanged);
 		super.dispose();
 	}
-
-    _onGameStateChanged()
-    {
-        bool isPlaying = notifier.value;
-        print("Game State Changed! $isPlaying");
-        if(isPlaying)
-        {
-            onGameStart();
-        }
-    }
-
 	void onGameStart()
 	{
 		_randomSeed = new Random().nextInt(19890926);
@@ -165,27 +152,120 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
     _backToLobby(Game game)
     {
         game.backToLobby();
-        setState(()
+        _panelController.reverse();
+    }
+
+    set isPlaying(bool isIt)
+    {
+        if(isIt != _isPlaying)
         {
-            _panelController.reverse();
-        });
+            if(isIt)
+            {
+                /// Start the Animation
+                onGameStart();
+            }
+            _isPlaying = isIt;
+        }
     }
 
 	static const int statsDropSeconds = 15;
 	final TextEditingController _ipInputController = new TextEditingController();
+
+    Widget inGameHeartsBuilder(BuildContext ctx, AsyncSnapshot<GameStatistics> snapshot)
+    {
+        GameStatistics gs = snapshot.data;
+        if(gs == null)
+        {
+            return Container();
+        }
+        int ls = gs.lives;
+        return new Row
+        (
+            children: 
+            [
+                new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 1, opacity: _gameOpacity)),
+                new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 2, opacity: _gameOpacity)),
+                new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 3, opacity: _gameOpacity)),
+                new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 4, opacity: _gameOpacity)),
+                new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 5, opacity: _gameOpacity)),
+            ],
+        );
+    }
     
+    Widget characterSceneBuilder(BuildContext ctx, AsyncSnapshot<SceneInfo> snapshot)
+    {
+        SceneInfo si = snapshot.data;
+        if (si == null)
+        {
+            return Container();
+        }
+
+        Game game = GameProvider.of(ctx);
+
+        return new Stack
+            (
+                children:<Widget>
+                [
+                    new TerminalScene(state:si.sceneState, characterIndex: si.sceneCharacterIndex, message:si.sceneMessage, startTime:si.commandStartTime, endTime:si.commandEndTime),
+                    new Container(
+                        margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
+                        child: new StreamBuilder(
+                            stream: game.gameStatsBloc.stream,
+                            builder: inGameHeartsBuilder
+                        )
+                    ),
+                    new Container
+                    (
+                        margin: new EdgeInsets.only(left:20.0, right:20.0, top:48.0),
+                        height: 15.0,
+                        child:new CommandTimer(opacity:_gameOpacity, startTime: si.commandStartTime, endTime: si.commandEndTime)
+                    )
+                ]	
+            );
+    }
+
+    Widget gameColumnBuilder(BuildContext ctx, AsyncSnapshot<ConnectionInfo> snapshot)
+    {
+        ConnectionInfo ci = snapshot.data;
+        if(ci == null)
+        {
+            return Container();
+        }
+        this.isPlaying = ci.isPlaying;
+        Game game = GameProvider.of(ctx);
+        String msg = snapshot.data.isConnected ? "SYSTEM ONLINE" : "SYSTEM OFFLINE";
+        return new Column
+                (children: 
+                    [
+                        /// Title Row
+                        new Row(children: 
+                            [
+                                new Text(msg, style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
+                                new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5)),
+                                new Expanded(child: new Container()),
+                                new Text(_batteryLevel, style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4))
+                            ]
+                        ),
+                        /// Two decoration lines underneath the title
+                        new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
+                        new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
+                        ci.isPlaying ? 
+                            new InGame(_gameOpacity, () => _backToLobby(game), _randomSeed) :
+                            new LobbyWidget(ci.isConnected && ci.canBeReady, ci.isReady, ci.markedStart, ci.arePlayersReady, _lobbyOpacity, game.client?.onReady, game.client?.onStart),
+                        new Container(
+                            margin: new EdgeInsets.only(top: 10.0),
+                            alignment: Alignment.bottomRight,
+                            child: new Text("V0.2", style: const TextStyle(color: const Color.fromARGB(255, 50, 69, 71), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 12.0, decoration: TextDecoration.none, letterSpacing: 0.9))
+                        ),
+                        new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
+                    ]
+                );
+    }
+
 	@override
 	Widget build(BuildContext context) 
 	{
         final Game game = GameProvider.of(context);
-        if(notifier == null && !game.isInGame.hasListeners)
-        {
-            /// Check if the current notifier has any listeners and 
-            /// register our one for swapping the state of the app
-            /// upon game start
-            this.notifier = game.isInGame;
-            notifier.addListener(_onGameStateChanged);
-        }
 		/// Hide Sofkteys&Status bar
 		SystemChrome.setEnabledSystemUIOverlays([]);
 		return new Listener(
@@ -268,42 +348,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 								padding: new EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 6.0),
 								child: new StreamBuilder(
                                         stream: game.gameConnectionBloc.stream,
-                                        builder: (BuildContext ctx, AsyncSnapshot<ConnectionInfo> snapshot)
-                                        {
-                                            ConnectionInfo ci = snapshot.data;
-                                            if(ci == null)
-                                            {
-                                                return Container();
-                                            }
-                                            String msg = snapshot.data.isConnected ? "SYSTEM ONLINE" : "SYSTEM OFFLINE";
-                                            return new Column
-                                                    (children: 
-                                                        [
-                                                            /// Title Row
-                                                            new Row(children: 
-                                                                [
-                                                                    new Text(msg, style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4)),
-                                                                    new Text(" > MILESTONE INITIATED", style: new TextStyle(color: new Color.fromARGB(255, 86, 234, 246), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.5)),
-                                                                    new Expanded(child: new Container()),
-                                                                    new Text(_batteryLevel, style: new TextStyle(color: new Color.fromARGB(255, 167, 230, 237), fontFamily: "Inconsolata", fontSize: 6.0, decoration: TextDecoration.none, letterSpacing: 0.4))
-                                                                ]
-                                                            ),
-                                                            /// Two decoration lines underneath the title
-                                                            new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
-                                                            new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
-                                                            ci.isPlaying ? 
-                                                                new InGame(_gameOpacity, () => _backToLobby(game), _randomSeed) :
-                                                                new LobbyWidget(ci.isConnected && ci.canBeReady, ci.isReady, ci.markedStart, ci.arePlayersReady, _lobbyOpacity, game.client?.onReady, game.client?.onStart),
-                                                            new Container(
-                                                                margin: new EdgeInsets.only(top: 10.0),
-                                                                alignment: Alignment.bottomRight,
-                                                                child: new Text("V0.2", style: const TextStyle(color: const Color.fromARGB(255, 50, 69, 71), fontFamily: "Inconsolata", fontWeight: FontWeight.bold, fontSize: 12.0, decoration: TextDecoration.none, letterSpacing: 0.9))
-                                                            ),
-                                                            new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]),
-                                                        ]
-                                                    );
-                                        }
-                                
+                                        builder: gameColumnBuilder                                
                                 )
                             )
                         )
@@ -318,55 +363,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
                         (
                             child: new StreamBuilder(
                                 stream: game.sceneBloc.stream,
-                                builder: (BuildContext ctx, AsyncSnapshot<SceneInfo> snapshot)
-                                {
-                                    SceneInfo si = snapshot.data;
-                                    if (si == null)
-                                    {
-                                        return Container();
-                                    }
-                                    return new Stack
-                                        (
-                                            children:<Widget>
-                                            [
-                                                new TerminalScene(state:si.sceneState, characterIndex: si.sceneCharacterIndex, message:si.sceneMessage, startTime:si.commandStartTime, endTime:si.commandEndTime),
-                                                new Container(
-                                                    margin: new EdgeInsets.only(left:20.0, right:20.0, top:20.0),
-                                                    child: new StreamBuilder(
-                                                        stream: game.gameStatsBloc.stream,
-                                                        builder: (BuildContext ctx, AsyncSnapshot<GameStatistics> snapshot)
-                                                        {
-                                                            GameStatistics gs = snapshot.data;
-                                                            if(gs == null)
-                                                            {
-                                                                return Container();
-                                                            }
-
-                                                            int ls = gs.lives;
-
-                                                            return new Row
-                                                            (
-                                                                children: 
-                                                                [
-                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 1, opacity: _gameOpacity)),
-                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 2, opacity: _gameOpacity)),
-                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 3, opacity: _gameOpacity)),
-                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 4, opacity: _gameOpacity)),
-                                                                    new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 5, opacity: _gameOpacity)),
-                                                                ],
-                                                            );
-                                                        }
-                                                    )
-                                                ),
-                                                new Container
-                                                (
-                                                    margin: new EdgeInsets.only(left:20.0, right:20.0, top:48.0),
-                                                    height: 15.0,
-                                                    child:new CommandTimer(opacity:_gameOpacity, startTime: si.commandStartTime, endTime: si.commandEndTime)
-                                                )
-                                            ]	
-                                        );
-                                }
+                                builder: characterSceneBuilder
                             )
                         )
                     ),

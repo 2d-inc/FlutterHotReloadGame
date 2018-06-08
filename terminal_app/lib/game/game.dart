@@ -3,7 +3,6 @@ import 'dart:math';
 import 'dart:async';
 import "dart:convert";
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import "package:uuid/uuid.dart";
 import "package:crypto/crypto.dart";
 import "package:audioplayers/audioplayer.dart";
@@ -35,14 +34,12 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 
     Timer _highscoreTimer;
     List<AudioPlayer> _audioPlayers = new List<AudioPlayer>();
-    ValueNotifier<bool> _isInGame;
     
     Game({InGameBloc igb, GameStatsBloc gsb, GameConnectionBloc gcb, SceneBloc sb}) :
         inGameBloc = igb ?? new InGameBloc(),
         gameStatsBloc = gsb ?? new GameStatsBloc(),
         gameConnectionBloc = gcb ?? new GameConnectionBloc(),
-        sceneBloc = sb ?? new SceneBloc(),
-        _isInGame = ValueNotifier(false)
+        sceneBloc = sb ?? new SceneBloc()
     {
         onMessage = onSocketMessage;
         onReady = handleReady;
@@ -84,10 +81,6 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
         if(_client != null)
         {
             _client.dispose();
-        }
-        if(_isInGame != null)
-        {
-            _isInGame.dispose();
         }
     }
 
@@ -195,9 +188,6 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 			return;
 		}
 
-        /// Notify [_TerminalState] that this game is ready to start
-        _isInGame.value = true;
-        
         gameConnectionBloc.setLast(isPlaying: true);
         inGameBloc.setLast(gridDescription: commands, isOver: false, hasWon: false);
         
@@ -240,8 +230,6 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
         sceneBloc.nullifyParams(true, true, true);
         /// Update the stream with the nulled values.
         sceneBloc.setLast();
-        /// Notify [_TerminalState] that this game is over
-        _isInGame.value = false;
 	}
 
 
@@ -392,5 +380,4 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 
     get client => _client;
     get connection => gameConnectionBloc.last;
-    ValueNotifier<bool> get isInGame => _isInGame;
 }
