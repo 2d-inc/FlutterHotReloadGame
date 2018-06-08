@@ -1,22 +1,24 @@
 import 'dart:async';
-import "package:flutter/material.dart";
+import "dart:math";
+
 import "package:flutter/foundation.dart";
+import "package:flutter/material.dart";
 import "package:flutter/rendering.dart";
 import 'package:flutter/services.dart';
-import "decorations/dotted_grid.dart";
-import "lobby.dart";
-import "in_game.dart";
+
 import "character_scene.dart";
 import "command_timer.dart";
-import "dart:math";
+import "decorations/dotted_grid.dart";
 import "flare_heart_widget.dart";
+import "game/blocs/connection_bloc.dart";
+import "game/blocs/game_stats_bloc.dart";
+import "game/blocs/scene_bloc.dart";
+import "game/game.dart";
+import "game/game_provider.dart";
+import "in_game.dart";
+import "lobby.dart";
 import "socket_client.dart";
 import "terminal_dopamine.dart";
-import "game/game_provider.dart";
-import "game/game.dart";
-import "game/blocs/connection_bloc.dart";
-import "game/blocs/scene_bloc.dart";
-import "game/blocs/game_stats_bloc.dart";
 
 void main() 
 {
@@ -39,7 +41,7 @@ class TerminalApp extends StatelessWidget {
         /// The [GameProvider] wrapper exposes the [Game] object
         /// to the rest of our app, so that the necessary Widgets 
         /// will be able to access [SocketClient], [ValueNotifier]s,
-        /// [Sink]s and [Stream]s as neede
+        /// [Sink]s and [Stream]s as needed
 		return GameProvider(
                 child: MaterialApp(
                 title: "Terminal",
@@ -131,7 +133,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			end: 0.0,
 		).animate(new CurvedAnimation(
 				parent: _panelController,
-				curve: new Interval(0.0, 0.33, curve: Curves.easeInOut)
+				curve: new Interval(0.0, gamePanelRatio, curve: Curves.easeInOut)
 			)
 		);
 
@@ -141,7 +143,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
 			end: gamePanelRatio
 		).animate(new CurvedAnimation(
 				parent: _panelController,
-				curve: new Interval(0.34, gamePanelRatio, curve: Curves.easeInOut)
+				curve: new Interval(0.34, lobbyPanelRatio, curve: Curves.easeInOut)
 			)
 		);
 

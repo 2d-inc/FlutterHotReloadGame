@@ -1,20 +1,22 @@
 import "dart:math";
+
 import 'package:collection/collection.dart';
-import 'package:flutter/widgets.dart';
-import "command_panel.dart";
-import "package:flutter/material.dart";
 import "package:flutter/foundation.dart";
+import "package:flutter/material.dart";
 import "package:flutter/rendering.dart";
-import "game_controls/game_slider.dart";
+import 'package:flutter/widgets.dart';
+
+import "command_panel.dart";
+import "game/blocs/game_stats_bloc.dart";
+import "game/blocs/in_game_bloc.dart";
+import "game/game.dart";
+import "game/game_provider.dart";
+import "game_buttons.dart";
 import "game_controls/game_radial.dart";
+import "game_controls/game_slider.dart";
+import "game_over.dart";
 import "game_over_stats.dart";
 import "high_score.dart";
-import "game_over.dart";
-import "game_buttons.dart";
-import "game/game_provider.dart";
-import "game/game.dart";
-import "game/blocs/in_game_bloc.dart";
-import "game/blocs/game_stats_bloc.dart";
 
 typedef void StringCallback(String msg);
 

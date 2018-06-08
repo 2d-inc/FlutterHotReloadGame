@@ -1,4 +1,5 @@
 import "dart:async";
+
 import "package:rxdart/rxdart.dart";
 
 /// The [GameStatistics] object servers the purpose of maintaing all the data

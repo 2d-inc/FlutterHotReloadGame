@@ -1,8 +1,9 @@
 import 'package:flutter/widgets.dart';
+
 import "command_panel.dart";
-import "players_widget.dart";
-import "panel_button.dart";
 import "game_controls/game_colors.dart";
+import "panel_button.dart";
+import "players_widget.dart";
 
 class LobbyWidget extends StatelessWidget
 {

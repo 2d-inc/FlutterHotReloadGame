@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
-import "dart:ui" as ui;
-import "package:nima/nima_flutter.dart";
-import "package:nima/animation/actor_animation.dart";
-import "package:nima/actor_node.dart";
-import "package:flutter/scheduler.dart";
-import "package:AABB/AABB.dart";
-import "package:nima/math/mat2d.dart";
 import "dart:math";
+import "dart:ui" as ui;
+
+import "package:AABB/AABB.dart";
+import 'package:flutter/material.dart';
+import "package:flutter/scheduler.dart";
+import "package:nima/actor_node.dart";
+import "package:nima/animation/actor_animation.dart";
+import "package:nima/math/mat2d.dart";
+import "package:nima/nima_flutter.dart";
 
 enum CharacterState
 {

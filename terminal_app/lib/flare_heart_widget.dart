@@ -1,6 +1,7 @@
-import "package:flutter/material.dart";
-import "package:flare/flare.dart" as flr;
 import "dart:typed_data";
+
+import "package:flare/flare.dart" as flr;
+import "package:flutter/material.dart";
 import "package:flutter/scheduler.dart";
 
 class FlareHeart extends LeafRenderObjectWidget
@@ -9,13 +10,15 @@ class FlareHeart extends LeafRenderObjectWidget
 	final bool isDead;
 	final bool isSmall;
 	final double opacity;
+
 	FlareHeart(
 		this.src,
 		this.isDead,
 		{
 			Key key,
-			this.opacity
-		}): super(key: key);
+			this.opacity,
+            bool isSmall
+		}): isSmall = isSmall ?? false, super(key: key);
 
 	@override
 	RenderObject createRenderObject(BuildContext context) 

@@ -1,8 +1,9 @@
 import "package:flutter/material.dart";
-import "panel_button.dart";
-import "game_controls/game_command_widget.dart";
+
 import "game/game.dart";
 import "game/game_provider.dart";
+import "game_controls/game_command_widget.dart";
+import "panel_button.dart";
 
 class GameBinaryButton extends StatelessWidget implements GameCommand
 {

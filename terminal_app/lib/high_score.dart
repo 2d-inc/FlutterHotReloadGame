@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import "panel_button.dart";
+
+import "game/blocs/game_stats_bloc.dart";
 import "game/game.dart";
 import "game/game_provider.dart";
-import "game/blocs/game_stats_bloc.dart";
+import "panel_button.dart";
 
 typedef void StringCallback(String msg);
 final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");

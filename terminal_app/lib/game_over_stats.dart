@@ -1,10 +1,12 @@
-import "dart:ui" as ui;
 import "dart:math";
 import "dart:typed_data";
+import "dart:ui" as ui;
+
 import "package:flare/flare.dart" as flr;
 import "package:flutter/material.dart";
-import "game/game_provider.dart";
+
 import "delegates/audio_player_delegate.dart";
+import "game/game_provider.dart";
 
 class GameStats extends LeafRenderObjectWidget
 {

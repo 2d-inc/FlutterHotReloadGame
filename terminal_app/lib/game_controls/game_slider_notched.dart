@@ -1,10 +1,12 @@
-import "package:flutter/material.dart";
-import "dart:ui" as ui;
 import "dart:math";
+import "dart:ui" as ui;
+
+import "package:flutter/material.dart";
+
+import "../game/game_provider.dart";
 import "game_colors.dart";
 import "game_command_widget.dart";
 import "game_radial.dart";
-import "../game/game_provider.dart";
 
 class GameSliderNotched extends StatefulWidget implements GameCommand
 {
