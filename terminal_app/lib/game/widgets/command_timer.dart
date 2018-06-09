@@ -25,33 +25,15 @@ class CommandTimer extends LeafRenderObjectWidget
 	}
 }
 
-String formatDuration(Duration d) 
-{
-    String twoDigits(int n) 
-	{
-      if (n >= 10) return "$n";
-      return "0$n";
-    }
-
-	if(d.inMilliseconds < 0)
-	{
-		return "00:00";
-	}
-
-    String twoDigitMinutes = twoDigits(d.inMinutes.remainder(Duration.minutesPerHour));
-    String twoDigitSeconds = twoDigits(d.inSeconds.remainder(Duration.secondsPerMinute));
-    return "$twoDigitMinutes:$twoDigitSeconds";
-}
-
 class CommandTimerRenderer extends RenderBox
 {
-	DateTime _startTime;
-	DateTime _endTime;
-	double _opacity;
-
 	static const Color angryTime = const Color.fromARGB(255, 255, 72, 0);
 	static const Color urgentTime = const Color.fromARGB(255, 255, 191, 0);
 	static const Color relaxedTime = const Color.fromARGB(255, 86, 234, 246);
+
+	DateTime _startTime;
+	DateTime _endTime;
+	double _opacity;
 
 	CommandTimerRenderer(DateTime startTime, DateTime endTime, double opacity)
 	{
@@ -101,6 +83,24 @@ class CommandTimerRenderer extends RenderBox
 		}
 		_endTime = value;
 	}
+
+    String formatDuration(Duration d) 
+    {
+        String twoDigits(int n) 
+        {
+            if (n >= 10) return "$n";
+            return "0$n";
+        }
+
+        if(d.inMilliseconds < 0)
+        {
+            return "00:00";
+        }
+
+        String twoDigitMinutes = twoDigits(d.inMinutes.remainder(Duration.minutesPerHour));
+        String twoDigitSeconds = twoDigits(d.inSeconds.remainder(Duration.secondsPerMinute));
+        return "$twoDigitMinutes:$twoDigitSeconds";
+    }
 
 	@override
 	bool get sizedByParent => true;

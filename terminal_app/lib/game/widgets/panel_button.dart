@@ -2,6 +2,10 @@ import 'package:flutter/widgets.dart';
 
 import "../../decorations/game_colors.dart";
 
+/// A [PanelButton] has three possible states:
+/// 1. Inactive: A button that's present but doesn't respond to tap events.
+/// 2. Active: A button that response to tap events.
+/// 3. Accented: A button that responds to tap events and has a bright cyan color.
 class PanelButton extends StatefulWidget
 {
     final String _text;
@@ -31,16 +35,23 @@ class PanelButton extends StatefulWidget
     State<StatefulWidget> createState() => new PanelButtonState();
 }
 
+/// A [State] for the PanelButton is necessary in order to animate it upon tap events.
 class PanelButtonState extends State<PanelButton> with SingleTickerProviderStateMixin
 {
     Color _backgroundColor;
     Color _textColor;
     Color _borderColor;
 
+    /// A single [AnimationController] will take care of animating all the properties at the same time.
     AnimationController _pressedColorController;
+    /// This element will animate three parameters: 
+    /// 1. Color of the background;
+    /// 2. Color of its text;
+    /// 3. Color of its border.
     Animation<Color> _buttonBackgroundAnimation;
     Animation<Color> _buttonTextAnimation;
     Animation<Color> _buttonBorderAnimation;
+    /// State variables to perform the animation.
     Color _currentBgColor;
     Color _currentTxtColor;
     Color _currentBorderColor;

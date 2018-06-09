@@ -53,6 +53,9 @@ class GameStats extends LeafRenderObjectWidget
 class StatParagraph
 {
 	static const double MaxWidth = 4096.0;
+	static const PositiveScoreColor = const Color.fromRGBO(124, 253, 245, 1.0);
+	static const NegativeScoreColor = const Color.fromRGBO(255, 76, 205, 1.0);
+    
 	ui.Paragraph paragraph;
 	Size size;
 	Size finalSize;
@@ -69,9 +72,6 @@ class StatParagraph
 	Offset velocity;
 	double scale = 1.0;
 	double factor = 0.0;
-
-	static const PositiveScoreColor = const Color.fromRGBO(124, 253, 245, 1.0);
-	static const NegativeScoreColor = const Color.fromRGBO(255, 76, 205, 1.0);
 
 	StatParagraph(this.label, this.fontFamily, this.fontSize, this.letterSpacing, this.weight, this.color)
 	{
@@ -129,10 +129,6 @@ class StatParagraph
 
 	void draw(ui.Canvas canvas, Offset offset, Offset pivot)
 	{
-		//canvas.drawParagraph(paragraph, new Offset(offset.dx + baseSize.width/2.0-size.width/2.0, offset.dy + baseSize.height/2.0 - size.height/2.0));
-		//double scale = size.width/baseSize.width;
-		//canvas.drawParagraph(paragraph, new Offset(offset.dx + 100.0*(1.0-scale), offset.dy + baseSize.height/2.0 - size.height/2.0));
-		
 		Offset move = offset-pivot;
 		canvas.drawParagraph(paragraph, new Offset(offset.dx + move.dx*(1.0-factor), offset.dy + move.dy*(1.0-factor)));
 	}
@@ -140,6 +136,11 @@ class StatParagraph
 
 class GameStatsRenderObject extends RenderBox
 {
+	static const Color labelColor = const Color.fromRGBO(255, 255, 255, 0.5);
+	static const double secondsPerSection = 0.2;
+	static const double secondsPaddingPerSection = 0.22;
+	static const double shakeAhead = 0.05;
+
 	static final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
 	static final Function matchFunc = (Match match) => "${match[1]},";
 
@@ -178,8 +179,6 @@ class GameStatsRenderObject extends RenderBox
 
 	DateTime _showTime;
 
-	static const Color labelColor = const Color.fromRGBO(255, 255, 255, 0.5);
-
 	GameStatsRenderObject(DateTime showTime, double progress, int score, int lives, int rank, int totalScore, int lifeScore, AudioPlayerDelegate player)
 	{
 		this.showTime = showTime;
@@ -204,8 +203,6 @@ class GameStatsRenderObject extends RenderBox
 		_rankValue = new StatParagraph("0", "Inconsolata", 50, null, FontWeight.normal, Colors.white);
 		_progressValue = new StatParagraph("0", "Roboto", 19, null, FontWeight.w700, Colors.white);
 		
-		//SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
-
 		flr.FlutterActor actor = new flr.FlutterActor();
 		actor.loadFromBundle("assets/flares/Heart").then(
 			(bool success)
@@ -335,24 +332,6 @@ class GameStatsRenderObject extends RenderBox
 		_lifeScore = d;
 	}
 
-	// void beginFrame(Duration timeStamp) 
-	// {
-	// 	final double t = timeStamp.inMicroseconds / Duration.microsecondsPerMillisecond / 1000.0;
-		
-	// 	if(_lastFrameTime == 0)
-	// 	{
-	// 		_lastFrameTime = t;
-	// 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
-	// 		return;
-	// 	}
-		
-	// 	double elapsed = (t - _lastFrameTime).clamp(0.0, 1.0);
-	// 	_lastFrameTime = t;
-
-	// 	SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
-	// 	markNeedsPaint();
-	// }
-
 	@override
 	bool get sizedByParent => true;
 	
@@ -370,10 +349,6 @@ class GameStatsRenderObject extends RenderBox
 	{
 		super.performLayout();
 	}
-	
-	static const double secondsPerSection = 0.2;
-	static const double secondsPaddingPerSection = 0.22;
-	static const double shakeAhead = 0.05;
 	
 	int index(double seconds)
 	{
@@ -403,9 +378,6 @@ class GameStatsRenderObject extends RenderBox
 	Random rand = new Random();
 	void advanceAnimation()
 	{
-		//const int duration = 7000;
-		//double seconds = new DateTime.now().millisecondsSinceEpoch%duration/1000.0;
-		//double seconds = max(0.0, ((new DateTime.now().millisecondsSinceEpoch - _showTime.millisecondsSinceEpoch)%7000)/1000.0);
 		double seconds = max(0.0, ((new DateTime.now().millisecondsSinceEpoch - _showTime.millisecondsSinceEpoch))/1000.0);
 
 		int ix = index(seconds);
@@ -428,7 +400,6 @@ class GameStatsRenderObject extends RenderBox
 					break;
 				case 4:
 				case 8:
-					//player.playAudio("assets/audio/point_counting.wav");
 					break;
 			}
 		}
@@ -581,7 +552,6 @@ class GameStatsRenderObject extends RenderBox
 				canvas.restore();		
 			}
 		}
-		
 
 		currentOffset += new Offset(0.0, _livesValue.height + padding);
 		_finalScoreLabel.draw(canvas, currentOffset, center);

@@ -120,6 +120,8 @@ class TerminalSceneRenderer extends RenderBox
             /// Once that has been successfully loaded, all the characters can be added on top as well.
 			for(int i = 0; i < 4; i++)
 			{
+                /// A dedicated node on every [TerminalCharacter] is set appropriately 
+                /// so that the [Actor] can be placed accurately.
 				_characters[i].mount = _scene.getNode("NPC${i+1}");
                 /// Set the Actor's stance to first frame of its animation loop.
 				_characters[i].advance(0.0, true);
@@ -247,6 +249,7 @@ class TerminalSceneRenderer extends RenderBox
 			{
 				continue;
 			}
+            /// Whenever the state changes, reinitialize the character to prevent any artifacts.
 			character.reinit();
 		}
 

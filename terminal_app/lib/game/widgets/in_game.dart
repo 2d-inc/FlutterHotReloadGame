@@ -13,7 +13,7 @@ import "../blocs/game_stats_bloc.dart";
 import "../blocs/in_game_bloc.dart";
 import "../game.dart";
 import "../game_provider.dart";
-import "command_panel.dart";
+import "titled_command_panel.dart";
 import "game_over.dart";
 import "game_over_stats.dart";
 import "high_score.dart";

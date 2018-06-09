@@ -6,6 +6,8 @@ import "package:nima/actor_node.dart";
 
 import "terminal_scene.dart";
 
+/// A StateMix object is used to wrap the information about an animation,
+///  and the transition that happens when the character needs to interpolate from the current one to the next.
 class StateMix
 {
 	CharacterState state;
@@ -36,6 +38,8 @@ class TerminalCharacter
     
 	TerminalCharacter(this.scene, String filename)
 	{
+        /// Every TerminalCharacter will have three animations: Happy, Upset and Angry.
+        /// They are initialized here in the constructor, and the Actor is loaded with its assets.
 		states.add(new StateMix()
 									..state = CharacterState.Happy
 									..mix = 1.0
