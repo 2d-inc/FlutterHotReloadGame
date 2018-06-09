@@ -4,31 +4,38 @@ import "dart:ui" as ui;
 import "package:AABB/AABB.dart";
 import 'package:flutter/material.dart';
 import "package:flutter/scheduler.dart";
-import "package:nima/actor_node.dart";
 import "package:nima/animation/actor_animation.dart";
 import "package:nima/math/mat2d.dart";
 import "package:nima/nima_flutter.dart";
 
-enum CharacterState
-{
-	Happy,
-	Upset,
-	Angry
-}
+import "terminal_character.dart";
 
+/// [TerminalScene] can show either one or all stakeholders on the screen.
 enum TerminalSceneState
 {
 	All,
 	BossOnly
 }
 
+/// This widget wraps the information for the [TerminalScene].
+/// It displays the [FlutterActor](s) on the screen.
+/// While the game is waiting for players to join or the game to begin, all the 
+/// characters will be shown together on the screen with their idle animation.
+/// Once the game starts, the stakeholders alternate on screen and display,
+/// in a custom message bubble, the action that the game needs for this turn to complete.
 class TerminalScene extends LeafRenderObjectWidget
 {
+    /// Every command needs to be executed within a certain timeframe.
+    /// If time runs out, the current playing team loses a life.
 	final DateTime startTime;
 	final DateTime endTime;
 	final TerminalSceneState state;
+    /// There are four possible stakeholders to choose from. 
+    /// For any given command, a different random character is chosen.
 	final int characterIndex;
+    /// The message to be shown in the bubble.
 	final String message;
+
 	TerminalScene({Key key, this.state, this.characterIndex, this.message, this.startTime, this.endTime}): super(key: key);
 
 	@override
@@ -48,193 +55,13 @@ class TerminalScene extends LeafRenderObjectWidget
 	}
 }
 
-const double MixSpeed = 5.0;
-
-class StateMix
-{
-	CharacterState state;
-	ActorAnimation animation;
-	ActorAnimation transitionAnimation;
-
-	double animationTime;
-	double transitionTime;
-	double mix;
-}
-
-class TerminalCharacter
-{
-	FlutterActor _sourceActor;
-	FlutterActor actor;
-	AABB _bounds;
-	ActorNode mount;
-	List<StateMix> states = new List<StateMix>();
-	CharacterState state = CharacterState.Happy;
-	TerminalSceneRenderer scene;
-	TerminalCharacter(this.scene, String filename)
-	{
-		states.add(new StateMix()
-									..state = CharacterState.Happy
-									..mix = 1.0
-									..animationTime = 0.0);
-
-		states.add(new StateMix()
-									..state = CharacterState.Upset
-									..mix = 0.0
-									..animationTime = 0.0);
-
-		states.add(new StateMix()
-									..state = CharacterState.Angry
-									..mix = 0.0
-									..animationTime = 0.0);
-
-		load(filename);
-	}
-
-	AABB get bounds
-	{
-		return _bounds;
-	}
-
-	bool recomputeBounds()
-	{
-		if(_bounds != null) // only do this if bounds has already been computed
-		{
-			_bounds = actor.computeAABB();
-			return true;
-		}
-		return false;
-	}
-
-	ActorAnimation getAnimation(CharacterState state)
-	{
-		String animationName;
-		switch(state)
-		{
-			case CharacterState.Happy:
-				animationName = "Happy";
-				break;
-			case CharacterState.Angry:
-				animationName = "Angry";
-				break;
-			case CharacterState.Upset:
-				animationName = "Upset";
-				break;
-		}
-		return actor.getAnimation(animationName);
-	}
-
-	ActorAnimation getTransitionAnimation(CharacterState state)
-	{
-		String animationName;
-		switch(state)
-		{
-			case CharacterState.Happy:
-				animationName = null;
-				break;
-			case CharacterState.Angry:
-				animationName = "Upset-Angry";
-				break;
-			case CharacterState.Upset:
-				animationName = "Happy-Upset";
-				break;
-		}
-		return animationName == null ? null : actor.getAnimation(animationName);
-	}
-
-	void load(String filename)
-	{
-		_sourceActor = new FlutterActor();
-		_sourceActor.loadFromBundle(filename).then((bool ok)
-		{
-			actor = _sourceActor.makeInstance();
-			for(StateMix sm in states)
-			{
-				sm.animation = getAnimation(sm.state);
-				sm.transitionAnimation = getTransitionAnimation(sm.state);
-				sm.transitionTime = 0.0;
-				if(sm.animation != null && sm.state == CharacterState.Happy)
-				{
-					sm.animationTime = 0.0;
-					sm.animation.apply(sm.animationTime, actor, 1.0);
-				}
-			}
-			actor.advance(0.0);
-			_bounds = actor.computeAABB();
-			this.scene.characterLoaded(this);
-		});
-	}
-	
-	void advance(double elapsed, bool animate)
-	{
-		if(_bounds == null)
-		{
-			return;
-		}
-
-		CharacterState renderState = state;
-		
-        for(StateMix sm in states)
-		{
-			if(sm.state != renderState)
-			{
-				sm.mix -= elapsed*MixSpeed;
-			}
-			else
-			{
-				sm.mix += elapsed*MixSpeed;
-			}
-			sm.mix = sm.mix.clamp(0.0, 1.0);
-			if(sm.mix == 0.0)
-			{
-				sm.transitionTime = 0.0;
-			}
-
-			if(sm.mix != 0 && animate)
-			{ 
-				if(sm.transitionAnimation == null || sm.transitionTime >= sm.transitionAnimation.duration)
-				{
-					sm.animationTime = (sm.animationTime+elapsed) % sm.animation.duration;
-					sm.animation.apply(sm.animationTime, actor, sm.mix);
-				}
-				else
-				{
-					sm.transitionTime = sm.transitionTime+elapsed;
-					sm.transitionAnimation.apply(sm.transitionTime, actor, sm.mix);
-				}
-			}
-		}
-
-		if(mount != null)
-		{
-			actor.root.x = mount.x;
-			actor.root.y = mount.y;
-			actor.root.scaleX = mount.scaleX*0.5;
-			actor.root.scaleY = mount.scaleY*0.5;
-		}
-		actor.advance(elapsed);
-	}
-
-	void draw(Canvas canvas)
-	{
-		if(_bounds == null)
-		{
-			return;
-		}
-		actor.draw(canvas);
-	}
-
-	void reinit()
-	{
-		actor = _sourceActor.makeInstance();
-		advance(0.0, true);
-	}
-}
-const double MessagePadding = 40.0;
-const double BubblePaddingH = 20.0;
-const double BubblePaddingV = 12.0;
-
 class TerminalSceneRenderer extends RenderBox
 {
+    static const double mix_speed = 5.0;
+    static const double message_padding = 40.0;
+    static const double bubble_padding_h = 20.0;
+    static const double bubble_padding_v = 12.0;
+
 	FlutterActor _scene;
 	ActorAnimation _flicker;
 	double _flickerTime = 0.0;
@@ -269,8 +96,11 @@ class TerminalSceneRenderer extends RenderBox
 		this.startTime = startTime;
 		this.endTime = endTime;
 		
+        /// After saving some initialization variables, start the rendering loop,
+        /// by calling [beginFrame()].
 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 
+        /// Build the list of characters that'll be loaded from the local assets folder.
 		List<int> characterNameLookup = <int>[2,1,3,4];
 		for(int i = 0; i < 4; i++)
 		{
@@ -279,16 +109,23 @@ class TerminalSceneRenderer extends RenderBox
 			_renderCharacters[i] = _characters[i];
 		}						
 
+        /// Initialize the scene with a Nima Actor representing the background and 
+        /// the flickering logo. 
 		_scene = new FlutterActor();
 		_scene.loadFromBundle("assets/nima/HotReloadScene/HotReloadScene").then((bool ok)
 		{
 			_scene.advance(0.0);
 			_bounds = _scene.computeAABB();
+            
+            /// Once that has been successfully loaded, all the characters can be added on top as well.
 			for(int i = 0; i < 4; i++)
 			{
 				_characters[i].mount = _scene.getNode("NPC${i+1}");
+                /// Set the Actor's stance to first frame of its animation loop.
 				_characters[i].advance(0.0, true);
-			}	
+            }
+
+            /// Calculate dimensions and evaluate the position for this [RenderBox]
 			AABB bounds = _bounds;
 			double height = bounds[3] - bounds[1];
 			double width = bounds[2] - bounds[0];
@@ -297,6 +134,7 @@ class TerminalSceneRenderer extends RenderBox
 			
 			_contentHeight = height;
 			_position = new Offset(x, y);
+            /// Get a reference for the logo flickering animation.
 			_flicker = _scene.getAnimation("Flicker");
 			markNeedsLayout();
 		});
@@ -461,7 +299,6 @@ class TerminalSceneRenderer extends RenderBox
 		double elapsed = t - _lastFrameTime;
 		_lastFrameTime = t;
 
-		
 		TerminalCharacter boss = _characters[_characterIndex];
 		
         bool focusBoss = _state != TerminalSceneState.All;
@@ -488,14 +325,18 @@ class TerminalSceneRenderer extends RenderBox
 		}
 		if(_flicker != null)
 		{
+            /// Increment the flickering animation time and apply for this frame.
 			_flickerTime = (_flickerTime+elapsed)%_flicker.duration;
 			_flicker.apply(_flickerTime, _scene, 1.0);
 		}
 
+        /// Advance the whole scene.
 		_scene.advance(elapsed);
 
-
 		DateTime now = new DateTime.now();
+        /// Evaluate how much time has passed from the beginning of the current command.
+        /// Characters will start getting 'Upset' when there's less than 60% of time left.
+        /// Characters will start getting 'Angry' when there's less than 256% of time left.
 		double f = _startTime == null ? 1.0 : 1.0-(now.difference(_startTime).inMilliseconds/_endTime.difference(_startTime).inMilliseconds).clamp(0.0, 1.0);
 		if(focusBoss)
 		{
@@ -509,7 +350,7 @@ class TerminalSceneRenderer extends RenderBox
 		{
 			character.advance(elapsed, true);
 		}
-		// Recompute bounds while spread is in action.
+		/// Recompute bounds while spread is in action.
 		if(recomputeBossBounds && _characters[_characterIndex] != null)
 		{
 			if(_characters[_characterIndex].recomputeBounds())
@@ -521,6 +362,8 @@ class TerminalSceneRenderer extends RenderBox
 		AABB bounds = focusBoss ? (_characterBounds ?? _bounds) : _bounds;
 		const double PadTop = 0.35;
 		const double PadBottom = 0.1;
+        /// Ensure that the current character is properly positioned within its bounds and with proper padding.
+        /// If a message bubble is present, the height bounds for this objects get influenced.
 		if(focusBoss)
 		{
 			bounds = new AABB.clone(bounds);
@@ -534,12 +377,12 @@ class TerminalSceneRenderer extends RenderBox
 		double x = -bounds[0] - width/2.0;
 		double y =  -bounds[1] - height/2.0;
 		
-		double mix = min(1.0, elapsed*MixSpeed);
+		double mix = min(1.0, elapsed*TerminalSceneRenderer.mix_speed);
 		_contentHeight += (height-_contentHeight) * mix;
 		_position += new Offset((x-_position.dx)*mix, (y-_position.dy)*mix);
 
 		markNeedsPaint();
-		
+		/// Reschedule this function.
 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 	}
 
@@ -560,6 +403,7 @@ class TerminalSceneRenderer extends RenderBox
 	{
 		super.performLayout();
 
+        /// If a message is currently being shown, prepare the layout for it to fit within the message bubble.
 		if(_messageParagraph != null)
 		{
 			TerminalCharacter talkCharacter = _characters[_state == TerminalSceneState.All ? 0 : _characterIndex];
@@ -568,7 +412,14 @@ class TerminalSceneRenderer extends RenderBox
 				return;
 			}
 			AABB b = talkCharacter.bounds;
-			_messageParagraph.layout(new ui.ParagraphConstraints(width:  min(300.0, min(size.width-MessagePadding*2.0-BubblePaddingH*2.0, b[2] - b[0] + BubblePaddingH*2))));
+			_messageParagraph.layout(
+                new ui.ParagraphConstraints(
+                    width: min(300.0, min(
+                        size.width-TerminalSceneRenderer.message_padding*2.0-TerminalSceneRenderer.bubble_padding_h*2.0,
+                        b[2] - b[0] + TerminalSceneRenderer.bubble_padding_h*2)
+                    )
+                )
+            );
 		}
 	}
 
@@ -601,6 +452,7 @@ class TerminalSceneRenderer extends RenderBox
 		canvas.translate(center.dx, center.dy);
 		canvas.scale(scale, -scale);
 		canvas.translate(_position.dx, _position.dy);
+        /// After having properly positioned the canvas, the scene can be drawn.
 		_scene.draw(canvas);
 		canvas.restore();
 		double fadeHeight = size.height*0.75;
@@ -614,9 +466,12 @@ class TerminalSceneRenderer extends RenderBox
 
 		TerminalCharacter boss = _characters[_characterIndex];
 
+        /// When there's a single character showing, the scene displays a radial gradient behind the character
+        /// in order to signify how urgent the current command is.
+        /// Moreover, to interpolate correctly, there's a range of gradient accumulation before the character 
+        /// switches its state (Happy->Upset->Angry).
 		if(boss != null && _state != TerminalSceneState.All)
-		{			
-			
+		{
 			DateTime now = new DateTime.now();
 			double elapsed = now.difference(_lastNow).inMilliseconds / 1000.0;
 			_lastNow = now;
@@ -624,22 +479,34 @@ class TerminalSceneRenderer extends RenderBox
 			double fi = 1.0-f;
 			double stopLerp = 0.0;
 
+            /// "Angry State": 
+            /// a three-step radial gradient accumulates from the yellowish tint, towards a more intense red color to signify the urgency of the current command.
 			if(fi < 0.35 && fi > 0.0)
 			{
 				_colorAccumulator = 0.0;
+                /// In order to perform [Color.lerp()], a normalization variable is needed.
+                /// This double normalized value starts accumulating depending on how "far" the current time is from running out.
+                /// The "Angry" state begins when there's only 25% of time left in the current command,
+                /// and the color will start accumulating when there's 35% left, 
+                /// so that there's a gradual increase towards the full gradient.
+                /// Once the target has been reached, clamp the value to 1.0.
 				double n = (1.0 - (fi - 0.25)/ (0.35-0.25)).clamp(0.0, 1.0);
 				stopLerp = 0.27*n;
 				_angryBackground = Color.lerp(Colors.transparent, new Color.fromRGBO(255, 0, 0, 0.0), n);
 				_midStepGradient = Color.lerp(new Color.fromRGBO(255, 209, 0, 0.23), new Color.fromRGBO(255, 0, 0, 0.2), n);
 				_topStepGradient = Color.lerp(new Color.fromRGBO(255, 179, 0, 1.0), new Color.fromRGBO(255, 0, 0, 1.0), n);
 			}
+            /// "Upset State": 
+            /// a two-step radial gradient starts lerp-ing from the begging transparent color towards a yellowish tint.
 			else if(fi < 0.75 && fi >= 0.35)
 			{
 				_colorAccumulator = 0.0;
+                /// Same as the if statement above: normalize the range in which lerp-ing should happen.
 				double n = (1.0 - (fi - 0.6)/(0.75-0.6)).clamp(0.0, 1.0);
 				_midStepGradient = Color.lerp(Colors.transparent, new Color.fromRGBO(255, 209, 0, 0.23), n);
 				_topStepGradient = Color.lerp(Colors.transparent, new Color.fromRGBO(255, 179, 0, 1.0) , n);
 			}
+            /// "Happy State": a transparent layer is displayed.
 			else
 			{
 				_colorAccumulator = (_colorAccumulator + elapsed).clamp(0.0, 1.0);
@@ -656,7 +523,7 @@ class TerminalSceneRenderer extends RenderBox
 			canvas.drawRect(offset&size, new ui.Paint() ..shader = new ui.Gradient.radial(center, size.height*1.1, [ Colors.transparent, _midStepGradient, _topStepGradient ], [0.0, 0.6 - stopLerp, 1.0], TileMode.clamp, radialScaleMatrix.mat4));
 		}
 
-
+        /// Sort the characters so that they're proplery drawn depending on their y coordinate.
 		_renderCharacters.sort((TerminalCharacter a, TerminalCharacter b)
 		{
 			return ((b.actor.root.y - a.actor.root.y) * 100.0).round();
@@ -673,12 +540,14 @@ class TerminalSceneRenderer extends RenderBox
 			canvas.scale(scale, -scale);
 			canvas.translate(_position.dx, _position.dy);
 
+            /// Draw all the characters on top of the scene.
 			character.draw(canvas);
 			canvas.restore();
-		}
-		
+		}		
 
 		canvas.save();
+
+        /// Once a String message is passed to the scene, compute the bubble position and draw.
 		if(_messageParagraph != null)
 		{
 			TerminalCharacter talkCharacter = _characters[_state == TerminalSceneState.All ? 0 : _characterIndex];
@@ -695,14 +564,14 @@ class TerminalSceneRenderer extends RenderBox
 			canvas.translate(_position.dx*scale, -_position.dy*scale);
 			AABB talkBounds = talkCharacter.bounds;
 			
-			Offset p = new Offset((talkBounds[0]+talkBounds[2])*0.5*scale-_messageParagraph.width/2.0, -talkBounds[3]*scale - _messageParagraph.height - BubblePaddingV*4.0);
+			Offset p = new Offset((talkBounds[0]+talkBounds[2])*0.5*scale-_messageParagraph.width/2.0, -talkBounds[3]*scale - _messageParagraph.height - TerminalSceneRenderer.bubble_padding_v*4.0);
 			if(_bubbleOffset == null)
 			{
 				_bubbleOffset = p;
 			}
 			_bubbleOffset += new Offset((p.dx-_bubbleOffset.dx)*0.05, (p.dy-_bubbleOffset.dy)*0.2);
 
-			Size bubbleSize = new Size(_messageParagraph.width + BubblePaddingH*2.0, _messageParagraph.height + BubblePaddingV*2.0);
+			Size bubbleSize = new Size(_messageParagraph.width + TerminalSceneRenderer.bubble_padding_h*2.0, _messageParagraph.height + TerminalSceneRenderer.bubble_padding_v*2.0);
 			
 			Path bubble = makeBubblePath(bubbleSize.width, bubbleSize.height);
 			canvas.translate(_bubbleOffset.dx + 4.0, _bubbleOffset.dy + 7.0);
@@ -713,7 +582,7 @@ class TerminalSceneRenderer extends RenderBox
 													..style = PaintingStyle.stroke
 													..strokeWidth = 2.0);
 
-			canvas.drawParagraph(_messageParagraph, new Offset(BubblePaddingH, BubblePaddingV));
+			canvas.drawParagraph(_messageParagraph, new Offset(TerminalSceneRenderer.bubble_padding_h, TerminalSceneRenderer.bubble_padding_v));
 		}
 		canvas.restore();
 	}

@@ -17,7 +17,7 @@ import "blocs/connection_bloc.dart";
 import "blocs/game_stats_bloc.dart";
 import "blocs/in_game_bloc.dart";
 import "blocs/scene_bloc.dart";
-import "widgets/character_scene.dart";
+import "widgets/character_scene/terminal_scene.dart";
 
 class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 {
