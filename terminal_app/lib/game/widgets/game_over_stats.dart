@@ -5,6 +5,7 @@ import "dart:ui" as ui;
 import "package:flare/flare.dart" as flr;
 import "package:flutter/material.dart";
 
+import "../../decorations/game_colors.dart";
 import "../../delegates/audio_player_delegate.dart";
 import "../game_provider.dart";
 
@@ -53,24 +54,22 @@ class GameStats extends LeafRenderObjectWidget
 class StatParagraph
 {
 	static const double MaxWidth = 4096.0;
-	static const PositiveScoreColor = const Color.fromRGBO(124, 253, 245, 1.0);
-	static const NegativeScoreColor = const Color.fromRGBO(255, 76, 205, 1.0);
     
 	ui.Paragraph paragraph;
+	Color color;
 	Size size;
 	Size finalSize;
 	Size baseSize;
 	Offset center;
-	double life = 0.0;
-	Color color;
-	String label;
-	String calculatedLabel;
-	String fontFamily;
-	int fontSize;
-	double letterSpacing;
-	FontWeight weight;
 	Offset velocity;
+	String calculatedLabel;
+	String label;
+	String fontFamily;
+	FontWeight weight;
+	int fontSize;
 	double scale = 1.0;
+	double letterSpacing;
+	double life = 0.0;
 	double factor = 0.0;
 
 	StatParagraph(this.label, this.fontFamily, this.fontSize, this.letterSpacing, this.weight, this.color)
@@ -134,12 +133,25 @@ class StatParagraph
 	}
 }
 
+/// This [RenderBox] lays out and paints the screen players see when a game ends.
+/// It'll display all the relevant information for the current game: if the team
+/// won or lost, how far they progressed, the score, how many lives were left at 
+/// the end of the game, and the team's global ranking.
+/// If the team won the game, and their rank is good enough, they'll be able to 
+/// input the team initials, and they'll be displayed on the monitor.
 class GameStatsRenderObject extends RenderBox
 {
-	static const Color labelColor = const Color.fromRGBO(255, 255, 255, 0.5);
 	static const double secondsPerSection = 0.2;
 	static const double secondsPaddingPerSection = 0.22;
 	static const double shakeAhead = 0.05;
+	static const double heartPadding = 9.0;
+    static const Size tick = const Size(3.0, 5.0);
+
+    static const String roboto = "Roboto";
+    static const String inconsolata = "Inconsolata";
+
+	static const int padding = 10;
+    static const int progressNumTicks = 8;
 
 	static final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
 	static final Function matchFunc = (Match match) => "${match[1]},";
@@ -178,7 +190,13 @@ class GameStatsRenderObject extends RenderBox
 	AudioPlayerDelegate _player;
 
 	DateTime _showTime;
+    Random rand = new Random();
 
+    /// This object will received all the obvious parameters from the server to show all 
+    /// the appropriate information. 
+    /// The [AudioPlayerDelegate] is necessary because this [RenderBox] will animate all the parameters in,
+    /// as if they were falling onto the screen, perform a shake animation, and play a sound when they
+    /// "hit" the screen.
 	GameStatsRenderObject(DateTime showTime, double progress, int score, int lives, int rank, int totalScore, int lifeScore, AudioPlayerDelegate player)
 	{
 		this.showTime = showTime;
@@ -190,18 +208,18 @@ class GameStatsRenderObject extends RenderBox
 		this.lifeScore = lifeScore;
 		this.player = player;
 		
-		_message = new StatParagraph("YOU WON!", "Roboto", 64, null, FontWeight.normal, Colors.white);
-		_progressLabel = new StatParagraph("PROGRESS", "Roboto", 19, 5.0, FontWeight.normal, labelColor);
-		_scoreLabel = new StatParagraph("SCORE", "Roboto", 19, 5.0, FontWeight.normal, labelColor);
-		_livesMultiplierLabel = new StatParagraph("LIVES MULTIPLIER", "Roboto", 19, 5.0, FontWeight.normal, labelColor);
-		_finalScoreLabel = new StatParagraph("FINAL SCORE", "Roboto", 19, 5.0, FontWeight.normal, labelColor);
-		_rankLabel = new StatParagraph("RANK", "Roboto", 19, 5.0, FontWeight.normal, labelColor);
+		_message = new StatParagraph("YOU WON!", roboto, 64, null, FontWeight.normal, Colors.white);
+		_progressLabel = new StatParagraph("PROGRESS", roboto, 19, 5.0, FontWeight.normal, GameColors.labelColor);
+		_scoreLabel = new StatParagraph("SCORE", roboto, 19, 5.0, FontWeight.normal, GameColors.labelColor);
+		_livesMultiplierLabel = new StatParagraph("LIVES MULTIPLIER", roboto, 19, 5.0, FontWeight.normal, GameColors.labelColor);
+		_finalScoreLabel = new StatParagraph("FINAL SCORE", roboto, 19, 5.0, FontWeight.normal, GameColors.labelColor);
+		_rankLabel = new StatParagraph("RANK", roboto, 19, 5.0, FontWeight.normal, GameColors.labelColor);
 		
-		_scoreValue = new StatParagraph("0", "Inconsolata", 50, null, FontWeight.normal, Colors.white);
-		_livesValue = new StatParagraph("0x", "Inconsolata", 50, null, FontWeight.normal, Colors.white);
-		_finalScoreValue = new StatParagraph("0", "Inconsolata", 50, null, FontWeight.normal, Colors.white);
-		_rankValue = new StatParagraph("0", "Inconsolata", 50, null, FontWeight.normal, Colors.white);
-		_progressValue = new StatParagraph("0", "Roboto", 19, null, FontWeight.w700, Colors.white);
+		_scoreValue = new StatParagraph("0", inconsolata, 50, null, FontWeight.normal, Colors.white);
+		_livesValue = new StatParagraph("0x", inconsolata, 50, null, FontWeight.normal, Colors.white);
+		_finalScoreValue = new StatParagraph("0", inconsolata, 50, null, FontWeight.normal, Colors.white);
+		_rankValue = new StatParagraph("0", inconsolata, 50, null, FontWeight.normal, Colors.white);
+		_progressValue = new StatParagraph("0", roboto, 19, null, FontWeight.w700, Colors.white);
 		
 		flr.FlutterActor actor = new flr.FlutterActor();
 		actor.loadFromBundle("assets/flares/Heart").then(
@@ -375,7 +393,12 @@ class GameStatsRenderObject extends RenderBox
 	{
 		return ui.lerpDouble(0.0, 1.0, f);
 	}
-	Random rand = new Random();
+	
+    /// This widget will incrementally add elements by 'dropping' them on the screen on at a time.
+    /// [sectionF()] evaluates what the progress is into the current animation, and builds the 'dropping'
+    /// animation accordingly. 
+    /// So every element has its own factor, delayed by its index, and for every element, 
+    /// they will scale down, become opaque and, upon 'impact, shake the screen.
 	void advanceAnimation()
 	{
 		double seconds = max(0.0, ((new DateTime.now().millisecondsSinceEpoch - _showTime.millisecondsSinceEpoch))/1000.0);
@@ -464,13 +487,13 @@ class GameStatsRenderObject extends RenderBox
 		_rankValue.label = _rank.toString();
 		_rankValue.layout(f, getScale(f), getOpacity(f));
 	}
+
 	@override
 	void paint(PaintingContext context, Offset offset)
 	{
 		final Canvas canvas = context.canvas;
 
-		const int padding = 10;
-
+        /// First thing before painting is laying out all the elemtns properly depending on how much time has passed.
 		advanceAnimation();
 
 		canvas.save();
@@ -493,10 +516,9 @@ class GameStatsRenderObject extends RenderBox
 
 			double progressOpacity = getOpacity(_progressFactor);
 			double progressScale = getScale(_progressFactor);
-			const int progressNumTicks = 8;
+
 			final double progressWidth = size.width*progressScale;
 			final double progressHeight = 12.1*progressScale;
-
 
 			Offset progressOff = new Offset(currentOffset.dx, currentOffset.dy + 50.0/2.0 - progressHeight/2.0);
 			
@@ -516,7 +538,6 @@ class GameStatsRenderObject extends RenderBox
 			for(int i = 0; i < progressNumTicks+1; i++)
 			{
 				Offset tickOffset = new Offset(xOffset + i * tickDistance, progressOff.dy + progressHeight);
-				const Size tick = const Size(3.0, 5.0);
 				bool isHighlighted = _progress > 0 && i <= numHighlightedTicks;
 				canvas.drawRect(tickOffset&tick, new Paint()..color = isHighlighted ? new Color.fromRGBO(13, 129, 181, progressOpacity) : Color.fromRGBO(255,255,255, progressOpacity*0.2));
 			}
@@ -537,7 +558,6 @@ class GameStatsRenderObject extends RenderBox
 		
 		if(_heartAABB != null)
 		{
-			const double heartPadding = 9.0;
 			final double heartWidth = _heartAABB[2] - _heartAABB[0];
 			final double heartHeight = _heartAABB[3] - _heartAABB[1];
 			for(int i = 0; i < _lives; i++)

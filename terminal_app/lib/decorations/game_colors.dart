@@ -18,4 +18,6 @@ class GameColors
     static const Color angryTime = const Color.fromARGB(255, 255, 72, 0);
 	static const Color urgentTime = const Color.fromARGB(255, 255, 191, 0);
 	static const Color relaxedTime = const Color.fromARGB(255, 86, 234, 246);
+
+    static const Color labelColor = const Color.fromRGBO(255, 255, 255, 0.5);
 }
