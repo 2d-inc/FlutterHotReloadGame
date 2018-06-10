@@ -14,7 +14,7 @@ class SocketClient
 	static const int ReconnectMaxSeconds = 10;
 	
     Socket _socket;
-	SocketDelegate _terminal;
+	SocketDelegate delegate;
 	Timer _reconnectTimer;
 	Timer _pingTimer;
 	int _reconnectSeconds = ReconnectMinSeconds;
@@ -23,7 +23,7 @@ class SocketClient
 	String _address;
 	String _uniqueId;
 
-    SocketClient(this._terminal, this._uniqueId)
+    SocketClient(this.delegate, this._uniqueId)
 	{
 		if(Platform.isAndroid)
 		{
@@ -90,8 +90,7 @@ class SocketClient
 
 	void onReady()
 	{
-		// bool state = _terminal.handleReady();
-		bool state = _terminal.onReady();
+		bool state = delegate.onReady();
 		_socket?.writeln(formatJSONMessage("ready", state));
 	}
 
@@ -236,7 +235,7 @@ class SocketClient
 							{
 								var jsonMsg = json.decode(encodedJson);
 								print("GOT MESSAGE $jsonMsg");
-                                _terminal.onMessage(jsonMsg);
+                                delegate.onMessage(jsonMsg);
 							}
 							on FormatException catch(e)
 							{

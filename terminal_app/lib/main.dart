@@ -261,7 +261,7 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
                         new Row(children: [ new Expanded(child: new Container(margin: new EdgeInsets.only(top:5.0), color: const Color.fromARGB(77, 167, 230, 237), height: 1.0)) ]), 
                         ci.isPlaying ? 
                             new InGame(_gameOpacity, () => _backToLobby(game), _randomSeed) :
-                            new LobbyWidget(ci.isConnected && ci.canBeReady, ci.isReady, ci.markedStart, ci.arePlayersReady, _lobbyOpacity, game.client?.onReady, game.client?.onStart),
+                            new LobbyWidget( _lobbyOpacity),
                         new Container(
                             margin: new EdgeInsets.only(top: 10.0),
                             alignment: Alignment.bottomRight,

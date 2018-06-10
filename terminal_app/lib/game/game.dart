@@ -382,6 +382,6 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
         gameConnectionBloc.setLast(isReady: isIt);
 	}
 
-    get client => _client;
-    get connection => gameConnectionBloc.last;
+    SocketClient get client => _client;
+    ConnectionInfo get connection => gameConnectionBloc.last;
 }
