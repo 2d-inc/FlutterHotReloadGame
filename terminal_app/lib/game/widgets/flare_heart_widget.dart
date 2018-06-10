@@ -4,11 +4,12 @@ import "package:flare/flare.dart" as flr;
 import "package:flutter/material.dart";
 import "package:flutter/scheduler.dart";
 
+/// This Widget will display a Flare heart, i.e. an animation made with 2Dimensions' Flare for vector graphics.
 class FlareHeart extends LeafRenderObjectWidget
 {
+    /// The asset's location in the local bundle.
 	final String src;
 	final bool isDead;
-	final bool isSmall;
 	final double opacity;
 
 	FlareHeart(
@@ -17,13 +18,12 @@ class FlareHeart extends LeafRenderObjectWidget
 		{
 			Key key,
 			this.opacity,
-            bool isSmall
-		}): isSmall = isSmall ?? false, super(key: key);
+		}) : super(key: key);
 
 	@override
 	RenderObject createRenderObject(BuildContext context) 
 	{
-		return new HeartRenderObject(src, isDead, isSmall);
+		return new HeartRenderObject(src, isDead);
 	}
 
 	@override
@@ -38,20 +38,23 @@ class FlareHeart extends LeafRenderObjectWidget
 class HeartRenderObject extends RenderBox
 {
 	String _src;
-	flr.FlutterActor _actor;
-	Float32List _aabb;
 	bool _isDead;
+	Float32List _aabb;
 	double _opacity;
-	flr.ActorAnimation _animation;
 	double _animationTime = 0.0;
 	double _lastFrameTime = 0.0;
+	flr.FlutterActor _actor;
+	flr.ActorAnimation _animation;
 
-	HeartRenderObject(String src, bool isDead, bool isSmall)
+	HeartRenderObject(String src, bool isDead)
 	{
 		this.src = src;
 		this.isDead = isDead;
 	}
 
+    /// Render loop for this animation: the heart should maintain its full state until a life is lost.
+    /// When a life is lost, the [_isDead] flag is raised and the animation starts by fading the heart 
+    /// to an empty (black) representation.
 	void beginFrame(Duration timeStamp) 
 	{
 		if(_animation == null)
@@ -68,7 +71,6 @@ class HeartRenderObject extends RenderBox
 			// Is the FrameCallback supposed to pass elapsed time since last frame? timeStamp seems to behave more like a date
 			return;
 		}
-		
 		double elapsed = (t - _lastFrameTime).clamp(0.0, 1.0);
 		_lastFrameTime = t;
 
@@ -78,6 +80,7 @@ class HeartRenderObject extends RenderBox
 	
 		if((isDead && _animationTime < _animation.duration) || (!isDead && _animationTime > 0.0))
 		{
+            /// Loop.
 			SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 		}
 		markNeedsPaint();
@@ -140,6 +143,7 @@ class HeartRenderObject extends RenderBox
 		{
 			return;
 		}
+        /// Raise the flag and reset the time so that the heart can fade with the animation.
 		_isDead = d;
 		_lastFrameTime = 0.0;
 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
@@ -163,6 +167,7 @@ class HeartRenderObject extends RenderBox
 			markNeedsPaint();
 			return;
 		}
+        /// Upon building the widget, load the resources, get the appropriate pointers and set its parameters.
 		flr.FlutterActor actor = new flr.FlutterActor();
 		actor.loadFromBundle(value).then(
 			(bool success)
@@ -170,7 +175,7 @@ class HeartRenderObject extends RenderBox
 				_actor = actor;
 				_animation = _actor.getAnimation("Dead Monitor");
 				_animationTime = 0.0;
-				// Heart on the terminal app should be smaller
+				/// Heart on the terminal app should be scaled down.
 				_actor.root.scaleX = 0.5;
 				_actor.root.scaleY = 0.5;
 				markNeedsLayout();

@@ -188,18 +188,16 @@ class _TerminalState extends State<Terminal> with SingleTickerProviderStateMixin
         {
             return Container();
         }
+        
         int ls = gs.lives;
-        return new Row
-        (
-            children: 
-            [
-                new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 1, opacity: _gameOpacity)),
-                new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 2, opacity: _gameOpacity)),
-                new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 3, opacity: _gameOpacity)),
-                new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 4, opacity: _gameOpacity)),
-                new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < 5, opacity: _gameOpacity)),
-            ],
-        );
+        List<Widget> hearts = <Widget>[];
+        /// Loop starts at 1, since it's iterating on how many lives are left.
+        for(int i = 1; i <= 5; i++)
+        {
+            Widget heart = new Container(margin:const EdgeInsets.only(right:10.0), child:new FlareHeart("assets/flares/Heart", ls < i, opacity: _gameOpacity));
+            hearts.add(heart);
+        }
+        return new Row(children: hearts);
     }
     
     Widget characterSceneBuilder(BuildContext ctx, AsyncSnapshot<SceneInfo> snapshot)
