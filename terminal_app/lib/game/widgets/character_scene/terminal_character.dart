@@ -7,7 +7,7 @@ import "package:nima/actor_node.dart";
 import "terminal_scene.dart";
 
 /// A StateMix object is used to wrap the information about an animation,
-///  and the transition that happens when the character needs to interpolate from the current one to the next.
+/// and the transition that happens when the character needs to interpolate from the current one to the next.
 class StateMix
 {
 	CharacterState state;

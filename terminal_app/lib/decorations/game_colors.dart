@@ -14,4 +14,8 @@ class GameColors
     static const Color buttonAccentedText = Colors.black;
     static const Color buttonPressedBackground = const Color.fromARGB(255, 0, 0, 0);
     static const Color buttonPressedText = const Color.fromARGB(255, 0, 236, 255);
+
+    static const Color angryTime = const Color.fromARGB(255, 255, 72, 0);
+	static const Color urgentTime = const Color.fromARGB(255, 255, 191, 0);
+	static const Color relaxedTime = const Color.fromARGB(255, 86, 234, 246);
 }

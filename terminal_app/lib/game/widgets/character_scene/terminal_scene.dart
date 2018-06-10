@@ -61,6 +61,8 @@ class TerminalSceneRenderer extends RenderBox
     static const double message_padding = 40.0;
     static const double bubble_padding_h = 20.0;
     static const double bubble_padding_v = 12.0;
+    static const double padTop = 0.35;
+    static const double padBottom = 0.1;
 
 	FlutterActor _scene;
 	ActorAnimation _flicker;
@@ -363,16 +365,14 @@ class TerminalSceneRenderer extends RenderBox
 		}
 
 		AABB bounds = focusBoss ? (_characterBounds ?? _bounds) : _bounds;
-		const double PadTop = 0.35;
-		const double PadBottom = 0.1;
         /// Ensure that the current character is properly positioned within its bounds and with proper padding.
         /// If a message bubble is present, the height bounds for this objects get influenced.
 		if(focusBoss)
 		{
 			bounds = new AABB.clone(bounds);
 			double realHeight = bounds[3] - bounds[1];
-			bounds[3] += max(realHeight * PadTop, _messageParagraph == null ? 0.0 : _messageParagraph.height + 100.0);
-			bounds[1] -= realHeight * PadBottom;
+			bounds[3] += max(realHeight * padTop, _messageParagraph == null ? 0.0 : _messageParagraph.height + 100.0);
+			bounds[1] -= realHeight * padBottom;
 			bounds[1] = max(bounds[1], _bounds[1]);
 		}
 		double height = bounds[3] - bounds[1];
@@ -592,8 +592,8 @@ class TerminalSceneRenderer extends RenderBox
 
 	Path makeBubblePath(double width, double height)
 	{
-		const double arrowSize = 30.0;
 		final double arrowX = width * 0.25;
+		const double arrowSize = 30.0;
 		const double cornerRadius = 5.0;
 		
 		const double circularConstant = 0.55;
