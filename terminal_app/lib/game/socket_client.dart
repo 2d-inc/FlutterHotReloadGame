@@ -1,7 +1,6 @@
 import "dart:async";
 import "dart:convert";
 import "dart:io";
-import "dart:ui";
 
 import "package:flutter/foundation.dart";
 import "package:path_provider/path_provider.dart";
@@ -19,7 +18,6 @@ class SocketClient
 	Timer _pingTimer;
 	int _reconnectSeconds = ReconnectMinSeconds;
 	bool _isConnected = false;
-	VoidCallback onConnectionChanged;
 	String _address;
 	String _uniqueId;
 
@@ -118,9 +116,9 @@ class SocketClient
 		}
 		_isConnected = false;
 
-		if(onConnectionChanged != null)
+		if(delegate.onConnectionChanged != null)
 		{
-			onConnectionChanged();
+			delegate.onConnectionChanged();
 		}
 
 		int delay = _reconnectSeconds;
@@ -202,9 +200,9 @@ class SocketClient
 					}
 					_isConnected = true;
 
-					if(onConnectionChanged != null)
+					if(delegate.onConnectionChanged != null)
 					{
-						onConnectionChanged();
+						delegate.onConnectionChanged();
 					}
 					debugPrint("Socket connected");
 					// Reset to min connect time for future reconnects.

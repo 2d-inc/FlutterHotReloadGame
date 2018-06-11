@@ -6,6 +6,7 @@ import 'dart:math';
 import "package:audioplayers/audioplayer.dart";
 import "package:crypto/crypto.dart";
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import "package:path_provider/path_provider.dart";
 import "package:uuid/uuid.dart";
 
@@ -19,48 +20,52 @@ import "blocs/in_game_bloc.dart";
 import "blocs/scene_bloc.dart";
 import "widgets/character_scene/terminal_scene.dart";
 
+/// This class is the junction point between the UI and the logic of the app.
+/// It implements three delegates:
+/// - [SocketDelegate] to manage I/O with the server;
+/// - [AudioPlayerDelegate] to play the relevant sounds;
+/// - [DopamineDelegate] to signal to the UI that a Dopamine effect should be displayed.
 class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 {
-	static const int statsDropSeconds = 15;
     static const String _waitingMessage = "Waiting for 2-4 players!";
 
+    /// Server inputs are relayed to the various UI components to reflect a change in the state of the app;
+    /// this relaying operation is handled through the [Stream]s and [Sink]s used inside the following four 
+    /// Business LOgic Componentss.
     final InGameBloc inGameBloc;
     final GameStatsBloc gameStatsBloc;
     final GameConnectionBloc gameConnectionBloc;
     final SceneBloc sceneBloc;
 
+    /// SocketClient handle & its relevant callbacks.
     SocketClient _client;
     SocketMessageCallback onMessage;
     SocketReadyCallback onReady;
+    SocketConnectionCallback onConnectionChanged;
 
+    /// Callbacks for [DopamineDelegate].
     DopamineScoreCallback onScored;
     DopamineLifeLostCallback onLifeLost;
 
-    Timer _highscoreTimer;
     List<AudioPlayer> _audioPlayers = new List<AudioPlayer>();
     
+    /// In the constructor all the BLOCs are initialized properly, together with the apppriate handles.
     Game({InGameBloc igb, GameStatsBloc gsb, GameConnectionBloc gcb, SceneBloc sb}) :
         inGameBloc = igb ?? new InGameBloc(),
         gameStatsBloc = gsb ?? new GameStatsBloc(),
         gameConnectionBloc = gcb ?? new GameConnectionBloc(),
         sceneBloc = sb ?? new SceneBloc()
     {
-        onMessage = onSocketMessage;
+        /// [SocketClient] is initialized with a unique ID so that the server has a way to identify
+        /// which tablet is connected to which socket.
+        _client = new SocketClient(this, new Uuid().v4());
+        /// [SocketDelegate] callbacks are also registered on this object, acting as a delegate.
         onReady = handleReady;
-        initSocketClient(new Uuid().v4());
+        onMessage = onSocketMessage;
+		onConnectionChanged = handleConnectionChange;
+        /// Initalize the message in the bubble shown in the lobby. 
         resetSceneMessage();
     }
-
-    initSocketClient(String uniqueId)
-	{
-        onReady = handleReady;
-        onMessage = onSocketMessage;
-        _client = new SocketClient(this, uniqueId);
-		_client.onConnectionChanged = ()
-		{
-            gameConnectionBloc.setLast(isConnected: _client.isConnected);
-		};
-	}
 
     bool handleReady()
 	{
@@ -69,6 +74,10 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 		return readyState;
 	}
 
+    void handleConnectionChange()
+    {
+        gameConnectionBloc.setLast(isConnected: _client.isConnected);
+    }
 
     void issueCommand(String taskType, int value)
 	{
@@ -88,6 +97,8 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
         }
     }
 
+    /// This function converts all the payloads in JSON format that arrive from the server. 
+    /// Depending on the type of message that is delivered, a different callback is used.
     onSocketMessage(jsonMsg)
     {
         var payload = jsonMsg['payload'];
@@ -155,25 +166,27 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
                 onServerInitials(payload as String);
                 break;
             default:
-                print("UNKNOWN MESSAGE: $jsonMsg");
+                debugPrint("UNKNOWN MESSAGE: $jsonMsg");
                 break;
         }
     }
-
+    
+    /// This callback is actioned every time a message arrives, so that every client has a consistent view of
+    /// the status of the game.
     void setGameStatus(bool isServerInGame, bool isClientInGame, bool doesServerThinkImReady, bool doesServerThinkStart)
 	{
         gameConnectionBloc.setLast(
             isReady: doesServerThinkImReady, 
             markedStart: doesServerThinkStart, 
-            canBeReady: !isServerInGame // we can only mark ready if the server isn't already in a game.
+            canBeReady: !isServerInGame /// we can only mark ready if the server isn't already in a game.
         );
         if(!inGameBloc.last.isOver && connection.isPlaying && !isClientInGame)
         {
-            //_backToLobby();
             showGameOver(false, false);
         }
 	}
 
+    /// If a new message has arrived, play the new_command sound and show the message with the command in the bubble.
 	void onTalk(String msg)
 	{
 		playAudio("assets/audio/new_command.wav");
@@ -181,6 +194,9 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
         sceneBloc.setLast(sceneMessage: msg);
 	}
 
+    /// When a game starts, the server sends over the list of commands that the local player will have on the screen.
+    /// Some fields are reset to make sure that the game status is consistent for the local player, and the character 
+    /// scene is updated by choosing a random stakeholder to zoom in to.
     void onGameStart(List commands)
     {
         if(!connection.isReady)
@@ -195,16 +211,16 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
         gameConnectionBloc.setLast(isPlaying: true);
         inGameBloc.setLast(gridDescription: commands, isOver: false, hasWon: false);
         
-        // Manually reset these fields.
+        /// Manually reset these fields.
         sceneBloc.nullifyParams(true, true, true);
         sceneBloc.setLast(
 			sceneState: TerminalSceneState.BossOnly,
             sceneCharacterIndex: new Random().nextInt(4)
         );
         gameStatsBloc.setLast(initials: "");
-        print("PLAYING AND SETTING CHARACTER TO ${sceneBloc.last.sceneCharacterIndex}");
     }
 
+    /// When a game ends, show the game over stats page, and update the [GameStatsBloc] with the server data.
     void gameOver(bool isHighScore, bool didDie, int score, int lifeScore, int rank, int lives, double progress)
 	{
 		showGameOver(isHighScore, didDie);
@@ -217,26 +233,19 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
             lives: max(0, lives),
             time: new DateTime.now().add(const Duration(seconds: 1))
         );
-
-		_highscoreTimer = new Timer(const Duration(seconds:statsDropSeconds), ()
-		{
-            inGameBloc.setLast(showStats: false);
-		});
 	}
 
+    /// This function updates the stream for the [InGame] widget, raising the appropriate flags.
     void showGameOver(bool isHighScore, bool didDie)
 	{
-		if(_highscoreTimer != null)
-		{
-			_highscoreTimer.cancel();
-		}
         inGameBloc.setLast(hasWon: isHighScore, isOver: true);
+        /// Manually update the fields, and call [SceneBloc.setLast()] so that they are updated properly.
         sceneBloc.nullifyParams(true, true, true);
-        /// Update the stream with the nulled values.
         sceneBloc.setLast();
 	}
 
-
+    /// When a player receives a new task, the [TerminalScene] needs to have refreshed information about
+    /// the message to show, the start&end time, and the AudioPlayer is triggered with the appropriate sound.
 	void onNewTask(Map task)
 	{
 		String msg = task['message'] as String;
@@ -259,12 +268,16 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 	}
 
 
+    /// Update the [GameConnectionBloc] list so that the [LobbyWidget] can show how many players are in the game, and which ones are ready to start.
 	onPlayersList(List<bool> readyList)
 	{
         gameConnectionBloc.setLast(arePlayersReady: readyList);
         resetSceneMessage();
 	}
 
+    /// Whenever a Game Control is actioned(e.g. a button press, a slider is set, etc.) the server validate that command with the 
+    /// current set of actions that need to be performed. Depending on the correctness of the action, a 'success' or a 'fail' sound
+    /// is played, and a corresponding [DopamineDelegate] effect is shown on screen.
 	void onScoreContribution(int score)
 	{
 		if(onScored != null)
@@ -281,17 +294,21 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 		}
 	}
 	
+    /// Update the [TerminalScene] message.
     void onTaskFail(String msg)
 	{
 	    sceneBloc.setLast(sceneMessage: msg);
 	}
 
+    /// Update the [TerminalScene] message and reset the start and end time for the current command.
 	void onTaskComplete(String msg)
 	{
         sceneBloc.nullifyParams(false, true, true);
         sceneBloc.setLast(sceneMessage: msg);
 	}
 
+    /// The server sends over how many lives are available for the team playing. If any lives have been lost
+    /// play a sound and show a [DopamineDelegate] effect in the center of the screen.
     void onLivesChanged(int value)
 	{
         int l = gameStatsBloc.lives;
@@ -309,6 +326,7 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 		}
 	}
     
+    /// Updated score for the team.
     void onScoreChanged(int value)
 	{
         if(gameStatsBloc.score != value)
@@ -317,6 +335,8 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
         }
 	}
 
+    /// In the [GameStats] screen, if a player has successfully entered the initials, these are passed back to the rest
+    /// of the team, and the that allowed to input initials is greyed out.
 	void onServerInitials(String initials)
 	{
         if(gameStatsBloc.initials != initials)
@@ -325,6 +345,7 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
         }
 	}
 
+    /// Set lobby message depending on how many players are ready in the list.
     resetSceneMessage()
 	{
 		if(connection.isPlaying)
@@ -338,6 +359,8 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 		}
 	}
 
+    /// When the game goes back to the lobby, the [_TerminalState] calls this function in order to reset all the appropriate fields 
+    /// and parameters and start from a clean slate.
     backToLobby()
     {
         inGameBloc.setLast(gridDescription: [], isOver: false);
@@ -346,6 +369,9 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
         gameConnectionBloc.setLast(isReady: false, markedStart: false, isPlaying: false);
     }
 
+    /// Helper private function that'll load a file from the assets and write it to disk.
+    /// Upon loading the file for the first time, and thus writing it to disk, the game could slow down.
+    /// For any subsequent [_loadFile()] call everything should go smoothly. 
 	Future<String> _loadFile(String from) async 
 	{
 		final dir = await getApplicationDocumentsDirectory();
@@ -362,6 +388,7 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 		return filename;
 	}
     
+    /// Implementation for the [AudioPlayerDelegate] interface.
     void playAudio(String url)
 	{
 		_loadFile(url).then((String filename)
@@ -376,12 +403,8 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 		});
 	}
 
-
-	set isReady(bool isIt)
-	{
-        gameConnectionBloc.setLast(isReady: isIt);
-	}
-
+    /// This getter exposes the [SocketClient] so that certain UI elements can directly
+    /// plug into some if its functions to use as callbacks.
     SocketClient get client => _client;
     ConnectionInfo get connection => gameConnectionBloc.last;
 }
