@@ -31,7 +31,10 @@ class InGameStatus
 /// This BLOC is used to communicate with the [InGame] widget.
 class InGameBloc
 {
+    /// Keep a reference to the last element added to the [Stream]
+    /// and initialize to a default 'empty' value.
     InGameStatus _last = InGameStatus.seed();
+    
     BehaviorSubject<InGameStatus> _inGameController = new BehaviorSubject();
     Stream<InGameStatus> get stream => _inGameController.stream;
     Sink<InGameStatus> get sink => _inGameController.sink;
@@ -41,6 +44,9 @@ class InGameBloc
         _inGameController.close();
     }
 
+    /// This function takes care of 'diffing' the last element of the Stream
+    /// with a new one so that any incoming new data is passed correctly to the
+    /// [StreamBuilder] widgets that are listening.
     setLast({List gridDescription, bool isOver, bool hasWon, bool showStats})
     {
         var status = new InGameStatus(

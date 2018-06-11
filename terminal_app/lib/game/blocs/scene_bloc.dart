@@ -22,7 +22,10 @@ class SceneInfo
 /// This BLOC is used to communicate with the [TerminalScene] and [CommandTimer] widgets.
 class SceneBloc
 {
+    /// Keep a reference to the last element added to the [Stream]
+    /// and initialize to a default 'empty' value.
     SceneInfo _last = SceneInfo.seed();
+    
     BehaviorSubject<SceneInfo> _sceneController = new BehaviorSubject();
     Stream<SceneInfo> get stream => _sceneController.stream;
     Sink<SceneInfo> get sink => _sceneController.sink;
@@ -32,6 +35,9 @@ class SceneBloc
         _sceneController.close();
     }
 
+    /// This function takes care of 'diffing' the last element of the Stream
+    /// with a new one so that any incoming new data is passed correctly to the
+    /// [StreamBuilder] widgets that are listening.
     setLast({ String sceneMessage, TerminalSceneState sceneState, DateTime commandStartTime, DateTime commandEndTime, int sceneCharacterIndex })
     {
        var info = new SceneInfo(

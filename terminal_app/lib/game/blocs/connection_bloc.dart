@@ -27,6 +27,8 @@ class ConnectionInfo
 /// This BLOC is used to communicate with the [_TerminalState] and [LobbyWidget].
 class GameConnectionBloc
 {
+    /// Keep a reference to the last element added to the [Stream]
+    /// and initialize to a default 'empty' value.
     ConnectionInfo _last = ConnectionInfo.seed();
 
     BehaviorSubject<ConnectionInfo> _connectionInfoController = new BehaviorSubject();
@@ -38,6 +40,9 @@ class GameConnectionBloc
         _connectionInfoController.close();
     }
 
+    /// This function takes care of 'diffing' the last element of the Stream
+    /// with a new one so that any incoming new data is passed correctly to the
+    /// [StreamBuilder] widgets that are listening.
     setLast({ bool isConnected, bool isPlaying, bool isReady, bool canBeReady, bool markedStart, List<bool> arePlayersReady })
     {
         var ci = new ConnectionInfo(
