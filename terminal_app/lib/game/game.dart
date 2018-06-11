@@ -85,7 +85,7 @@ class Game implements SocketDelegate, AudioPlayerDelegate, DopamineDelegate
 		{
 			return;
 		}
-		print("SEND COMMAND $taskType $value");
+		debugPrint("SEND COMMAND $taskType $value");
 		_client.sendCommand(taskType, value);
 	}
        

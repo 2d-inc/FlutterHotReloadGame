@@ -20,12 +20,20 @@ import "titled_command_panel.dart";
 
 typedef void StringCallback(String msg);
 
+/// This Widget is displayed when a new game begins. The server assigns the Controls that'll make up the grid
+/// with [GameBinaryButton]s, [GameSlider]s and/or [GameRadial]s. The [buildGrid()] function performs some 
+/// calculations to lay these elements out properly, respecting the space constraints available to this element.
+/// Once a game is over, the grid is replaced by the [GameStats] widget.
 class InGame extends StatelessWidget
 {
     final List _gridDescription = [];
 
+    /// Callback that is used for the [PanelButton] to go back to the lobby. 
+    /// This is piped directly from the [_TerminalState]
     final VoidCallback _onRetry;
+    /// This field animates the opacity for the current widget so it can fade in and out during transitions.
     final double _opacity;
+    /// Seed that's reset every time a game starts. Also comes from [_TerminalState].
 	final int _seed;
 
 	static const Map gameWidgetsMap = const {

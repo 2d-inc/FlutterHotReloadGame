@@ -9,6 +9,7 @@ import "../decorations/game_colors.dart";
 import "../delegates/audio_player_delegate.dart";
 import "../game_provider.dart";
 
+/// Build a custom object for the [GameStats]. This object instantiates a [GameStatsRenderObject] with the game over information. 
 class GameStats extends LeafRenderObjectWidget
 {
 	final double progress;
@@ -51,6 +52,7 @@ class GameStats extends LeafRenderObjectWidget
 	}
 }
 
+/// Wraps a single [ui.Paragraph], so that the [GameStatsRenderObject] can layout properly, and animate its paragraphs individually.
 class StatParagraph
 {
 	static const double MaxWidth = 4096.0;

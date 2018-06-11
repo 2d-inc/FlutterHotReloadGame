@@ -7,35 +7,43 @@ import "../game.dart";
 import "../game_provider.dart";
 import "game_command_widget.dart";
 import "game_radial.dart";
+import "tick_paragraph.dart";
 
+/// The [GameSlider] widget represents a horizontal line with 5 ticks, which can be shown during a game.
+/// Players can interact with the slider either by sliding their finger, or by tapping directly on a certain tick value.
+/// It needs to be a [StatefulWidget] so that it can animate between one state and the next, reacting to inputs.
 class GameSlider extends StatefulWidget implements GameCommand
 {
-	GameSlider.make(this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
-	
-	GameSlider.fromRadial(GameRadial radial) :
-		taskType = radial.taskType,
-		value = radial.value, min = radial.min, max = radial.max;
-
 	final String taskType;
 	final int value;
 	final int min;
 	final int max;
 
+	GameSlider.make(this.taskType, Map params) : value = params['min'], min = params['min'], max = params['max'];
+	
+    /// Custom constructor that's need by the [InGame] widget whenever a [GameRadial] wouldn't have enough space in the grid,
+    /// and it's replaced by a Slider instead.
+	GameSlider.fromRadial(GameRadial radial) :
+		taskType = radial.taskType,
+		value = radial.value, min = radial.min, max = radial.max;
+
 	@override
 	GameSliderState createState() => new GameSliderState(value.toDouble(), min, max);
 }
 
+/// This [State] uses a [GestureDetector] to detect any dragging events on the whole render element, and
+/// animates between a certain value and the new one registered by any possible event.
 class GameSliderState extends State<GameSlider> with SingleTickerProviderStateMixin
 {
-	AnimationController _controller;
-	Animation<double> _valueAnimation;
-	double value = 0.0;
+    static const int NumSliderTicks = 5;
 	final int minValue;
 	final int maxValue;
-	double accumulation = 0.0;
-	int targetValue = 0;
 
-    static const int NumSliderTicks = 5;
+	int targetValue = 0;
+	double value = 0.0;
+	double accumulation = 0.0;
+	AnimationController _controller;
+	Animation<double> _valueAnimation;
 
 	GameSliderState(this.value, this.minValue, this.maxValue);
 	
@@ -44,6 +52,7 @@ class GameSliderState extends State<GameSlider> with SingleTickerProviderStateMi
 		dragToGlobal(details.globalPosition);
 	}
 
+    /// Convert the gesture position to local values and animate, if needed, to this new value.
 	void dragToGlobal(Offset offset)
 	{
 		RenderBox ro = context.findRenderObject();
@@ -69,7 +78,6 @@ class GameSliderState extends State<GameSlider> with SingleTickerProviderStateMi
 		}
 		targetValue = v;
 
-		
 		_valueAnimation = new Tween<double>
 		(
 			begin: value.toDouble(),
@@ -95,6 +103,7 @@ class GameSliderState extends State<GameSlider> with SingleTickerProviderStateMi
         }
 	}
 
+    @override
 	initState() 
 	{
     	super.initState();
@@ -123,14 +132,14 @@ class GameSliderState extends State<GameSlider> with SingleTickerProviderStateMi
 			onVerticalDragUpdate: dragUpdate,
 			onVerticalDragEnd: (details) => dragEnd(details, context),
 			child: new Container(
-				alignment:Alignment.center,
-				child:new GameSliderNotches((value-minValue)/(maxValue-minValue), minValue, maxValue)
+				alignment: Alignment.center,
+				child: new GameSliderNotches((value-minValue)/(maxValue-minValue), minValue, maxValue)
 				)
 			);
 	}
 }
 
-
+/// The widget for rendering a custom [GameSliderNotchesRenderObject]. 
 class GameSliderNotches extends LeafRenderObjectWidget
 {
 	final double value;
@@ -157,22 +166,20 @@ class GameSliderNotches extends LeafRenderObjectWidget
 	}
 }
 
-class SliderTickParagraph
-{
-	ui.Paragraph paragraph;
-	Size size;
-}
-
+/// Custom renderer for the notched element in the grid, with 5 values. 
+/// It'll draw a horizontal line with 5 ticks, a textual value above each tick representing the value associated with it.
 class GameSliderNotchesRenderObject extends RenderBox
 {
+    static const padding = 40.0;
+    static const strokeWidth = 10.0;
+    static const double tickWidth = 10.0;
+    static const double tickHeight = 15.0;
+
 	double _value;
 	int _minValue;
 	int _maxValue;
 
-	ui.Paragraph _valueParagraph;
-	Size _valueLabelSize;
-
-	List<SliderTickParagraph> _tickParagraphs;
+	List<TickParagraph> _tickParagraphs;
 
 	GameSliderNotchesRenderObject(double value, int minValue, int maxValue)
 	{
@@ -193,26 +200,13 @@ class GameSliderNotchesRenderObject extends RenderBox
 		size = new Size(constraints.constrainWidth(), constraints.constrainHeight(240.0));
 	}
 
+    /// Lay out the all the Paragraphs needed the slider ticks.
 	@override
 	void performLayout()
 	{
 		super.performLayout();
 		
-		_tickParagraphs = new List<SliderTickParagraph>(GameSliderState.NumSliderTicks);
-
-		String valueLabel = (_minValue + _value*(_maxValue-_minValue)).round().toString();
-		ui.ParagraphBuilder builder = new ui.ParagraphBuilder(new ui.ParagraphStyle(
-			textAlign:TextAlign.start,
-			fontFamily: "Inconsolata",
-			fontSize: 36.0,
-			fontWeight: FontWeight.w700
-		))..pushStyle(new ui.TextStyle(color:GameColors.white));
-		builder.addText(valueLabel);
-		_valueParagraph = builder.build();
-
-		_valueParagraph.layout(new ui.ParagraphConstraints(width: size.width));
-		List<ui.TextBox> boxes = _valueParagraph.getBoxesForRange(0, valueLabel.length);
-		_valueLabelSize = new Size(boxes.last.right-boxes.first.left, boxes.last.bottom - boxes.first.top);
+		_tickParagraphs = new List<TickParagraph>(GameSliderState.NumSliderTicks);
 
 		for(int i = 0; i < GameSliderState.NumSliderTicks; i++)
 		{
@@ -227,11 +221,10 @@ class GameSliderNotchesRenderObject extends RenderBox
 			ui.Paragraph tickParagraph = builder.build();
 			tickParagraph.layout(new ui.ParagraphConstraints(width: size.width));
 			List<ui.TextBox> boxes = tickParagraph.getBoxesForRange(0, tickLabel.length);
-			SliderTickParagraph rtp = new SliderTickParagraph()
+			TickParagraph rtp = new TickParagraph()
 															..paragraph = tickParagraph
 															..size = new Size(boxes.last.right-boxes.first.left, boxes.last.bottom - boxes.first.top);
 			_tickParagraphs[i] = rtp;
-			
 		}
 	}
 	
@@ -239,16 +232,11 @@ class GameSliderNotchesRenderObject extends RenderBox
 	void paint(PaintingContext context, Offset offset)
 	{
 		final Canvas canvas = context.canvas;
-		const padding = 40.0;
-		const strokeWidth = 10.0;
-		const double tickWidth = 10.0;
-		const double tickHeight = 15.0;
 
-		ui.Paint tickPaint = new ui.Paint()..color = GameColors.lowValueContent..strokeWidth = 2.0..style=PaintingStyle.stroke;
-
-		double tickHorizonalSpace = size.width-padding*2;
-		double tickX = offset.dx+padding;
-		double moveDown = size.height*0.75;
+		final ui.Paint tickPaint = new ui.Paint()..color = GameColors.lowValueContent..strokeWidth = 2.0..style=PaintingStyle.stroke;
+		final double tickHorizonalSpace = size.width-padding*2;
+		final double tickX = offset.dx+padding;
+		final double moveDown = size.height*0.75;
 
 		for(int i = 0; i < GameSliderState.NumSliderTicks; i++)
 		{
@@ -259,24 +247,23 @@ class GameSliderNotchesRenderObject extends RenderBox
 
 			if(_tickParagraphs != null)
 			{
-				SliderTickParagraph tickParagraph = _tickParagraphs[i];
+				TickParagraph tickParagraph = _tickParagraphs[i];
+                /// Draw each textual tick value first.
 				canvas.drawParagraph(tickParagraph.paragraph, new Offset(p2.dx - tickParagraph.size.width/2.0, p2.dy - tickHeight - tickParagraph.size.height));
 			}
 			
-
+            /// Then draw the tick line beneath the text.
 			canvas.drawLine(p1, p2, tickPaint);
 		}
 
-		double upToX = offset.dx+padding+(size.width-padding*2.0)*value;
+		double upToX = offset.dx+padding+(size.width-padding*2.0)*_value;
+        /// Draw the slider background line.
 		canvas.drawLine(new Offset(offset.dx+padding, offset.dy+moveDown-strokeWidth/2.0), new Offset(offset.dx+size.width-padding, offset.dy+moveDown-strokeWidth/2.0), new ui.Paint()..color = GameColors.lowValueContent..strokeWidth = 10.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
+        /// Draw the slider foreground highlighted line.
 		canvas.drawLine(new Offset(offset.dx+padding, offset.dy+moveDown-strokeWidth/2.0), new Offset(upToX, offset.dy+moveDown-strokeWidth/2.0), new ui.Paint()..color = GameColors.highValueContent..strokeWidth = 10.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
+        /// Draw two circles, one bigger and one smaller, beneath the last selected element.
 		canvas.drawCircle(new Offset(upToX, offset.dy+moveDown-strokeWidth/2.0), 15.0, new ui.Paint()..color = Colors.white..strokeWidth = 2.0..style=PaintingStyle.stroke..strokeCap = StrokeCap.round);
 		canvas.drawCircle(new Offset(upToX, offset.dy+moveDown-strokeWidth/2.0), 5.0, new ui.Paint()..color = Colors.white..strokeWidth = 2.0..style=PaintingStyle.fill..strokeCap = StrokeCap.round);
-	}
-
-	double get value
-	{
-		return _value;
 	}
 
 	set value(double v)
@@ -291,11 +278,6 @@ class GameSliderNotchesRenderObject extends RenderBox
 		markNeedsPaint();
 	}
 
-	int get minValue
-	{
-		return _minValue;
-	}
-
 	set minValue(int v)
 	{
 		if(_minValue == v)
@@ -306,11 +288,6 @@ class GameSliderNotchesRenderObject extends RenderBox
 
 		markNeedsLayout();
 		markNeedsPaint();
-	}
-
-	int get maxValue
-	{
-		return _maxValue;
 	}
 
 	set maxValue(int v)
