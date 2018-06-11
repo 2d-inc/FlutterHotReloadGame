@@ -2,7 +2,7 @@ import "dart:ui" as ui;
 
 import 'package:flutter/material.dart';
 
-import "../../decorations/game_colors.dart";
+import "../decorations/game_colors.dart";
 
 class CommandTimer extends LeafRenderObjectWidget
 {

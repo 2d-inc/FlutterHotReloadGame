@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import "../../decorations/game_colors.dart";
+import "../decorations/game_colors.dart";
 
 /// A [PanelButton] has three possible states:
 /// 1. Inactive: A button that's present but doesn't respond to tap events.

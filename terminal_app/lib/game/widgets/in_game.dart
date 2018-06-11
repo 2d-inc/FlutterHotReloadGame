@@ -6,17 +6,17 @@ import "package:flutter/material.dart";
 import "package:flutter/rendering.dart";
 import 'package:flutter/widgets.dart';
 
-import "../../game_controls/game_buttons.dart";
-import "../../game_controls/game_radial.dart";
-import "../../game_controls/game_slider.dart";
 import "../blocs/game_stats_bloc.dart";
 import "../blocs/in_game_bloc.dart";
+import "../controls/game_buttons.dart";
+import "../controls/game_radial.dart";
+import "../controls/game_slider.dart";
 import "../game.dart";
 import "../game_provider.dart";
-import "titled_command_panel.dart";
+import "enter_initials.dart";
 import "game_over.dart";
 import "game_over_stats.dart";
-import "enter_initials.dart";
+import "titled_command_panel.dart";
 
 typedef void StringCallback(String msg);
 

@@ -5,8 +5,8 @@ import "dart:ui" as ui;
 import "package:flare/flare.dart" as flr;
 import "package:flutter/material.dart";
 
-import "../../decorations/game_colors.dart";
-import "../../delegates/audio_player_delegate.dart";
+import "../decorations/game_colors.dart";
+import "../delegates/audio_player_delegate.dart";
 import "../game_provider.dart";
 
 class GameStats extends LeafRenderObjectWidget

@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import "command_panel.dart";
-import "../../decorations/game_colors.dart";
+import "../decorations/game_colors.dart";
 
 /// During a game, a [CommandPanel] is used as a wrapper for InGame command so that it has a title describing its type.
 class TitledCommandPanel extends StatelessWidget

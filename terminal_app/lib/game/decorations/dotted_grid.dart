@@ -11,6 +11,7 @@ class DottedGrid extends Decoration
     }
 }
 
+/// Custom decoration that draws a list of dots directly on the [Canvas].
 class DottedGridPainter extends BoxPainter
 {
     static const double spacingWidth = 22.0;

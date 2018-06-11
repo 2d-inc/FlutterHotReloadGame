@@ -1,12 +1,12 @@
 import 'package:flutter/widgets.dart';
 
-import "../../decorations/game_colors.dart";
+import "../blocs/connection_bloc.dart";
+import "../decorations/game_colors.dart";
+import "../game.dart";
+import "../game_provider.dart";
 import "command_panel.dart";
 import "panel_button.dart";
 import "players_widget.dart";
-import "../game.dart";
-import "../game_provider.dart";
-import "../blocs/connection_bloc.dart";
 
 /// [Widget] that's present in the Game Lobby, while waiting for other players to join.
 /// This element is composed of a list of Players with their respective status (READY|NOT READY)

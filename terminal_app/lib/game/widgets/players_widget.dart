@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
 
-import "../../decorations/dotted_row.dart";
+import "../decorations/dotted_row.dart";
 
 enum PlayerStatus { READY, NOT_READY }
 

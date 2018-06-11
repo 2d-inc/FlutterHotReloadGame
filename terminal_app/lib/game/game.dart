@@ -9,9 +9,9 @@ import 'package:flutter/services.dart';
 import "package:path_provider/path_provider.dart";
 import "package:uuid/uuid.dart";
 
-import "../delegates/audio_player_delegate.dart";
-import "../delegates/dopamine_delegate.dart";
-import "../delegates/socket_delegate.dart";
+import "delegates/audio_player_delegate.dart";
+import "delegates/dopamine_delegate.dart";
+import "delegates/socket_delegate.dart";
 import "socket_client.dart";
 import "blocs/connection_bloc.dart";
 import "blocs/game_stats_bloc.dart";

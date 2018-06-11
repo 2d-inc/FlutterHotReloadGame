@@ -3,8 +3,8 @@ import "dart:ui" as ui;
 import "package:flutter/material.dart";
 
 import "../decorations/game_colors.dart";
-import "../game/game.dart";
-import "../game/game_provider.dart";
+import "../game.dart";
+import "../game_provider.dart";
 import "game_command_widget.dart";
 import "game_radial.dart";
 
