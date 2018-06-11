@@ -46,9 +46,9 @@ class LobbyWidget extends StatelessWidget
                         mainAxisSize: MainAxisSize.max,
                         children: 
                         [
-                            // Players Row
+                            /// Players Row
                             new CommandPanel(new PlayerListWidget(!canBeReady, ci.arePlayersReady)),
-                            // Filler
+                            /// Filler
                             new Expanded(child: new Container()),
                             /// If the local player has pressed the start button, all the players
                             /// marked as 'READY' need to do the same, so this component will remove the buttons

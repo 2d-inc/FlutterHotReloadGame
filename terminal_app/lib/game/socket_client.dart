@@ -191,7 +191,6 @@ class SocketClient
 						}
 						return;
 					}
-					print("CONNECTION CALLBACK");
 					if(_isConnected)
 					{
 						// This seems to occur when a connection times out, but then mysteriously

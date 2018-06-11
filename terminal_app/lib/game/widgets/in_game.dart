@@ -16,7 +16,7 @@ import "../game_provider.dart";
 import "titled_command_panel.dart";
 import "game_over.dart";
 import "game_over_stats.dart";
-import "high_score.dart";
+import "enter_initials.dart";
 
 typedef void StringCallback(String msg);
 
@@ -221,7 +221,7 @@ class InGame extends StatelessWidget
                                 }
                             )
                         ),
-                        status.hasWon ? new HighScore(_onRetry) : new GameOver(_onRetry)
+                        status.hasWon ? new EnterInitials(_onRetry) : new GameOver(_onRetry)
                     ])
                     /// If the game has just started, build the commands on the screen.
                     :  new LayoutBuilder(builder: buildGrid)

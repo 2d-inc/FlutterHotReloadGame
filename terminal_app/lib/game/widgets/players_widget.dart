@@ -1,30 +1,26 @@
-import 'dart:math';
-import 'dart:ui' show PointMode;
-
 import "package:flutter/material.dart";
+
+import "../../decorations/dotted_row.dart";
 
 enum PlayerStatus { READY, NOT_READY }
 
-class PlayerListWidget extends StatefulWidget 
+/// Show the list of currently active players in the lobby. 
+/// This list is laid out in a [Table] widget, showing how many players are 
+/// in the game and how many are ready to play.
+class PlayerListWidget extends StatelessWidget 
 {
     final bool isInGame;
     final List<bool> _arePlayersReady;
 
     PlayerListWidget(this.isInGame, this._arePlayersReady, {Key key}) : super(key: key);
 
-	@override
-	PlayerListState createState() => new PlayerListState();
-}
-
-class PlayerListState extends State<PlayerListWidget> 
-{
     @override
     Widget build(BuildContext context)
     {
-        List<TableRow> c = new List<TableRow>(widget._arePlayersReady.length);
+        List<TableRow> c = new List<TableRow>(_arePlayersReady.length);
         for(int i = 0; i < c.length; i++)
         {
-            c[i] = (new PlayerRow("Player ${i+1}", widget.isInGame, widget._arePlayersReady[i]));
+            c[i] = (new PlayerRow("Player ${i+1}", isInGame, _arePlayersReady[i]));
         }
 
         return new Table(
@@ -40,40 +36,8 @@ class PlayerListState extends State<PlayerListWidget>
     }
 }
 
-class DottedDecoration extends Decoration
-{
-    @override
-    BoxPainter createBoxPainter([VoidCallback onChanged])
-    {
-        return new DottedPainter();
-    }
-}
-
-class DottedPainter extends BoxPainter
-{
-    static const int MAX_NUM_POINTS = 10;
-    static const int POINTS_OFFSET = 7;
-
-    @override
-    void paint(Canvas canvas, Offset offset, ImageConfiguration configuration)
-    {
-        double availableWidth = min(configuration.size.width, (MAX_NUM_POINTS * POINTS_OFFSET).toDouble());
-        int numPoints = (availableWidth/POINTS_OFFSET).floor();
-
-        Paint dotsPaint = new Paint()
-            ..strokeWidth = 1.0
-            ..color = Colors.cyan;
-
-        List<Offset> dots = new List(numPoints);
-        for(int i = 0; i < numPoints; i++)
-        {
-            double dx = offset.dx + i * POINTS_OFFSET;
-            dots[i] = new Offset(dx, offset.dy);
-        }
-        canvas.drawPoints(PointMode.points, dots, dotsPaint);
-    }
-}
-
+/// Every row is made of three [Container]s, first one showing the player number, the second one uses 
+/// a custom [DottedRowDecoration] to line up with the Player's state, whic is shown right-aligned in the table.
 class PlayerRow extends TableRow
 {
     static const Map<bool, Map> READY_MAP = const 
@@ -102,7 +66,7 @@ class PlayerRow extends TableRow
                     child: new Text(name, style: new TextStyle(color: new Color.fromARGB(255, 45, 207, 220), fontFamily: "Inconsolata", fontWeight: FontWeight.w100, fontSize: 18.0, decoration: TextDecoration.none))),
                 new Container(
                     alignment: Alignment.bottomLeft,
-                    decoration: new DottedDecoration(),
+                    decoration: new DottedRowDecoration(),
                     height: 1.0, 
                     margin: new EdgeInsets.only(left: 10.0, right: 10.0, bottom: 4.0),
                     ),
