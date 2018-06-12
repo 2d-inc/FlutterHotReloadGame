@@ -7,6 +7,7 @@ import "package:path_provider/path_provider.dart";
 
 import "delegates/socket_delegate.dart";
 
+/// The object that handles all the communication between the Server application and this client.
 class SocketClient
 {
 	static const int ReconnectMinSeconds = 2;
@@ -191,9 +192,9 @@ class SocketClient
 					}
 					if(_isConnected)
 					{
-						// This seems to occur when a connection times out, but then mysteriously
-						// comes back from the dead and calls its connection handler. This shouldn't
-						// happen with our new handler ordering, but this is a nice sanity check.
+						/// This seems to occur when a connection times out, but then mysteriously
+						/// comes back from the dead and calls its connection handler. This shouldn't
+						/// happen with our new handler ordering, but this is a nice sanity check.
 						print("Good socket was already connected, kill this zombie socket.");
 						socket.close();
 						return;
@@ -205,16 +206,16 @@ class SocketClient
 						delegate.onConnectionChanged();
 					}
 					debugPrint("Socket connected");
-					// Reset to min connect time for future reconnects.
+					/// Reset to min connect time for future reconnects.
 					_reconnectSeconds = ReconnectMinSeconds;
 
-					// Store socket.
+					/// Store socket.
 					_socket = socket;
 
-					// Let the server know who we are so they can kill older connections if they exist.
+					/// Let the server know who we are so they can kill older connections if they exist.
 					sendPing();
 
-					// Listen for messages.
+					/// Listen for messages.
 					String data = "";
 					_socket.transform(utf8.decoder).listen((message)
 					{
@@ -259,7 +260,7 @@ class SocketClient
 	}
 }
 
-
+/// Helper function that loosely evaluates if an input string conforms to an IPv4 address format.
 bool validateIpAddress(String ip)
 {
 	List<String> values = ip.split('.');

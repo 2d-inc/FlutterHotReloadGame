@@ -7,7 +7,7 @@ import "server.dart";
 import "tasks/command_tasks.dart";
 
 /// A virtual representation that [GameServer] can use to store data about clients.
-/// It has a handle to the [Socket] to also send and receive messages, and it contains all the game logic,
+/// It has a handle to the [Socket] to also send and receive messages, and it contains all the client game logic,
 /// if a player is ready to start, if it's playing, which commands it has, the current task and status,
 /// [DateTime]s for when a task has started and is supposed to end, and more.
 class GameClient
