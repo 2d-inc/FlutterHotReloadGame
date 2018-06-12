@@ -1,9 +1,7 @@
-import "package:flutter/material.dart";
-import "dart:ui" as ui;
-import "dart:math";
-import "package:flare/flare.dart" as flr;
-import "package:flare/animation/actor_animation.dart";
 import "dart:typed_data";
+
+import "package:flare/flare.dart" as flr;
+import "package:flutter/material.dart";
 import "package:flutter/scheduler.dart";
 
 class Flare extends LeafRenderObjectWidget
@@ -97,13 +95,6 @@ class FlareRenderObject extends RenderBox
 		{
 			size = new Size(1.0, 1.0);
 		}
-	//	super.performLayout();
-		// if(_actor != null)
-		// {
-		// 	_actor.advance(0.0);
-		// 	Float32List aabb = _actor.computeAABB();
-		// 	_flareRect = new Rect.fromLTRB(aabb[0], aabb[1], aabb[2], aabb[3]);
-		// }
 	}
 	
 	@override
@@ -157,7 +148,6 @@ class FlareRenderObject extends RenderBox
 			return;
 		}
 		flr.FlutterActor actor = new flr.FlutterActor();
-		// actor = new FlutterActor();
 		actor.loadFromBundle(value).then(
 			(bool success)
 			{
@@ -167,7 +157,6 @@ class FlareRenderObject extends RenderBox
 				markNeedsLayout();
 				markNeedsPaint();
 				SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
-				//animation = actor.getAnimation("Run");
 			}
 		);
 	}

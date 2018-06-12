@@ -1,8 +1,7 @@
 import "dart:async";
-import "package:flutter/foundation.dart";
-import "package:flutter/services.dart";
-import "dart:convert";
 import "dart:collection";
+
+import "package:flutter/services.dart";
 
 class Sound
 {
@@ -41,7 +40,6 @@ class Sound
 		try 
     	{
 			final dynamic result = await platform.send({"method":"make", "args":{"filename":filename}, "soundID":_id});
-			//print("RESULT ${result["soundID"]}");
 		} 
 		on PlatformException catch (e) 
 		{

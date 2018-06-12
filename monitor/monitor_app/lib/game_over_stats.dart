@@ -1,13 +1,9 @@
-import "package:flutter/material.dart";
-import "dart:ui" as ui;
 import "dart:math";
-import "package:flare/flare.dart" as flr;
-import "package:flare/animation/actor_animation.dart";
 import "dart:typed_data";
-import "package:flutter/scheduler.dart";
-import "server.dart";
+import "dart:ui" as ui;
+
 import "package:flare/flare.dart" as flr;
-import "package:flare/animation/actor_animation.dart";
+import "package:flutter/material.dart";
 
 class GameStats extends LeafRenderObjectWidget
 {
@@ -319,24 +315,6 @@ class GameStatsRenderObject extends RenderBox
 		_lifeScore = d;
 	}
 
-	// void beginFrame(Duration timeStamp) 
-	// {
-	// 	final double t = timeStamp.inMicroseconds / Duration.microsecondsPerMillisecond / 1000.0;
-		
-	// 	if(_lastFrameTime == 0)
-	// 	{
-	// 		_lastFrameTime = t;
-	// 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
-	// 		return;
-	// 	}
-		
-	// 	double elapsed = (t - _lastFrameTime).clamp(0.0, 1.0);
-	// 	_lastFrameTime = t;
-
-	// 	SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
-	// 	markNeedsPaint();
-	// }
-
 	@override
 	bool get sizedByParent => true;
 	
@@ -387,8 +365,6 @@ class GameStatsRenderObject extends RenderBox
 	Random rand = new Random();
 	void advanceAnimation()
 	{
-		//const int duration = 7000;
-		//double seconds = new DateTime.now().millisecondsSinceEpoch%duration/1000.0;
 		double seconds = max(0.0, (new DateTime.now().millisecondsSinceEpoch - _showTime.millisecondsSinceEpoch)/1000.0);
 
 		int ix = index(seconds);

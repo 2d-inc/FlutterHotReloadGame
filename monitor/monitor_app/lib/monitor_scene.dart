@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
-import "dart:ui" as ui;
-import "package:nima/nima_flutter.dart";
-import "package:nima/animation/actor_animation.dart";
-import "package:nima/actor_node.dart";
-import "package:flutter/scheduler.dart";
-import "package:AABB/AABB.dart";
 import "dart:math";
+import "dart:ui" as ui;
+
+import "package:AABB/AABB.dart";
+import 'package:flutter/material.dart';
+import "package:flutter/scheduler.dart";
+import "package:nima/actor_node.dart";
+import "package:nima/animation/actor_animation.dart";
 import "package:nima/math/vec2d.dart";
+import "package:nima/nima_flutter.dart";
 
 enum CharacterState
 {
@@ -54,8 +55,6 @@ class MonitorScene extends LeafRenderObjectWidget
 	}
 }
 
-const double MixSpeed = 5.0;
-
 class StateMix
 {
 	CharacterState state;
@@ -69,6 +68,8 @@ class StateMix
 
 class TerminalCharacter
 {
+    static const double MixSpeed = 5.0;
+
 	FlutterActor actor;
 	AABB _bounds;
 	ActorNode mount;
@@ -245,12 +246,13 @@ class TerminalCharacter
 		actor.draw(canvas);
 	}
 }
-const double MessagePadding = 40.0;
-const double BubblePaddingH = 20.0;
-const double BubblePaddingV = 12.0;
 
 class MonitorSceneRenderer extends RenderBox
 {
+    static const double MessagePadding = 40.0;
+    static const double BubblePaddingH = 20.0;
+    static const double BubblePaddingV = 12.0;
+    
 	FlutterActor _scene;
 	ActorAnimation _flicker;
 	double _flickerTime = 0.0;
@@ -438,7 +440,6 @@ class MonitorSceneRenderer extends RenderBox
 			textAlign:TextAlign.start,
 			fontFamily: "Inconsolata",
 			fontSize: 30.0,
-			//lineHeight: 30.0
 		))..pushStyle(new ui.TextStyle(color:const Color.fromARGB(255, 0, 92, 103)));
 		builder.addText(valueLabel);
 		_messageParagraph = builder.build();
@@ -517,10 +518,8 @@ class MonitorSceneRenderer extends RenderBox
 
 		
 		TerminalCharacter boss = _characters[_characterIndex];
-		//bool showOnlyBoss = _animation != null && _animationTime == _animation.duration;
 		
-		//boss.recomputeBounds();
-		bool focusBoss = _state != MonitorSceneState.All;
+        bool focusBoss = _state != MonitorSceneState.All;
 		bool recomputeBossBounds = false;
 		
 		if(_animation != null)
@@ -574,7 +573,7 @@ class MonitorSceneRenderer extends RenderBox
 		}
 		for(TerminalCharacter character in _characters)
 		{
-			character.advance(elapsed, character == boss);//!showOnlyBoss || character == boss);
+			character.advance(elapsed, character == boss);
 		}
 		// Recompute bounds while spread is in action.
 		if(recomputeBossBounds && _characters[_characterIndex] != null)
@@ -586,23 +585,13 @@ class MonitorSceneRenderer extends RenderBox
 		}
 
 		AABB bounds = _bounds;
-		const double PadTop = 0.35;
-		const double PadBottom = 0.1;
-		// if(focusBoss)
-		// {
-		// 	bounds = new AABB.clone(bounds);
-		// 	double realHeight = bounds[3] - bounds[1];
-		// 	bounds[3] += max(realHeight * PadTop, _messageParagraph == null ? 0.0 : _messageParagraph.height + 100.0);
-		// 	bounds[1] -= realHeight * PadBottom;
-		// 	bounds[1] = max(bounds[1], _bounds[1]);
-		// }
+		
 		double height = bounds[3] - bounds[1];
 		double width = bounds[2] - bounds[0];
 		double x = -bounds[0] - width/2.0;
 		double y =  -bounds[1] - height/2.0;
 		
-		//print("H ${size.height} $height");
-		double mix = min(1.0, elapsed*MixSpeed);
+		double mix = min(1.0, elapsed*TerminalCharacter.MixSpeed);
 		_contentHeight += (height-_contentHeight) * mix;
 		_position += new Offset((x-_position.dx)*mix, (y-_position.dy)*mix);
 
@@ -670,13 +659,6 @@ class MonitorSceneRenderer extends RenderBox
 		canvas.translate(_position.dx, _position.dy);
 		_scene.draw(canvas);
 		canvas.restore();
-		// double fadeHeight = size.height*0.75;
-
-		// double fadeOpacity = _animation == null ? (_state == MonitorSceneState.All ? 0.0 : 1.0) : (_animationTime/_animation.duration);
-
-		// canvas.drawRect(new Offset(offset.dx, offset.dy) & new Size(size.width, fadeHeight), 
-		// 						new ui.Paint()	..shader = new ui.Gradient.linear(new Offset(0.0, offset.dy + (size.height-fadeHeight)), new Offset(0.0, offset.dy + fadeHeight), <Color>[new Color.fromARGB((100*fadeOpacity).round(), 0, 0, 0), const Color.fromARGB(0, 0, 0, 0)])
-		// 									..style = ui.PaintingStyle.fill);
 
 		_renderCharacters.sort((TerminalCharacter a, TerminalCharacter b)
 		{
@@ -684,14 +666,9 @@ class MonitorSceneRenderer extends RenderBox
 		});
 
 		TerminalCharacter boss = _characters[_characterIndex];
-		//bool showOnlyBoss = _animation != null && _animationTime == _animation.duration;
 		
 		for(TerminalCharacter character in _renderCharacters)
 		{
-			// if(showOnlyBoss && character != boss)
-			// {
-			// 	continue;
-			// }
 			
 			if(character.drawWithMount != null)
 			{
@@ -722,7 +699,6 @@ class MonitorSceneRenderer extends RenderBox
 				if(_state != MonitorSceneState.All)
 				{
 					AABB.combine(_characterBounds, _characterBounds, talkCharacter.bounds);
-					//_characterBounds = talkCharacter.bounds;
 				}
 			}
 			
@@ -748,7 +724,7 @@ class MonitorSceneRenderer extends RenderBox
 													..style = PaintingStyle.stroke
 													..strokeWidth = 2.0);
 
-			canvas.drawParagraph(_messageParagraph, new Offset(BubblePaddingH, BubblePaddingV));// new Offset(talkBounds[0]*scale, talkBounds[1]*-scale));
+			canvas.drawParagraph(_messageParagraph, new Offset(BubblePaddingH, BubblePaddingV));
 		}
 		canvas.restore();
 
@@ -768,7 +744,6 @@ class MonitorSceneRenderer extends RenderBox
 
 			topLeft = _dopamineTopLeft.getWorldTranslation(new Vec2D());
 			bottomRight = _dopamineBottomRight.getWorldTranslation(new Vec2D());
-	;
 			Offset dopamineTopLeftOffset = new Offset(
 														(_position.dx + topLeft[0])*scale+bx, 
 														(_position.dy + topLeft[1])*-scale+by);

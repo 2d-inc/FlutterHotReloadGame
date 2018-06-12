@@ -1,8 +1,8 @@
 import "dart:async";
+import "dart:collection";
+
 import "package:flutter/foundation.dart";
 import "package:flutter/services.dart";
-import "dart:convert";
-import "dart:collection";
 
 typedef void StringCallback(String element); 
 
@@ -51,21 +51,12 @@ class FlutterTask
 			return;
 		}
 		task.addMessage(message);
-		//print("MESSAGE IS ${message}");
 	}
 
 	addMessage(String message)
 	{
 		// Seems like there's no need to buffer lines, keep an eye on this.
 		this.onReceivedLine(message);
-		// _message += message;
-		// int idx = _message.indexOf("\n");    
-		// if(idx != -1)
-		// {
-		// 	String line = _message.substring(0, idx);
-		// 	_message = _message.substring(idx+1);
-		// 	this.onReceivedLine(line);
-		// }
 	}
 
 	onReceivedLine(String line)
@@ -150,7 +141,6 @@ class FlutterTask
 				return null;
 			}
 			return result["contents"];
-			//print("RESULT ${result["soundID"]}");
 		} 
 		on PlatformException catch (e) 
 		{
@@ -163,7 +153,6 @@ class FlutterTask
 		try 
     	{
 			final dynamic result = await platform.send({"method":"write", "args":{"filename":_path+filename, "contents":contents}, "taskID":_id});
-			//print("RESULT ${result["soundID"]}");
 		} 
 		on PlatformException catch (e) 
 		{

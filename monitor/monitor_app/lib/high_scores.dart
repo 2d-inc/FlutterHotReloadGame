@@ -1,6 +1,6 @@
-import "dart:io";
 import "dart:convert";
 import "dart:math";
+
 import "flutter_task.dart";
 
 class HighScore
@@ -67,8 +67,6 @@ class HighScores
 			return b.value-a.value;
 		});
 
-		//_scores = _scores.sublist(0, min(10, _scores.length));
-		
 		int idx = 0;
 		for(HighScore score in _scores)
 		{
@@ -95,10 +93,6 @@ class HighScores
 		sortScores();
 
 		return score;
-		// return _scores.indexWhere((HighScore score)
-		// {
-		// 	return score.name == name && score.value == value;
-		// });
 	}
 
 	void save()

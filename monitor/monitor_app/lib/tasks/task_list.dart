@@ -1,7 +1,14 @@
 import "dart:math";
+
 import "command_tasks.dart";
-import "icon_tasks.dart";
 import "corner_radius_tasks.dart";
+import "font_tasks.dart";
+import "icon_tasks.dart";
+import "background_color_task.dart";
+import "images_task.dart";
+import "padding_task.dart";
+import "list_item_task.dart";
+import "show_tasks.dart";
 
 typedef String CodeUpdateStep(String code, TaskList list);
 
@@ -74,7 +81,6 @@ class TaskList
 		},
 		(String code, TaskList list)
 		{
-			//availableTasks.add(new AddImages());
 			return code.replaceAll("ListRestaurantAligned", "ListRestaurantDesigned");
 		}
 	];
@@ -246,20 +252,20 @@ class TaskList
 			{
 				if(!task.isPlayable)
 				{
-					// A widget for this task wasn't assigned to any player.
-					// This can happen if there are more tasks assignable than
-					// total number of widget slots for all clients.
-					// For example: two players (clients)
-					// Widgets total: 16
-					// The clients can only show a combined set of 10 widgets
-					// So the last 6 cannot be assigned.
-					// We track this by marking isPlayable to true when widgets
-					// are assigned to clients at the start of the game.
+					/// A widget for this task wasn't assigned to any player.
+					/// This can happen if there are more tasks assignable than
+					/// total number of widget slots for all clients.
+					/// For example: two players (clients)
+					/// Widgets total: 16
+					/// The clients can only show a combined set of 10 widgets
+					/// So the last 6 cannot be assigned.
+					/// We track this by marking isPlayable to true when widgets
+					/// are assigned to clients at the start of the game.
 					continue;
 				}
-				// Certain tasks we want to make sure do not get issued
-				// We leave this up to the implementer but generally this
-				// is the list of tasks that are already assigned.
+				/// Certain tasks we want to make sure do not get issued
+				/// We leave this up to the implementer but generally this
+				/// is the list of tasks that are already assigned.
 				CommandTask avoidTask = avoid.firstWhere((CommandTask check)
 				{
 					return check.taskType() == task.taskType();
@@ -267,28 +273,21 @@ class TaskList
 				
 				if(avoidTask == null)
 				{
-					// We also allow for a list of lower chance tasks.
-					// If the task we are checking is in this list, we add it
-					// less times to our valid stack such that it has lower
-					// odds of being picked.
+					/// We also allow for a list of lower chance tasks.
+					/// If the task we are checking is in this list, we add it
+					/// less times to our valid stack such that it has lower
+					/// odds of being picked.
 					CommandTask lowChanceTask = lowerChance.firstWhere((CommandTask check)
 					{
 						return check.taskType() == task.taskType();
 					}, orElse:()=>null);
 					
 					int weight = lowChanceTask == null ? highChanceWeight : lowChanceWeight;
-
-					
-					/*if(sanity == maxSanity-1)
+                    
+                    if(isIssuingFinalValues)
 					{
-						// give everything a weight of three if we're desperate for a task.
-						weight = 3;
-					}
-					else */if(isIssuingFinalValues)
-					{
-						//print("ISSUING FINALS");
-						// When issuing final values, don't issue tasks that have already reached completion.
-						// Don't assign tasks that a finalValue of -1, this means their final values are not important.
+						/// When issuing final values, don't issue tasks that have already reached completion.
+						/// Don't assign tasks that a finalValue of -1, this means their final values are not important.
 						if(task.finalValue == -1 || task.value == task.finalValue)
 						{
 							weight = 0;
@@ -296,18 +295,18 @@ class TaskList
 					}
 					else
 					{
-						// Alter weights based on time of issue. Don't do this while in final task assignment.
+						/// Alter weights based on time of issue. Don't do this while in final task assignment.
 						int secondsSinceIssue = now.difference(task.lastIssued).inSeconds;
 						
 						if(secondsSinceIssue < lowerWeightSeconds)
 						{
-							// Task was issued recently, don't re-issue it.
+							/// Task was issued recently, don't re-issue it.
 							weight = 0;
 						}
 						else
 						{
-							// Weight task by lowerWeightSeconds since issue (provided it's less than the currently established weight).
-							// This lets task gradually come back to high chance after 30 seconds.
+							/// Weight task by lowerWeightSeconds since issue (provided it's less than the currently established weight).
+							/// This lets task gradually come back to high chance after 30 seconds.
 							weight = min(weight, ((secondsSinceIssue-lowerWeightSeconds)/lowerWeightSeconds).floor());
 						}
 					}
@@ -326,7 +325,6 @@ class TaskList
 			IssuedTask issuedTask = isIssuingFinalValues ? (new IssuedTask()
 								..task = chosenTask
 								..value = chosenTask.finalValue) : chosenTask.issue();
-			//print("TASKS IN LIST $valid | $issuedTask | $avoid");
 			if(issuedTask != null)
 			{
 				chosenTask.lastIssued = new DateTime.now();
@@ -336,7 +334,7 @@ class TaskList
 			}
 			else
 			{
-				// Could not issue this command, remove it from the list.
+				/// Could not issue this command, remove it from the list.
 				_available.remove(chosenTask);
 			}
 		}

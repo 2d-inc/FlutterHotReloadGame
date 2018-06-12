@@ -1,15 +1,12 @@
 abstract class CommandTask
 {
-    bool isPlayable = false;
-    DateTime lastIssued = new DateTime.now().subtract(const Duration(days:7));
     int value = 0;
     int _lineOfInterest;
+    bool isPlayable = false;
+    DateTime lastIssued = new DateTime.now().subtract(const Duration(days:7));
+
 	String apply(String code);
 	void complete(int value, String code);
-    void setCurrentValue(int value)
-    {
-        this.value = value;
-    }
 	String taskType();
 	String taskLabel();
 	String getIssueCommand(int value);
@@ -24,16 +21,15 @@ abstract class CommandTask
         return taskLabel();
     }
 
-    bool isDelayed() { return false; }
+    bool isDelayed() => false;
 
-    bool get hasLineOfInterest
-    {
-        return _lineOfInterest != null;
-    }
+    bool get hasLineOfInterest => (_lineOfInterest != null);
+    
+    int get finalValue => -1;
 
-    int get finalValue
+    void setCurrentValue(int value)
     {
-        return -1;
+        this.value = value;
     }
 
     void findLineOfInterest(String code, String match)
@@ -76,7 +72,7 @@ abstract class CommandTask
         };
     }
 
-static Map makeBinary(CommandTask task, List<String> options)
+    static Map makeBinary(CommandTask task, List<String> options)
     {
         return {
             "type": "GameBinaryButton",

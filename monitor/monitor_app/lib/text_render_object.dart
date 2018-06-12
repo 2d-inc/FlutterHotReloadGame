@@ -35,6 +35,43 @@ class Highlight
 	}
 }
 
+class CodeBoxWidget extends LeafRenderObjectWidget
+{
+	final String _contents;
+	final double _lineNumber;
+	final Highlight _highlight;
+	final int _alpha;
+
+	CodeBoxWidget(
+		this._contents, 
+		this._lineNumber,
+		this._highlight,
+		this._alpha,
+		{Key key}) : super(key: key);
+
+	@override
+	RenderObject createRenderObject(BuildContext context)
+	{
+		var ro = new TextRenderObject()
+			..text = this._contents
+			..scrollValue = _lineNumber
+			..highlight = this._highlight
+			..highlightAlpha = this._alpha;
+
+		return ro;
+	}
+
+	@override
+	void updateRenderObject(BuildContext context, TextRenderObject renderObject) 
+	{
+		renderObject
+			..text = this._contents
+			..scrollValue = _lineNumber
+			..highlight = this._highlight
+			..highlightAlpha = this._alpha;
+	}
+}
+
 class TextRenderObject extends RenderBox
 {
 	static const double FONT_SIZE = 16.0;
@@ -266,7 +303,6 @@ class TextRenderObject extends RenderBox
 	{
 		if(value == null)
 		{
-			// print("TRYING TO SET THE TEXT TO A NULL VALUE");
 			return;
 		}
 		else if(this._text != value)

@@ -1,7 +1,5 @@
 import "package:flutter/material.dart";
-import "high_scores.dart";
-import "dart:ui" show PointMode;
-import "dart:math";
+
 import "game_over_stats.dart";
 
 class GameOverScreen extends StatelessWidget

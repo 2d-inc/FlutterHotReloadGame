@@ -1,8 +1,6 @@
-import "package:flutter/material.dart";
 import "dart:ui" as ui;
-import "dart:math";
-import "dart:typed_data";
-import "package:flutter/scheduler.dart";
+
+import "package:flutter/material.dart";
 
 class ShadowText extends LeafRenderObjectWidget
 {

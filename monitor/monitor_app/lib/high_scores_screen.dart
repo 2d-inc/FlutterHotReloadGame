@@ -1,14 +1,15 @@
-import "package:flutter/material.dart";
-import "high_scores.dart";
 import "dart:ui" show PointMode;
-import "dart:math";
-import "flare_widget.dart";
 
-final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
-final Function matchFunc = (Match match) => "${match[1]},";
+import "package:flutter/material.dart";
+
+import "flare_widget.dart";
+import "high_scores.dart";
 
 class HighScoreLine extends StatelessWidget
 {
+    static final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
+    static final Function matchFunc = (Match match) => "${match[1]},";
+
 	final String name;
 	final String value;
 	final int idx;
@@ -26,7 +27,6 @@ class HighScoreLine extends StatelessWidget
 			decoration: isHighlit ? new HighLightDecoration() : null,
 			child: new Row
 			(
-				//margin: const EdgeInsets.only(top: 30.0, bottom: 30.0, left: 20.0, right: 40.0),
 				crossAxisAlignment: CrossAxisAlignment.end,
 				children: <Widget>
 				[
