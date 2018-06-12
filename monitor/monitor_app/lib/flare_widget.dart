@@ -4,6 +4,7 @@ import "package:flare/flare.dart" as flr;
 import "package:flutter/material.dart";
 import "package:flutter/scheduler.dart";
 
+/// Create a widget from a Flare asset file.
 class Flare extends LeafRenderObjectWidget
 {
 	final String src;
@@ -29,15 +30,16 @@ class Flare extends LeafRenderObjectWidget
 	}
 }
 
+/// This [RenderBox] will draw a Flare actor directly on the canvas, and animate it as needed.
 class FlareRenderObject extends RenderBox
 {
-	String _src;
-	flr.FlutterActor _actor;
-	Float32List _aabb;
 	bool _isDead;
-	flr.ActorAnimation _animation;
 	double _animationTime = 0.0;
 	double _lastFrameTime = 0.0;
+	String _src;
+	flr.FlutterActor _actor;
+	flr.ActorAnimation _animation;
+	Float32List _aabb;
 
 	FlareRenderObject(String src, bool isDead)
 	{
@@ -82,6 +84,8 @@ class FlareRenderObject extends RenderBox
 	@override
 	bool hitTestSelf(Offset screenOffset) => true;
 
+    /// Set the actor to the beginning of its current animation, and compute its
+    /// Axis-Aligned Bounding-Box.
 	@override
 	void performLayout()
 	{
@@ -97,6 +101,8 @@ class FlareRenderObject extends RenderBox
 		}
 	}
 	
+    /// The paint function will apply a translation transform, and then delegate the process 
+    /// of drawing this actor to the Flare Library.
 	@override
 	void paint(PaintingContext context, Offset offset)
 	{
@@ -109,15 +115,12 @@ class FlareRenderObject extends RenderBox
 			_actor.draw(canvas);
 			canvas.restore();
 		}
-		
-		
 	}
 
-	bool get isDead
-	{
-		return _isDead;
-	}
+	bool get isDead => _isDead;
+	String get src => _src;
 
+    /// If this Flare Animation sets this flag, it'll try to run the "Dead Terminal" animation.
 	set isDead(bool d)
 	{
 		if(_isDead == d)
@@ -129,11 +132,8 @@ class FlareRenderObject extends RenderBox
 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 	}
 
-	String get src
-	{
-		return _src;
-	}
-
+    /// This is initially set by the constructor, but could also be changed by an update.
+    /// It loads the corresponding source file from the bundle, and starts the render loop.
 	set src(String value)
 	{
 		if(_src == value)

@@ -23,18 +23,39 @@ import "stdout_display.dart";
 import "tasks/command_tasks.dart";
 import "text_render_object.dart";
 
-
-class CodeBox extends StatefulWidget
+/// The main component of the application. 
+/// The [MonitorState] keeps track of the state of the whole application.
+class Monitor extends StatefulWidget
 {
 	final String title;
 	
-	CodeBox({Key key, this.title}) : super(key:key);
+	Monitor({Key key, this.title}) : super(key:key);
 
 	@override
-	CodeBoxState createState() => new CodeBoxState();
+	MonitorState createState() => new MonitorState();
 }
 
-class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
+/// State for the app. 
+/// It shows the main window, with a background image with a flickering neon on top.
+/// There'll be a monitor occupying most of the window, with a character on its left.
+/// If no game is in progress, the monitor will show the highscores from the previous games. The character on the left
+/// will be playing its "happy" idle animation, while waiting for 2 or more players to start a game.
+/// If a game is being played, its status will be shown: 
+/// - on the top-left the app shows the team's lives, together with a progress bar;
+/// - on the top-right corner there's the current score;
+/// - the monitor will show the actual code that's being reloaded on-the-fly, as commands are received from the clients;
+/// - "Dopamine" are also displayed when certain events occur (e.g. life is lost, the score is increased);
+/// - a 'stdout' panel is shown underneath the code, to visualize the communication between this Flutter app, and its
+/// "Hot Reload" counterpart in the backened.
+/// 
+/// When a game ends, the monitor will show all the relevant stats for this game.
+/// 
+/// There are also two buttons present in the bottom-right corner of the monitor:
+/// - the "restart" button will stop a game if it's in progress, and allow players to restart;
+/// - the "run" button runs (or restarts if already running) the app in the Simulator.
+/// In fact the two buttons are supposed to be hidden behind a Simulator that should be overlayed on top of the window
+/// and placed "on top" of the phone dock image.
+class MonitorState extends State<Monitor> with TickerProviderStateMixin
 {
 	static const int HIGHLIGHT_ALPHA_FULL = 56;
 	static const int MAX_FLICKER_COUNT = 6;
@@ -43,17 +64,26 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
     static const int STDOUT_MAX_LINES = 5;
     static const String targetDevice = '"iPhone 8"';
     static const String logoAppLocation = "~/Projects/BiggerLogo/logo_app";
+	static const int statsDropSeconds = 15;
 
+    /// Which line should be highligted.
 	double _lineOfInterest = 0.0;
+    /// An object representing a line highlight for the Monitor.
 	Highlight _highlight;
 	List<Sound> _sounds;
+    /// The object that pipes messages to the Objective-C backend.
 	FlutterTask _flutterTask;
+    /// This Widget is the entry point for the whole app, thus it owns the [GameServer].
 	GameServer _server;
 	bool _ready = false;
+    /// This string will be loaded with a template file so that it can replace certain values
+    /// as the inputs from the Clients are received. This template will be then loaded saved 
+    /// by the Simulator app, and reloaded by an ad-hoc [FlutterTask].
 	String _contents;
 	ListQueue<String> _stdoutQueue;
 	IssuedTask _currentDisplayTask;
 
+    /// Animation Controllers for scrolling in the code window, and for staggering the highlight effect.
 	AnimationController _scrollController;
 	AnimationController _highlightController;
 	int _flickerCounter = 0;
@@ -62,13 +92,16 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	Animation<double> _highlightAnimation;
 	AnimationStatusListener _scrollStatusListener;
 
+    /// Some Parameters for correct placement of widgets and effects.
 	Offset _monitorTopLeft;
 	Offset _monitorBottomRight;
 	Offset _dopamineTopLeft;
 	Offset _dopamineBottomRight;
+    /// Start and end time for current task.
 	DateTime _startTaskTime;
 	DateTime _failTaskTime;
 	DateTime _waitMessageTime;
+    /// Which NPC should be displayed on the left.
 	int _characterIndex = 0;
 	int _lives = 0;
 	int _score = 0;
@@ -83,177 +116,26 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 	double _gameProgress = 0.0;
 	DateTime _statsDropTime = new DateTime.fromMicrosecondsSinceEpoch(0);
 	Timer _highScoreTimer;
-	static const int statsDropSeconds = 15;
 
-	void showStats()
-	{
-		_characterIndex = 0;
-		_characterMessage = "IT'S OVER!";
-		_startTaskTime = null;
-		_failTaskTime = null;
-		_showHighScores = true;
-		_showStats = true;
-
-		_statsDropTime = new DateTime.now().add(const Duration(seconds:1));
-		if(_highScoreTimer != null)
-		{
-			_highScoreTimer.cancel();
-		}
-		_highScoreTimer = new Timer(const Duration(seconds:statsDropSeconds), ()
-		{
-			setState(()
-			{
-				showLobby();
-			});
-		});
-	}
-
-	void showLobby()
-	{
-		_characterIndex = 0;
-		_characterMessage = "WAITING FOR 2-4 PLAYERS!";
-		_startTaskTime = null;
-		_failTaskTime = null;
-		_showHighScores = true;
-		_showStats = false;
-	}
-
-	@override
-	initState()
-	{
-		super.initState();
-
-		showLobby();
-
-		_scrollController = new AnimationController(duration: const Duration(milliseconds: 350), vsync: this)
-			..addListener(
-				() {
-					setState(() 
-					{
-						_lineOfInterest = _scrollAnimation.value;
-					});
-				}		
-		);
-
-		_highlightController = new AnimationController(vsync: this, duration: new Duration(milliseconds: 100))
-			..addListener(
-				()
-				{
-					setState(
-						()
-						{
-							this._highlightAlpha = _highlightAnimation.value.toInt();
-							// Stop the animation ELSE flicker
-							if(_flickerCounter == MAX_FLICKER_COUNT)
-							{
-								_flickerCounter = 0;
-								_highlightController.stop();
-							}
-							else if(_highlightAnimation.status == AnimationStatus.completed)
-							{
-								_highlightController.reverse();
-								_flickerCounter++;
-							}
-							else if(_highlightAnimation.status == AnimationStatus.dismissed)
-							{
-								_highlightController.forward();
-								_flickerCounter++;
-							}
-						}
-					);
-				}
-			);
-
-		_progressController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 600))
-			..addListener(
-				()
-				{
-					setState(
-						()
-						{
-							this._gameProgress = _progressAnimation.value;
-						}
-					);
-				}
-			);
-
-		_scrollStatusListener = 
-		(AnimationStatus state)
-		{
-			if(state == AnimationStatus.completed)
-			{
-				_scrollAnimation?.removeStatusListener(_scrollStatusListener);
-				setState(
-					()
-					{
-						_highlightAnimation = new Tween<double>(
-							begin: HIGHLIGHT_ALPHA_FULL.toDouble(),
-							end: 0.0
-						).animate(_highlightController);
-						_highlightController..forward();
-					}
-				);
-			}
-		};
-	}
-
-	@override
-	dispose()
-	{
-		_scrollController.dispose();
-		_highlightController.dispose();
-		super.dispose();
-	}
-
-	initFlutterTask()
-	{
-		_ready = false;
-		if(_flutterTask != null)
-		{
-			_flutterTask.onReady(null);
-			_flutterTask.onStdout(null);
-			_flutterTask.terminate();
-		}
-		_flutterTask = new FlutterTask(logoAppLocation);
-		_flutterTask.onReady(()
-		{
-			setState(() 
-			{
-				_ready = true;
-			});
-		});
-		_flutterTask.onStdout((String line)
-		{
-			setState(()
-				{
-					while(_stdoutQueue.length > STDOUT_MAX_LINES - 1)
-					{
-						_stdoutQueue.removeFirst();
-					}
-					_stdoutQueue.addLast(line);
-				}
-			);
-		});
-	}
-
-	CodeBoxState() :
-		_highlight = new Highlight(-1, 0, 0)
+    MonitorState() : _highlight = new Highlight(-1, 0, 0)
 	{
 		initFlutterTask();
 
 		_stdoutQueue = new ListQueue<String>(STDOUT_MAX_LINES);
-		// Read contents.
+		/// Read the template file contents.
 		_flutterTask.read("/lib/main_template.dart").then((contents)
 		{
 			_contents = contents;
 
 			_flutterTask.write("/lib/main.dart", _contents).then((ok)
 			{
-				// Start emulator.
+				/// Start emulator.
 				_flutterTask.load(targetDevice).then((success)
 				{
+                    /// Once the emulator has been loaded, the server can be instantiated.
 					_server = new GameServer(_flutterTask, _contents);
 					
+                    /// Start registering the relevant callbacks on the server.
 					_server.onProgressChanged = (double progress)
 					{
 						print("PROGRESS $progress");
@@ -277,7 +159,6 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							).animate(_progressController);
 
 							_progressController ..value = 0.0..animateTo(1.0, curve: Curves.easeInOut);
-							//_gameProgress = progress;
 						 });
 					};
 
@@ -373,6 +254,164 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		}
 	}
 
+    /// Upon creation, this object is initialized by showing the lobby, and allocating all the [AnimationController] fields.
+	@override
+	initState()
+	{
+		super.initState();
+
+		showLobby();
+
+        /// Scroll the [CodeBoxWidget] to the right line.
+		_scrollController = new AnimationController(duration: const Duration(milliseconds: 350), vsync: this)
+			..addListener(
+				() {
+					setState(() 
+					{
+						_lineOfInterest = _scrollAnimation.value;
+					});
+				}		
+		);
+
+        /// Highlight by flickering 3 times the relevant line.
+		_highlightController = new AnimationController(vsync: this, duration: new Duration(milliseconds: 100))
+			..addListener(
+				()
+				{
+					setState(
+						()
+						{
+							this._highlightAlpha = _highlightAnimation.value.toInt();
+							/// Stop the animation ELSE flicker
+							if(_flickerCounter == MAX_FLICKER_COUNT)
+							{
+								_flickerCounter = 0;
+								_highlightController.stop();
+							}
+							else if(_highlightAnimation.status == AnimationStatus.completed)
+							{
+								_highlightController.reverse();
+								_flickerCounter++;
+							}
+							else if(_highlightAnimation.status == AnimationStatus.dismissed)
+							{
+								_highlightController.forward();
+								_flickerCounter++;
+							}
+						}
+					);
+				}
+			);
+
+        /// Interpolate the game progress bar to a new value
+		_progressController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 600))
+			..addListener(
+				()
+				{
+					setState(
+						()
+						{
+							this._gameProgress = _progressAnimation.value;
+						}
+					);
+				}
+			);
+
+        /// Wait for the scroll animation to complete, and start the highlighting animation right after.
+		_scrollStatusListener = (AnimationStatus state) {
+			if(state == AnimationStatus.completed)
+			{
+				_scrollAnimation?.removeStatusListener(_scrollStatusListener);
+				setState(
+					()
+					{
+						_highlightAnimation = new Tween<double>(
+							begin: HIGHLIGHT_ALPHA_FULL.toDouble(),
+							end: 0.0
+						).animate(_highlightController);
+						_highlightController..forward();
+					}
+				);
+			}
+		};
+	}
+
+	@override
+	dispose()
+	{
+		_scrollController.dispose();
+		_highlightController.dispose();
+		super.dispose();
+	}
+
+    /// When a game is over, stats replace the Code window.
+	void showStats()
+	{
+		_characterIndex = 0;
+		_characterMessage = "IT'S OVER!";
+		_startTaskTime = null;
+		_failTaskTime = null;
+		_showHighScores = true;
+		_showStats = true;
+
+		_statsDropTime = new DateTime.now().add(const Duration(seconds:1));
+		if(_highScoreTimer != null)
+		{
+			_highScoreTimer.cancel();
+		}
+		_highScoreTimer = new Timer(const Duration(seconds:statsDropSeconds), ()
+		{
+			setState(()
+			{
+                /// Show the lobby after a few seconds with the stats.
+				showLobby();
+			});
+		});
+	}
+
+    /// Sets the appropriate flags and fields to show the lobby.
+	void showLobby()
+	{
+		_characterIndex = 0;
+		_characterMessage = "WAITING FOR 2-4 PLAYERS!";
+		_startTaskTime = null;
+		_failTaskTime = null;
+		_showHighScores = true;
+		_showStats = false;
+	}
+
+    /// This function (re)initializes the [FlutterTask] field, and its callbacks.
+	initFlutterTask()
+	{
+		_ready = false;
+		if(_flutterTask != null)
+		{
+			_flutterTask.onReady(null);
+			_flutterTask.onStdout(null);
+			_flutterTask.terminate();
+		}
+		_flutterTask = new FlutterTask(logoAppLocation);
+		_flutterTask.onReady(()
+		{
+			setState(() 
+			{
+				_ready = true;
+			});
+		});
+		_flutterTask.onStdout((String line)
+		{
+			setState(()
+				{
+					while(_stdoutQueue.length > STDOUT_MAX_LINES - 1)
+					{
+						_stdoutQueue.removeFirst();
+					}
+					_stdoutQueue.addLast(line);
+				}
+			);
+		});
+	}
+
 	@override
 	Widget build(BuildContext context)
 	{
@@ -386,6 +425,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 		final double CODE_BOX_MARGIN_TOP = hasMonitorCoordinates ? _monitorTopLeft.dy : 0.0;
 
 		final double secondsSinceDrop = max(0.0, (new DateTime.now().millisecondsSinceEpoch - _statsDropTime.millisecondsSinceEpoch)/1000.0);
+        /// This [Stack] is the main component of the app.
 		Stack stack = new Stack(
 					children: 
 					[
@@ -396,6 +436,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 							child: new Stack(
 										children: 
 										[
+                                            /// The left part of the screen is occupied by the NPC.
 											new MonitorScene(state:MonitorSceneState.BossOnly, reloadDateTime:_reloadTime, characterIndex: _characterIndex, message:_characterMessage, startTime: _startTaskTime, endTime:_failTaskTime, monitorExtentsCallback:(Offset topLeft, Offset bottomRight, Offset dopamineTopLeft, Offset dopamineBottomRight)
 											{
 												if(_monitorTopLeft != topLeft || _monitorBottomRight != bottomRight || _dopamineTopLeft != dopamineTopLeft || _dopamineBottomRight != dopamineBottomRight)
@@ -413,6 +454,7 @@ class CodeBoxState extends State<CodeBox> with TickerProviderStateMixin
 										]
 									)
 						),
+                        /// A Top Row with the Lives, Progress bar on the left, and Score on the right.
 						new Container(margin:const EdgeInsets.only(left:50.0, top:20.0, right:50.0), 
 							child: new Row
 							(

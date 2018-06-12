@@ -24,7 +24,7 @@ enum TaskStatus
     complete, inProgress, failed, noMore 
 }
 
-/// Some internal callbacks that are set by the [CodeBox]. This allows the object to respond to some Server events.
+/// Some internal callbacks that are set by the [Monitor]. This allows the object to respond to some Server events.
 typedef void UpdateCodeCallback(String code, int line);
 typedef void OnTaskIssuedCallback(IssuedTask task, DateTime failTime);
 typedef void OnTaskCompletedCallback(IssuedTask task, DateTime failTime, String message);
@@ -70,9 +70,9 @@ class GameServer
     Map<String, CommandTask> _completedTasks;
     HighScores _highScores;
 
-    /// When the game server is created by the [CodeBox], a [FlutterTask] is registered. 
+    /// When the game server is created by the [Monitor], a [FlutterTask] is registered. 
     /// This task reads (if present) a JSON file in the root directory containing the Highscores that 
-    /// had been saved in previous games. This allows the [CodeBox] to show older results while the Server 
+    /// had been saved in previous games. This allows the [Monitor] to show older results while the Server 
     /// waits for players to start a new game.
     GameServer(FlutterTask flutterTask, this._originalTemplate)
     {
@@ -183,7 +183,7 @@ class GameServer
         }
     }
 
-    /// Update the local variable, the main [CodeBox] and all the clients with the new value.
+    /// Update the local variable, the main [Monitor] and all the clients with the new value.
     void _setLives(int lives)
     {
 		if(_lives == lives)

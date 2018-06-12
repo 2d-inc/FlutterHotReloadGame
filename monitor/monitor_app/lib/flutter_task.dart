@@ -6,9 +6,17 @@ import "package:flutter/services.dart";
 
 typedef void StringCallback(String element); 
 
+/// This object interacts with Objective-C through a message channel. This object and FlutterTask in [FLEFlutterTaskPlugin.m] 
+/// subscribe to the same channel, so that they can communicate.
+/// When a new message is sent over the 'platform' [BasicMessageChannel] the corresponding method is actioned.
+/// A static field is used to identify a FlutterTask after initialization, and is registered the static HashMap when
+/// the [load()] function is called.
 class FlutterTask
 {
+	static final platform = const BasicMessageChannel("flutter/flutterTask", const JSONMessageCodec())..setMessageHandler(onPlatformMessage);
+	static HashMap<int, FlutterTask> _lookup = new HashMap<int, FlutterTask>();
 	static int _next_id = 0;
+
 	int _id = 0;
 	String _message = "";
 	String _path;
@@ -17,8 +25,6 @@ class FlutterTask
 	StringCallback _outputHandler;
 	bool _ready = false;
 
-	static final platform = const BasicMessageChannel("flutter/flutterTask", const JSONMessageCodec())..setMessageHandler(onPlatformMessage);
-	static HashMap<int, FlutterTask> _lookup = new HashMap<int, FlutterTask>();
 
 	FlutterTask(String path)
 	{
@@ -41,6 +47,8 @@ class FlutterTask
 		_outputHandler = callback;
 	}
 
+    /// Handle incoming messages with the appropriate registered FlutterTask.
+    /// A Task that should react to this message should've been registere in [load()].
 	static Future<dynamic> onPlatformMessage(dynamic data) async
 	{
 		int id = data["taskID"];
@@ -59,6 +67,8 @@ class FlutterTask
 		this.onReceivedLine(message);
 	}
 
+    /// Any incoming message from the is processed here. 
+    /// If this FlutterTask can handle the current message, it'll have a registered callback.
 	onReceivedLine(String line)
 	{
 		line = line.trim();

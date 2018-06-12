@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
-import "code_box_widget.dart";
+import "monitor_widget.dart";
 
 void main()
 {
@@ -16,7 +16,7 @@ class MonitorApp extends StatelessWidget
 	Widget build(BuildContext context)
 	{
 		return new MaterialApp(
-			home: new CodeBox(),
+			home: new Monitor(),
 		);
 	}
 }
