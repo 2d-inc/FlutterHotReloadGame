@@ -9,13 +9,10 @@ import "package:nima/animation/actor_animation.dart";
 import "package:nima/math/vec2d.dart";
 import "package:nima/nima_flutter.dart";
 
-enum CharacterState
-{
-	Happy,
-	Upset,
-	Angry
-}
+import "monitor_scene_character.dart";
+import "monitor_widget.dart";
 
+/// [TerminalScene] can show either one or all stakeholders on the screen.
 enum MonitorSceneState
 {
 	All,
@@ -24,6 +21,11 @@ enum MonitorSceneState
 
 typedef void SetMonitorExtentsCallback(Offset topLeft, Offset bottomRight, Offset dopamineTopLeft, Offset dopamineBottomRight);
 
+/// All the information for the [MonitorScene], i.e. the Nima Character that animates on the left
+/// side of the scren. The character will have a bouncing bubble on top of its head, displaying one of the
+/// actions that the server has sent to the players. 
+/// As time passes, the character gets more and more restless until the action is completed, or the
+/// current task fails.
 class MonitorScene extends LeafRenderObjectWidget
 {
 	final DateTime startTime;
@@ -55,198 +57,9 @@ class MonitorScene extends LeafRenderObjectWidget
 	}
 }
 
-class StateMix
-{
-	CharacterState state;
-	ActorAnimation animation;
-	ActorAnimation transitionAnimation;
-
-	double animationTime;
-	double transitionTime;
-	double mix;
-}
-
-class TerminalCharacter
-{
-    static const double MixSpeed = 5.0;
-
-	FlutterActor actor;
-	AABB _bounds;
-	ActorNode mount;
-	FlutterActorImage drawWithMount;
-	List<StateMix> states = new List<StateMix>();
-	CharacterState state = CharacterState.Happy;
-	MonitorSceneRenderer scene;
-
-	ActorAnimation focusAnimation;
-	double focusTime = 0.0;
-	double focusMix = 0.0;
-	int idx;
-
-	TerminalCharacter(this.scene, String filename, this.idx)
-	{
-		states.add(new StateMix()
-									..state = CharacterState.Happy
-									..mix = 1.0
-									..animationTime = 0.0);
-
-		states.add(new StateMix()
-									..state = CharacterState.Upset
-									..mix = 0.0
-									..animationTime = 0.0);
-
-		states.add(new StateMix()
-									..state = CharacterState.Angry
-									..mix = 0.0
-									..animationTime = 0.0);
-
-		load(filename);
-	}
-
-	void drawWith(FlutterActorImage image)
-	{
-		drawWithMount = image;
-		drawWithMount.onDraw = this.draw;
-	}
-
-	AABB get bounds
-	{
-		return _bounds;
-	}
-
-	bool recomputeBounds()
-	{
-		if(_bounds != null) // only do this if bounds has already been computed
-		{
-			_bounds = actor.computeAABB();
-			return true;
-		}
-		return false;
-	}
-
-	ActorAnimation getAnimation(CharacterState state)
-	{
-		String animationName;
-		switch(state)
-		{
-			case CharacterState.Happy:
-				animationName = "Happy";
-				break;
-			case CharacterState.Angry:
-				animationName = "Angry";
-				break;
-			case CharacterState.Upset:
-				animationName = "Upset";
-				break;
-		}
-		return actor.getAnimation(animationName);
-	}
-
-	ActorAnimation getTransitionAnimation(CharacterState state)
-	{
-		String animationName;
-		switch(state)
-		{
-			case CharacterState.Happy:
-				animationName = null;
-				break;
-			case CharacterState.Angry:
-				animationName = "Upset-Angry";
-				break;
-			case CharacterState.Upset:
-				animationName = "Happy-Upset";
-				break;
-		}
-		return animationName == null ? null : actor.getAnimation(animationName);
-	}
-
-	void load(String filename)
-	{
-		actor = new FlutterActor();
-		actor.loadFromBundle(filename).then((bool ok)
-		{
-			for(StateMix sm in states)
-			{
-				sm.animation = getAnimation(sm.state);
-				sm.transitionAnimation = getTransitionAnimation(sm.state);
-				sm.transitionTime = 0.0;
-				if(sm.animation != null && sm.state == CharacterState.Happy)
-				{
-					sm.animationTime = 0.0;
-					sm.animation.apply(sm.animationTime, actor, 1.0);
-				}
-			}
-
-			actor.advance(0.0);
-			_bounds = actor.computeAABB();
-			this.scene.characterLoaded(this);
-		});
-	}
-	
-	void advance(double elapsed, bool isBoss)
-	{
-		if(_bounds == null)
-		{
-			return;
-		}
-
-		CharacterState renderState = state;
-		if(focusAnimation != null)
-		{
-			focusTime = (focusTime + ((isBoss ? 1 : -1) * elapsed)).clamp(0.0, focusAnimation.duration);
-			focusMix = (focusMix + ((isBoss ? 1 : -1) * elapsed * 2.0)).clamp(0.0, 1.0);
-		}
-		for(StateMix sm in states)
-		{
-			if(sm.state != renderState)
-			{
-				sm.mix -= elapsed*MixSpeed;
-			}
-			else
-			{
-				sm.mix += elapsed*MixSpeed;
-			}
-			sm.mix = sm.mix.clamp(0.0, 1.0);
-			if(sm.mix == 0.0)
-			{
-				sm.transitionTime = 0.0;
-			}
-
-			if(sm.mix != 0)
-			{ 
-				if(sm.transitionAnimation == null || sm.transitionTime >= sm.transitionAnimation.duration)
-				{
-					sm.animationTime = (sm.animationTime+elapsed) % sm.animation.duration;
-					sm.animation.apply(sm.animationTime, actor, sm.mix);
-				}
-				else
-				{
-					sm.transitionTime = sm.transitionTime+elapsed;
-					sm.transitionAnimation.apply(sm.transitionTime, actor, sm.mix);
-				}
-			}
-		}
-
-		if(mount != null)
-		{
-			actor.root.x = mount.x;
-			actor.root.y = mount.y;
-			actor.root.scaleX = mount.scaleX*0.65;
-			actor.root.scaleY = mount.scaleY*0.65;
-		}
-		actor.advance(elapsed);
-	}
-
-	void draw(Canvas canvas)
-	{
-		if(_bounds == null)
-		{
-			return;
-		}
-		actor.draw(canvas);
-	}
-}
-
+/// The renderer for the Monitor Scene widget above.
+/// It implements all the getters and setters needed for the widget to initialize and update 
+/// correctly. Uses a scheduler to paint as smoothly as possible. 
 class MonitorSceneRenderer extends RenderBox
 {
     static const double MessagePadding = 40.0;
@@ -280,8 +93,8 @@ class MonitorSceneRenderer extends RenderBox
 	ActorNode _dopamineBottomRight;
 	DateTime _reloadDateTime;
 
-	List<TerminalCharacter> _characters = new List<TerminalCharacter>(4);
-	List<TerminalCharacter> _renderCharacters = new List<TerminalCharacter>(4);
+	List<MonitorCharacter> _characters = new List<MonitorCharacter>(4);
+	List<MonitorCharacter> _renderCharacters = new List<MonitorCharacter>(4);
 
 	Offset _monitorTopLeftOffset;
 	Offset _monitorBottomRightOffset;
@@ -297,22 +110,28 @@ class MonitorSceneRenderer extends RenderBox
 		this.endTime = endTime;
 		this.reloadDateTime = reloadDateTime;
 		
+        /// Start the rendering loop right after initialization
 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 
+        /// Build the list of characters that'll be loaded from the local assets folder.
 		List<int> characterNameLookup = <int>[2,1,3,4];
 		for(int i = 0; i < 4; i++)
 		{
 			int ci = characterNameLookup[i];
-			_characters[i] = new TerminalCharacter(this, "assets/nima/NPC$ci/NPC$ci", ci);
+			_characters[i] = new MonitorCharacter(this, "assets/nima/NPC$ci/NPC$ci", ci);
 			_renderCharacters[i] = _characters[i];
 		}						
 
+        /// Initialize the scene with a Nima Actor representing the background and 
+        /// the flickering logo. 
 		_scene = new FlutterActor();
 		_scene.loadFromBundle("assets/nima/HotReloadScene/HotReloadScene").then((bool ok)
 		{
 			_scene.getAnimation("Monitor").apply(0.0, _scene, 1.0);
 			_scene.advance(0.0);
 			_bounds = _scene.computeAABB();
+
+            /// Once that has been successfully loaded, all the characters can be added on top as well.
 			for(int i = 0; i < 4; i++)
 			{
 				ActorNode mount = _scene.getNode("NPC${i+1}");
@@ -321,9 +140,14 @@ class MonitorSceneRenderer extends RenderBox
 				{
 					_characters[i].drawWith(mount);
 				}
+                /// A dedicated node on every [TerminalCharacter] is set 
+                /// so that the [Actor] can be placed accurately.
 				_characters[i].mount = mount;
+                /// Set the Actor's stance to first frame of its animation loop.
 				_characters[i].advance(0.0, false);
-			}	
+			}
+
+            /// Calculate dimensions and evaluate the position for this [RenderBox]
 			AABB bounds = _bounds;
 			double height = bounds[3] - bounds[1];
 			double width = bounds[2] - bounds[0];
@@ -333,9 +157,13 @@ class MonitorSceneRenderer extends RenderBox
 			_contentHeight = height;
 			_contentWidth = width;
 			_position = new Offset(x, y);
+            
+            /// Get a reference for the animations...
 			_flicker = _scene.getAnimation("Flicker");
 			_reload = _scene.getAnimation("Reload");
 
+            /// ...and extract the monitor coordinates from the scene nodes that have been
+            /// conveniently placed.
 			_monitorTopLeft = _scene.getNode("MonitorUpperLeft");
 			_monitorBottomRight = _scene.getNode("MonitorLowerRight");
 			_dopamineTopLeft = _scene.getNode("DopamineUpperLeft");
@@ -427,6 +255,14 @@ class MonitorSceneRenderer extends RenderBox
 			_messageParagraph = null;
 			return;	
 		}
+        else if(value == MonitorState.backToLobbyMessage)
+        {
+            /// After a game has ended, reinitialize the Nima Characters.
+            for(MonitorCharacter c in _characters)
+            {
+                c?.reinit();
+            }
+        }
 		
 		if(_characters[_characterIndex] != null)
 		{
@@ -471,8 +307,7 @@ class MonitorSceneRenderer extends RenderBox
 		if(_scene != null)
 		{
 			_animation = _scene.getAnimation("Spread");
-		}
-		
+		}		
 
 		markNeedsPaint();
 		markNeedsLayout();
@@ -515,13 +350,13 @@ class MonitorSceneRenderer extends RenderBox
 
 		double elapsed = t - _lastFrameTime;
 		_lastFrameTime = t;
-
 		
-		TerminalCharacter boss = _characters[_characterIndex];
+		MonitorCharacter boss = _characters[_characterIndex];
 		
         bool focusBoss = _state != MonitorSceneState.All;
 		bool recomputeBossBounds = false;
 		
+        /// All the [ActorAnimation]s are advanced and the new transformations are applied.
 		if(_animation != null)
 		{
 			if(focusBoss)
@@ -552,16 +387,20 @@ class MonitorSceneRenderer extends RenderBox
 			_reload.apply(_reloadTime, _scene, 1.0);
 		}
 
-		for(TerminalCharacter character in _characters)
+		for(MonitorCharacter character in _characters)
 		{
 			if(character.focusMix != 0.0)
 			{
 				character.focusAnimation.apply(character.focusTime, _scene, character.focusMix);
 			}
 		}
+        /// Also advance the scene.
 		_scene.advance(elapsed);
 
 		DateTime now = new DateTime.now();
+        /// Evaluate how much time has passed from the beginning of the current command.
+        /// Characters will start getting 'Upset' when there's less than 60% of time left.
+        /// Characters will start getting 'Angry' when there's less than 256% of time left.
 		double f = _startTime == null ? 1.0 : 1.0-(now.difference(_startTime).inMilliseconds/_endTime.difference(_startTime).inMilliseconds).clamp(0.0, 1.0);
 		if(focusBoss)
 		{
@@ -571,11 +410,11 @@ class MonitorSceneRenderer extends RenderBox
 		{
 			boss.state = CharacterState.Happy;
 		}
-		for(TerminalCharacter character in _characters)
+		for(MonitorCharacter character in _characters)
 		{
 			character.advance(elapsed, character == boss);
 		}
-		// Recompute bounds while spread is in action.
+		/// Recompute bounds while spread is in action.
 		if(recomputeBossBounds && _characters[_characterIndex] != null)
 		{
 			if(_characters[_characterIndex].recomputeBounds())
@@ -591,12 +430,12 @@ class MonitorSceneRenderer extends RenderBox
 		double x = -bounds[0] - width/2.0;
 		double y =  -bounds[1] - height/2.0;
 		
-		double mix = min(1.0, elapsed*TerminalCharacter.MixSpeed);
+		double mix = min(1.0, elapsed*MonitorCharacter.MixSpeed);
 		_contentHeight += (height-_contentHeight) * mix;
 		_position += new Offset((x-_position.dx)*mix, (y-_position.dy)*mix);
 
 		markNeedsPaint();
-		
+		/// Reschedule this function.
 		SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
 	}
 
@@ -617,9 +456,10 @@ class MonitorSceneRenderer extends RenderBox
 	{
 		super.performLayout();
 
+        /// If a message is currently being shown, prepare the layout for it to fit within the message bubble.
 		if(_messageParagraph != null)
 		{
-			TerminalCharacter talkCharacter = _characters[_state == MonitorSceneState.All ? 0 : _characterIndex];
+			MonitorCharacter talkCharacter = _characters[_state == MonitorSceneState.All ? 0 : _characterIndex];
 			if(talkCharacter == null || talkCharacter.bounds == null)
 			{
 				return;
@@ -629,9 +469,9 @@ class MonitorSceneRenderer extends RenderBox
 		}
 	}
 
-	void characterLoaded(TerminalCharacter c)
+	void characterLoaded(MonitorCharacter c)
 	{
-		TerminalCharacter talkCharacter = _characters[_state == MonitorSceneState.All ? 0 : _characterIndex];
+		MonitorCharacter talkCharacter = _characters[_state == MonitorSceneState.All ? 0 : _characterIndex];
 		if(talkCharacter == c && c.recomputeBounds())
 		{
 			_characterBounds = c.bounds;
@@ -657,22 +497,23 @@ class MonitorSceneRenderer extends RenderBox
 		canvas.translate(offset.dx + size.width/2.0, offset.dy + size.height/2.0);
 		canvas.scale(scale, -scale);
 		canvas.translate(_position.dx, _position.dy);
+        /// First position the canvas, and then draw.
 		_scene.draw(canvas);
 		canvas.restore();
 
-		_renderCharacters.sort((TerminalCharacter a, TerminalCharacter b)
+		_renderCharacters.sort((MonitorCharacter a, MonitorCharacter b)
 		{
 			return ((b.actor.root.y - a.actor.root.y) * 100.0).round();
 		});
 
-		TerminalCharacter boss = _characters[_characterIndex];
+		MonitorCharacter boss = _characters[_characterIndex];
 		
-		for(TerminalCharacter character in _renderCharacters)
+		for(MonitorCharacter character in _renderCharacters)
 		{
 			
 			if(character.drawWithMount != null)
 			{
-				// This character draws directly with the mount.
+				/// This character draws directly with the mount.
 				continue;
 			}
 			canvas.save();		
@@ -690,9 +531,10 @@ class MonitorSceneRenderer extends RenderBox
 		
 
 		canvas.save();
+        /// If a [_messageParagraph] String was passed to the scene, compute the bubble position and draw.
 		if(_messageParagraph != null)
 		{
-			TerminalCharacter talkCharacter = _characters[_state == MonitorSceneState.All ? 0 : _characterIndex];
+			MonitorCharacter talkCharacter = _characters[_state == MonitorSceneState.All ? 0 : _characterIndex];
 			if(talkCharacter != null)
 			{
 				talkCharacter.recomputeBounds();
@@ -728,6 +570,9 @@ class MonitorSceneRenderer extends RenderBox
 		}
 		canvas.restore();
 
+        /// Lastly, make adjustments for the monitor coordinates:
+        /// - Evaluate them in world space, and calculate the correct offsets.
+        /// - If any of them has changed, report that back to [MonitorState].
 		if(_monitorTopLeft != null && _monitorBottomRight != null && _dopamineTopLeft != null && _dopamineBottomRight != null)
 		{
 			Vec2D topLeft = _monitorTopLeft.getWorldTranslation(new Vec2D());

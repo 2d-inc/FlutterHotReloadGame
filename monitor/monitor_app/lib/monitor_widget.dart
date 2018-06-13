@@ -64,6 +64,7 @@ class MonitorState extends State<Monitor> with TickerProviderStateMixin
     static const int STDOUT_MAX_LINES = 5;
     static const String targetDevice = '"iPhone 8"';
     static const String logoAppLocation = "~/Projects/BiggerLogo/logo_app";
+    static const String backToLobbyMessage = "WAITING FOR 2-4 PLAYERS!";
 	static const int statsDropSeconds = 15;
 
     /// Which line should be highligted.
@@ -373,7 +374,7 @@ class MonitorState extends State<Monitor> with TickerProviderStateMixin
 	void showLobby()
 	{
 		_characterIndex = 0;
-		_characterMessage = "WAITING FOR 2-4 PLAYERS!";
+		_characterMessage = backToLobbyMessage;
 		_startTaskTime = null;
 		_failTaskTime = null;
 		_showHighScores = true;

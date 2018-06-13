@@ -1,12 +1,12 @@
 import "package:AABB/AABB.dart";
 import 'package:flutter/material.dart';
+import "package:nima/actor_node.dart";
 import "package:nima/animation/actor_animation.dart";
 import "package:nima/nima_flutter.dart";
-import "package:nima/actor_node.dart";
 
-import "terminal_scene.dart";
+import "monitor_scene.dart";
 
-/// A StateMix object is used to wrap the information about an animation,
+/// Wrap the information about an animation,
 /// and the transition that happens when the character needs to interpolate from the current one to the next.
 class StateMix
 {
@@ -29,20 +29,26 @@ enum CharacterState
 /// Wraps a [FlutterActor] from the Nima runtime library in order to build the stakeholders'
 /// animations. Every Character will have three animations: Happy, Upset and Angry.
 /// They are initialized in the constructor, and the Actor is loaded with its assets.
-class TerminalCharacter
+class MonitorCharacter
 {
+    static const double MixSpeed = 5.0;
+
 	FlutterActor _sourceActor;
 	FlutterActor actor;
 	AABB _bounds;
 	ActorNode mount;
+	FlutterActorImage drawWithMount;
 	List<StateMix> states = new List<StateMix>();
 	CharacterState state = CharacterState.Happy;
-	TerminalSceneRenderer scene;
-    
-	TerminalCharacter(this.scene, String filename)
+	MonitorSceneRenderer scene;
+
+	ActorAnimation focusAnimation;
+	double focusTime = 0.0;
+	double focusMix = 0.0;
+	int idx;
+
+	MonitorCharacter(this.scene, String filename, this.idx)
 	{
-        /// Every TerminalCharacter will have three animations: Happy, Upset and Angry.
-        /// They are initialized here in the constructor, and the Actor is loaded with its assets.
 		states.add(new StateMix()
 									..state = CharacterState.Happy
 									..mix = 1.0
@@ -59,6 +65,12 @@ class TerminalCharacter
 									..animationTime = 0.0);
 
 		load(filename);
+	}
+
+	void drawWith(FlutterActorImage image)
+	{
+		drawWithMount = image;
+		drawWithMount.onDraw = this.draw;
 	}
 
 	AABB get bounds
@@ -94,6 +106,7 @@ class TerminalCharacter
 		return actor.getAnimation(animationName);
 	}
 
+    /// These intermediate animations are used to smoothly transition from one state to the next.
 	ActorAnimation getTransitionAnimation(CharacterState state)
 	{
 		String animationName;
@@ -112,12 +125,13 @@ class TerminalCharacter
 		return animationName == null ? null : actor.getAnimation(animationName);
 	}
 
+    /// Load the resources from storage, and make the actor instance.
 	void load(String filename)
 	{
 		_sourceActor = new FlutterActor();
 		_sourceActor.loadFromBundle(filename).then((bool ok)
 		{
-			actor = _sourceActor.makeInstance();
+            actor = _sourceActor.makeInstance();
 			for(StateMix sm in states)
 			{
 				sm.animation = getAnimation(sm.state);
@@ -134,8 +148,9 @@ class TerminalCharacter
 			this.scene.characterLoaded(this);
 		});
 	}
-	
-	void advance(double elapsed, bool animate)
+
+	/// Advance the animation by the [elapsed] time value.
+	void advance(double elapsed, bool isBoss)
 	{
 		if(_bounds == null)
 		{
@@ -143,16 +158,20 @@ class TerminalCharacter
 		}
 
 		CharacterState renderState = state;
-		
-        for(StateMix sm in states)
+		if(focusAnimation != null)
+		{
+			focusTime = (focusTime + ((isBoss ? 1 : -1) * elapsed)).clamp(0.0, focusAnimation.duration);
+			focusMix = (focusMix + ((isBoss ? 1 : -1) * elapsed * 2.0)).clamp(0.0, 1.0);
+		}
+		for(StateMix sm in states)
 		{
 			if(sm.state != renderState)
 			{
-				sm.mix -= elapsed*TerminalSceneRenderer.mix_speed;
+				sm.mix -= elapsed*MixSpeed;
 			}
 			else
 			{
-				sm.mix += elapsed*TerminalSceneRenderer.mix_speed;
+				sm.mix += elapsed*MixSpeed;
 			}
 			sm.mix = sm.mix.clamp(0.0, 1.0);
 			if(sm.mix == 0.0)
@@ -160,7 +179,7 @@ class TerminalCharacter
 				sm.transitionTime = 0.0;
 			}
 
-			if(sm.mix != 0 && animate)
+			if(sm.mix != 0)
 			{ 
 				if(sm.transitionAnimation == null || sm.transitionTime >= sm.transitionAnimation.duration)
 				{
@@ -175,12 +194,13 @@ class TerminalCharacter
 			}
 		}
 
+        /// Translate and scale the actor.
 		if(mount != null)
 		{
 			actor.root.x = mount.x;
 			actor.root.y = mount.y;
-			actor.root.scaleX = mount.scaleX*0.5;
-			actor.root.scaleY = mount.scaleY*0.5;
+			actor.root.scaleX = mount.scaleX*0.65;
+			actor.root.scaleY = mount.scaleY*0.65;
 		}
 		actor.advance(elapsed);
 	}
@@ -194,9 +214,10 @@ class TerminalCharacter
 		actor.draw(canvas);
 	}
 
-	void reinit()
-	{
-		actor = _sourceActor.makeInstance();
-		advance(0.0, true);
-	}
+    void reinit()
+    {
+        actor = _sourceActor.makeInstance();
+        advance(0.0, true);
+        print("REINIT!");
+    }
 }

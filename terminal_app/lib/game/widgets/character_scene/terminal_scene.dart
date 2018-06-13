@@ -122,7 +122,7 @@ class TerminalSceneRenderer extends RenderBox
             /// Once that has been successfully loaded, all the characters can be added on top as well.
 			for(int i = 0; i < 4; i++)
 			{
-                /// A dedicated node on every [TerminalCharacter] is set appropriately 
+                /// A dedicated node on every [TerminalCharacter] is set 
                 /// so that the [Actor] can be placed accurately.
 				_characters[i].mount = _scene.getNode("NPC${i+1}");
                 /// Set the Actor's stance to first frame of its animation loop.
@@ -308,7 +308,8 @@ class TerminalSceneRenderer extends RenderBox
 		
         bool focusBoss = _state != TerminalSceneState.All;
 		bool recomputeBossBounds = false;
-		
+
+        /// All the [ActorAnimation]s are advanced and the new transformations are applied.		
 		if(_animation != null)
 		{
 			if(focusBoss)
@@ -330,7 +331,6 @@ class TerminalSceneRenderer extends RenderBox
 		}
 		if(_flicker != null)
 		{
-            /// Increment the flickering animation time and apply for this frame.
 			_flickerTime = (_flickerTime+elapsed)%_flicker.duration;
 			_flicker.apply(_flickerTime, _scene, 1.0);
 		}
@@ -550,7 +550,7 @@ class TerminalSceneRenderer extends RenderBox
 
 		canvas.save();
 
-        /// Once a String message is passed to the scene, compute the bubble position and draw.
+        /// If a [_messageParagraph] String was passed to the scene, compute the bubble position and draw.
 		if(_messageParagraph != null)
 		{
 			TerminalCharacter talkCharacter = _characters[_state == TerminalSceneState.All ? 0 : _characterIndex];

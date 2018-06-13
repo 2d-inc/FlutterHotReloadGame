@@ -3,6 +3,11 @@ import "dart:math";
 
 import "flutter_task.dart";
 
+/// Wrapper class for all the information for a highscore:
+/// - Team Initials;
+/// - Final score;
+/// - Global ranking;
+/// - Number of participants.
 class HighScore
 {
 	String name;
@@ -17,10 +22,13 @@ class HighScore
 	}
 }
 
-const highScoreFile = "/../highscores.json";
-
+/// Maintain the information regarding all the highscores that have been registered until a certain point in time.
+/// The file containing the highscores is stored at the root folder of the project, and is read and deserialized when this object is created. 
+/// Helper methods are present for sorting the scores, writing them back to disk, checking if a score is in the top ten,
+/// so it is visualized in the monitor screen, and removing them.
 class HighScores
 {
+    static const highScoreFile = "/../highscores.json";
 	List<HighScore> _scores = new List<HighScore>();
 
 	List<HighScore> get scores => _scores;

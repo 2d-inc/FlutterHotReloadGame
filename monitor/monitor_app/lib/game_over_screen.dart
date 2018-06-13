@@ -2,6 +2,8 @@ import "package:flutter/material.dart";
 
 import "game_over_stats.dart";
 
+/// A representation of all the last game's stats, that are effectively contained
+/// and drawn by the [GameStats] widget.
 class GameOverScreen extends StatelessWidget
 {
 	final double progress;
@@ -42,7 +44,6 @@ class GameOverScreen extends StatelessWidget
 					new Container
 					(
 						width: double.infinity,
-						//height: 55.0,
 						padding: const EdgeInsets.all(20.0),
 						decoration: new BoxDecoration
 						(

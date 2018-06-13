@@ -194,10 +194,9 @@ class GameStatsRenderObject extends RenderBox
 	DateTime _showTime;
     Random rand = new Random();
 
-    /// This object will received all the obvious parameters from the server to show all 
-    /// the appropriate information. 
-    /// The [AudioPlayerDelegate] is necessary because this [RenderBox] will animate all the parameters in,
-    /// as if they were falling onto the screen, perform a shake animation, and play a sound when they
+    /// This object will receive its parameters from the server to show the appropriate information. 
+    /// The [AudioPlayerDelegate] is also passed in because this [RenderBox] will animate the stats by drawing one paragraph at a time,
+    /// as if the elements composing it were "falling" onto the screen, perform a shake animation, and play a sound when they
     /// "hit" the screen.
 	GameStatsRenderObject(DateTime showTime, double progress, int score, int lives, int rank, int totalScore, int lifeScore, AudioPlayerDelegate player)
 	{

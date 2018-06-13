@@ -5,6 +5,10 @@ import "package:flutter/material.dart";
 import "flare_widget.dart";
 import "high_scores.dart";
 
+/// Every element in the [HighScoresScreen] is displayed as a single line which presents 
+/// the ranking with the initials on the left-hand side, a dotted decoration in the middle, and a right-hand side
+/// with the score, and a [Flare] widget showing the "players_icon" to signify how many players played
+/// the game that obtained this score.
 class HighScoreLine extends StatelessWidget
 {
     static final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
@@ -15,7 +19,6 @@ class HighScoreLine extends StatelessWidget
 	final int idx;
     final int teamSize;
 	final bool isHighlit;
-
 
 	HighScoreLine(this.idx, this.name, int v, this.teamSize, this.isHighlit) : value = v.toString().replaceAllMapped(reg, matchFunc);
 
@@ -51,6 +54,7 @@ class HighScoreLine extends StatelessWidget
 	}
 }
 
+/// This widget draws in the monitor window all the highscores that have been recorded.
 class HighScoresScreen extends StatelessWidget
 {
 	final List<HighScore> _highScores;
@@ -76,7 +80,6 @@ class HighScoresScreen extends StatelessWidget
 					new Container
 					(
 						width: double.infinity,
-						//height: 55.0,
 						padding: const EdgeInsets.all(20.0),
 						decoration: new BoxDecoration
 						(
@@ -105,6 +108,7 @@ class HighScoresScreen extends StatelessWidget
 	}
 }
 
+/// Helper element to draw the dotted line in the middle of each [HighScoreLine].
 class DottedDecoration extends Decoration
 {
     @override

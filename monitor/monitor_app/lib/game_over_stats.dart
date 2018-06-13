@@ -5,6 +5,7 @@ import "dart:ui" as ui;
 import "package:flare/flare.dart" as flr;
 import "package:flutter/material.dart";
 
+/// Build a custom object for the [GameStats]. This object instantiates a [GameStatsRenderObject] with the game over information. 
 class GameStats extends LeafRenderObjectWidget
 {
 	final double progress;
@@ -46,6 +47,7 @@ class GameStats extends LeafRenderObjectWidget
 	}
 }
 
+/// Wraps a single [ui.Paragraph], so that the [GameStatsRenderObject] can layout properly, and animate its paragraphs individually.
 class StatParagraph
 {
 	static const double MaxWidth = 4096.0;
@@ -134,11 +136,23 @@ class StatParagraph
 	}
 }
 
+/// This [RenderBox] lays out and paints the screen players see when a game ends.
+/// It'll display all the relevant information for the current game: if the team
+/// won or lost, how far they progressed, the score, how many lives were left at 
+/// the end of the game, and the team's global ranking.
+/// If the team won the game, and their rank is good enough, they'll be able to 
+/// input the team initials, and they'll be displayed on the monitor.
 class GameStatsRenderObject extends RenderBox
 {
 	static final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
 	static final Function matchFunc = (Match match) => "${match[1]},";
-
+	static const Color labelColor = const Color.fromRGBO(255, 255, 255, 0.5);
+	static const double secondsPerSection = 0.2;
+	static const double secondsPaddingPerSection = 0.22;
+	static const double shakeAhead = 0.05;
+	static const int padding = 10;
+    	
+	Random rand = new Random();
 	flr.FlutterActor _heart;
 	Float32List _heartAABB;
 
@@ -173,8 +187,10 @@ class GameStatsRenderObject extends RenderBox
 
 	DateTime _showTime;
 
-	static const Color labelColor = const Color.fromRGBO(255, 255, 255, 0.5);
-
+    /// This object will receive its parameters from the server to show the appropriate information. 
+    /// This [RenderBox] will animate the stats by drawing one paragraph at a time,
+    /// as if the elements composing it were "falling" onto the screen, performing a shake animation
+    /// when "hitting" the screen.
 	GameStatsRenderObject(DateTime showTime, double progress, int score, int lives, int rank, int totalScore, int lifeScore)
 	{
 		this.showTime = showTime;
@@ -198,8 +214,6 @@ class GameStatsRenderObject extends RenderBox
 		_rankValue = new StatParagraph("0", "Inconsolata", 50, null, FontWeight.normal, Colors.white);
 		_progressValue = new StatParagraph("0", "Roboto", 19, null, FontWeight.w700, Colors.white);
 		
-		//SchedulerBinding.instance.scheduleFrameCallback(beginFrame);
-
 		flr.FlutterActor actor = new flr.FlutterActor();
 		actor.loadFromBundle("assets/flares/Heart").then(
 			(bool success)
@@ -333,10 +347,6 @@ class GameStatsRenderObject extends RenderBox
 		super.performLayout();
 	}
 	
-	static const double secondsPerSection = 0.2;
-	static const double secondsPaddingPerSection = 0.22;
-	static const double shakeAhead = 0.05;
-	
 	int index(double seconds)
 	{
 		seconds += secondsPaddingPerSection + shakeAhead;
@@ -362,7 +372,12 @@ class GameStatsRenderObject extends RenderBox
 	{
 		return ui.lerpDouble(0.0, 1.0, f);
 	}
-	Random rand = new Random();
+    
+    /// This widget will incrementally add elements by 'dropping' them on the screen on at a time.
+    /// [sectionF()] evaluates what the progress is into the current animation, and builds the 'dropping'
+    /// animation accordingly. 
+    /// So every element has its own factor, delayed by its index, and for every element, 
+    /// they will scale down, become opaque and, upon 'impact, shake the screen.
 	void advanceAnimation()
 	{
 		double seconds = max(0.0, (new DateTime.now().millisecondsSinceEpoch - _showTime.millisecondsSinceEpoch)/1000.0);
@@ -434,13 +449,13 @@ class GameStatsRenderObject extends RenderBox
 		_rankValue.label = _rank.toString();
 		_rankValue.layout(f, getScale(f), getOpacity(f));
 	}
+
 	@override
 	void paint(PaintingContext context, Offset offset)
 	{
 		final Canvas canvas = context.canvas;
-
-		const int padding = 10;
-
+        
+        /// First thing before painting is laying out all the elemtns properly depending on how much time has passed.
 		advanceAnimation();
 
 		canvas.save();
