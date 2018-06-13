@@ -6,6 +6,7 @@ import "package:flutter/scheduler.dart";
 
 import "server.dart";
 
+/// Widget that implements a custom renderer to draw a dopamine effect on the screen.
 class ScoreDopamine extends LeafRenderObjectWidget
 {
 	final GameServer server;
@@ -34,9 +35,18 @@ class ScoreDopamine extends LeafRenderObjectWidget
 	}
 }
 
-
+/// [ScoreParagraph] is a simple object describing the text [Paragraph] that the 
+/// [TerminalDopamineRenderObject] will render.
 class ScoreParagraph
 {
+    static const  double fadeIn = 0.5;
+    static const  double fadeHold = 0.2;
+    static const  double fadeOut = 1.0-(fadeIn+fadeHold);
+	static final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
+	static final Function matchFunc = (Match match) => "${match[1]},";
+	static const PositiveScoreColor = const Color.fromRGBO(124, 253, 245, 1.0);
+	static const NegativeScoreColor = const Color.fromRGBO(255, 76, 205, 1.0);
+
 	ui.Paragraph paragraph;
 	Size size;
 	Offset center;
@@ -44,12 +54,6 @@ class ScoreParagraph
 	Color color;
 	String label;
 	Offset velocity;
-
-	static final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
-	static final Function matchFunc = (Match match) => "${match[1]},";
-
-	static const PositiveScoreColor = const Color.fromRGBO(124, 253, 245, 1.0);
-	static const NegativeScoreColor = const Color.fromRGBO(255, 76, 205, 1.0);
 
 	ScoreParagraph(int score)
 	{
@@ -74,10 +78,7 @@ class ScoreParagraph
 	bool setLife(double v)
 	{
 		life = v.clamp(0.0, 1.0);
-		double opacity;// = (1.0-life).clamp(0.0, 1.0);
-		const double fadeIn = 0.5;
-		const double fadeHold = 0.2;
-		const double fadeOut = 1.0-(fadeIn+fadeHold);
+		double opacity;
 		if(life < fadeIn)
 		{
 			opacity = life/fadeIn;
@@ -109,11 +110,15 @@ class ScoreParagraph
 
 class ScoreDopamineRenderObject extends RenderBox
 {
+    /// The object responsible for invoking its interface functions.
 	GameServer _server;
+    /// Two Offsets to localize a box of possible rendering locations.
 	Offset _upperLeft;
 	Offset _lowerRight;
 	double _lastFrameTime = 0.0;
 
+	/// A list of [ScoreParagraph] is needed if more than one of them needs to be drawn
+    /// at the same time (e.g. two events happening in rapid succession).
 	List<ScoreParagraph> _scores = new List<ScoreParagraph>();
 
 	ScoreDopamineRenderObject(GameServer server, Offset upperLeft, Offset lowerRight)
@@ -130,11 +135,14 @@ class ScoreDopamineRenderObject extends RenderBox
 		showScoreParagraph(new ScoreParagraph(amount));
 	}
 
+    /// Both callbacks rely on this function, which will add a [Paragraph] to the list 
+    /// with the right parameters.
 	void showScoreParagraph(ScoreParagraph paragraph)
 	{
 		Random rand = new Random();
 
 		Offset center = (lowerRight - upperLeft)/2.0;
+        /// Randomly place this paragraph.
 		Offset offCenter = new Offset((lowerRight.dx - upperLeft.dx)*rand.nextDouble(), (lowerRight.dy - upperLeft.dy)*rand.nextDouble());
 		paragraph.center = _upperLeft + offCenter;
 		paragraph.velocity = offCenter - center;
@@ -164,6 +172,7 @@ class ScoreDopamineRenderObject extends RenderBox
 			_server.onScoreIncreased = null;
 			_server.onIssuingFinalValues = null;
 		}
+        /// Register the local callbacks so this Renderer can be invoked by the server.
 		_server = d;
 		_server.onScoreIncreased = onScoreIncreased;
 		_server.onIssuingFinalValues = onIssuingFinalValues;
@@ -248,7 +257,9 @@ class ScoreDopamineRenderObject extends RenderBox
 	{
 		super.performLayout();
 	}
-	
+
+	/// This is where the actual painting happens. By looping over any element added to the list,
+    /// this [RenderBox] uses the [Canvas] to draw text paragraphs.
 	@override
 	void paint(PaintingContext context, Offset offset)
 	{

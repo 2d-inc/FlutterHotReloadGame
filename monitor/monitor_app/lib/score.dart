@@ -2,9 +2,7 @@ import "package:flutter/material.dart";
 
 import "shadow_text.dart";
 
-final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
-final Function matchFunc = (Match match) => "${match[1]},";
-
+/// Visual representation of the score on the screen.
 class GameScore extends StatefulWidget
 {	
 	final int score;
@@ -14,8 +12,13 @@ class GameScore extends StatefulWidget
 	_GameScoreState createState() => new _GameScoreState();
 }
 
+/// Keep the state of the [GameScore]. This object will animate between one score value
+/// and the next one.
 class _GameScoreState extends State<GameScore> with SingleTickerProviderStateMixin
 {
+    final RegExp reg = new RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))");
+    final Function matchFunc = (Match match) => "${match[1]},";
+
 	AnimationController _controller;
 	Animation<double> _scoreAnimation;
 	double _score = 0.0;
@@ -30,6 +33,8 @@ class _GameScoreState extends State<GameScore> with SingleTickerProviderStateMix
     	_controller = new AnimationController(duration: const Duration(milliseconds:200), vsync: this);
 		_controller.addListener(()
 		{
+            /// When the [_controller] is triggered, it'll start interpolating towards a new value.
+            /// By using [setState()] the [build()] function is triggered and the score will animate.
 			setState(()
 			{
 				_score = _scoreAnimation.value;

@@ -3,14 +3,21 @@ import "dart:collection";
 
 import "package:flutter/services.dart";
 
+/// This object interacts with Objective-C through a message channel. This object and FLEAudioPlayer in [FLEAudioPlayerPlugin.m] 
+/// subscribe to the same channel, so that they can communicate.
+/// When a new message is sent over the 'platform' [BasicMessageChannel] the corresponding method is actioned.
+/// A static field is used to identify a Sound after initialization, and is registered the static HashMap when
+/// the [play()] function is called.
+/// This is needed in order to communicate with the underlying macOS platform.
 class Sound
 {
+	static final platform = const BasicMessageChannel("flutter/sound", const JSONMessageCodec())..setMessageHandler(onPlatformMessage);
 	static int _next_id = 0;
+	static HashMap<int, Sound> _lookup = new HashMap<int, Sound>();
+
 	int _id = 0;
 	double _volume = 1.0;
 	bool _loop = false;
-	static final platform = const BasicMessageChannel("flutter/sound", const JSONMessageCodec())..setMessageHandler(onPlatformMessage);
-	static HashMap<int, Sound> _lookup = new HashMap<int, Sound>();
 	bool _isPlaying = false;
 
 	Sound()

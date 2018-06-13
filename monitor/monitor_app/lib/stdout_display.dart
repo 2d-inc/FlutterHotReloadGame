@@ -3,6 +3,9 @@ import "dart:ui" as ui;
 
 import "package:flutter/material.dart";
 
+/// This widget is used in the main window, during a game, to show the stdout channel from the virtual terminal
+/// that is running the Simulator, so that the 'Hot Reload' commands can be shown directly to anyone looking at the 
+/// TV App.
 class StdoutDisplay extends LeafRenderObjectWidget
 {
 	final String output;
@@ -22,6 +25,8 @@ class StdoutDisplay extends LeafRenderObjectWidget
 	}
 }
 
+/// This custom renderer clips out a rectangle box to properly show the terminal output, and draws a paragraph.
+/// Moreover it paints a blinking cursor at the end of the output, for a more faithful representation.
 class StdoutDisplayRenderer extends RenderBox
 {
 	String _output;

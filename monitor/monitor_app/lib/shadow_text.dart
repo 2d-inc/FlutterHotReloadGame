@@ -2,6 +2,8 @@ import "dart:ui" as ui;
 
 import "package:flutter/material.dart";
 
+/// Implements a custom renderer to show a shadow underneath the text.
+/// Can be passed in a number of parameters like [fontFamily], [fontSize], and [spacing].
 class ShadowText extends LeafRenderObjectWidget
 {
 	final String text;
@@ -33,6 +35,9 @@ class ShadowText extends LeafRenderObjectWidget
 	}
 }
 
+/// This renderer is used to draw the shadow text underneath a text widget.
+/// To obtain this effect, two paragraphs are effectively drawn:
+/// the background shadow paragraph, with a slight offset to show the shadow and the regular text paragraph,
 class ShadowTextRenderObject extends RenderBox
 {
 	String _text;

@@ -12,11 +12,15 @@ import "show_tasks.dart";
 
 typedef String CodeUpdateStep(String code, TaskList list);
 
+/// This class builds the list of tasks that each player will receive as the game progresses.
+/// The game will become more difficult as more tasks are completed, because the expiry time of each task
+/// will be modulated depending on the progress of the game.
+/// When a small number of tasks have remained, the game starts issuing a "final" set of commands to ensure
+/// that the appearance of the Simulator App is completed when a game is won.
 class TaskList
 {
-	List<CommandTask> _available = <CommandTask>[];
-
-	List<CommandTask> allTasks = <CommandTask>
+	final List<CommandTask> _available = <CommandTask>[];
+	final List<CommandTask> allTasks = <CommandTask>
 	[
 		new FontSizeCommand(),
 		new ListCornerRadius(),
@@ -36,16 +40,9 @@ class TaskList
 		new FontFamily()
 	];
 
-	int _tasksCompleted = 0;
-	int _tasksAssigned = 0;
-	int _completionsPerUpdate = 0;
-	int _appliedUpdateIndex = -1;
-	bool _isDone = false;
-	int _finalTaskCount = -1;
+	final Random _rand = new Random();
 
-	Random _rand = new Random();
-
-	List<CodeUpdateStep> _automaticUpdates = <CodeUpdateStep>
+	final List<CodeUpdateStep> _automaticUpdates = <CodeUpdateStep>
 	[
 		(String code, TaskList list)
 		{
@@ -84,6 +81,13 @@ class TaskList
 			return code.replaceAll("ListRestaurantAligned", "ListRestaurantDesigned");
 		}
 	];
+
+    int _tasksCompleted = 0;
+	int _tasksAssigned = 0;
+	int _completionsPerUpdate = 0;
+	int _appliedUpdateIndex = -1;
+	bool _isDone = false;
+	int _finalTaskCount = -1;
 	
 	TaskList(this._completionsPerUpdate)
 	{
@@ -334,7 +338,7 @@ class TaskList
 			}
 			else
 			{
-				/// Could not issue this command, remove it from the list.
+				/// Not a valid command, remove it from the list.
 				_available.remove(chosenTask);
 			}
 		}

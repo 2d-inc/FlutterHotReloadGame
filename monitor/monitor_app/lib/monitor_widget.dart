@@ -118,7 +118,7 @@ class MonitorState extends State<Monitor> with TickerProviderStateMixin
 	DateTime _statsDropTime = new DateTime.fromMicrosecondsSinceEpoch(0);
 	Timer _highScoreTimer;
 
-    MonitorState() : _highlight = new Highlight(-1, 0, 0)
+    MonitorState() : _highlight = new Highlight(-1, 0)
 	{
 		initFlutterTask();
 
@@ -177,7 +177,7 @@ class MonitorState extends State<Monitor> with TickerProviderStateMixin
 						setState(()
 						{
 							_contents = code; 
-							_highlight = new Highlight(lineOfInterest, 0, 1);
+							_highlight = new Highlight(lineOfInterest, 1);
 							_scrollAnimation = new Tween<double>(
 								begin: _lineOfInterest,
 								end: lineOfInterest.toDouble()
