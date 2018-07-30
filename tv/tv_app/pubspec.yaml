@@ -12,7 +12,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   nima:
-    path: ../../Dependencies/Nima-Flutter/nima
+    path: ../../Dependencies/Nima-Flutter
   flare:
     path: ../../Dependencies/Flare-Flutter/flare
 

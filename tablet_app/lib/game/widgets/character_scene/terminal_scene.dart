@@ -1,12 +1,12 @@
 import "dart:math";
 import "dart:ui" as ui;
 
-import "package:AABB/AABB.dart";
 import 'package:flutter/material.dart';
 import "package:flutter/scheduler.dart";
-import "package:nima/animation/actor_animation.dart";
-import "package:nima/math/mat2d.dart";
-import "package:nima/nima_flutter.dart";
+import "package:nima/nima/animation/actor_animation.dart";
+import "package:nima/nima/math/mat2d.dart";
+import "package:nima/nima/math/aabb.dart";
+import "package:nima/nima.dart";
 
 import "terminal_character.dart";
 

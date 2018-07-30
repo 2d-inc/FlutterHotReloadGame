@@ -1,8 +1,8 @@
-import "package:AABB/AABB.dart";
 import 'package:flutter/material.dart';
-import "package:nima/animation/actor_animation.dart";
-import "package:nima/nima_flutter.dart";
-import "package:nima/actor_node.dart";
+import "package:nima/nima/animation/actor_animation.dart";
+import "package:nima/nima.dart";
+import "package:nima/nima/actor_node.dart";
+import "package:nima/nima/math/aabb.dart";
 
 import "terminal_scene.dart";
 

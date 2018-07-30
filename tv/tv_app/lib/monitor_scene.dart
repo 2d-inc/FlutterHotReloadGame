@@ -1,13 +1,13 @@
 import "dart:math";
 import "dart:ui" as ui;
 
-import "package:AABB/AABB.dart";
 import 'package:flutter/material.dart';
 import "package:flutter/scheduler.dart";
-import "package:nima/actor_node.dart";
-import "package:nima/animation/actor_animation.dart";
-import "package:nima/math/vec2d.dart";
-import "package:nima/nima_flutter.dart";
+import "package:nima/nima/actor_node.dart";
+import "package:nima/nima/animation/actor_animation.dart";
+import "package:nima/nima/math/vec2d.dart";
+import "package:nima/nima.dart";
+import "package:nima/nima/math/aabb.dart";
 
 import "monitor_scene_character.dart";
 import "monitor_widget.dart";
