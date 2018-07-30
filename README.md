@@ -39,7 +39,7 @@ The animated components in the Tablet and TV App use the [2Dimensions](www.2dime
 
 ## Network
 
-The server code is located in [/monitor/monitor_app/lib/server.dart](https://github.com/2d-inc/BiggerLogo/blob/master/monitor/monitor_app/lib/server.dart), while the client code is located in `/terminal_app/lib/game/socket_client.dart`.
+The server code is located in [/monitor/tv_app/lib/server.dart](https://github.com/2d-inc/BiggerLogo/blob/master/monitor/tv_app/lib/server.dart), while the client code is located in `/tablet_app/lib/game/socket_client.dart`.
 
 ### IP
 
@@ -49,6 +49,6 @@ The Tablet App will store an IP address to connect to in a file and reload it wh
 
 ### Asynchronous Communication
 
-The Tablet app uses Sinks & Streams to handle communication with the server, as well as Bussiness LOgic Components (BLOCs), which can be found in the `terminal_app/lib/blocs` folder. This scheme of communication has been detailed by Google at I/O in [this talk](https://www.youtube.com/watch?v=RS36gBEp8OI) and in [this blog post](https://medium.com/flutter-io/build-reactive-mobile-apps-in-flutter-companion-article-13950959e381).
+The Tablet app uses Sinks & Streams to handle communication with the server, as well as Bussiness LOgic Components (BLOCs), which can be found in the `tablet_app/lib/blocs` folder. This scheme of communication has been detailed by Google at I/O in [this talk](https://www.youtube.com/watch?v=RS36gBEp8OI) and in [this blog post](https://medium.com/flutter-io/build-reactive-mobile-apps-in-flutter-companion-article-13950959e381).
 
 An overview of this repo's implementation is also in the [wiki page](https://github.com/2d-inc/BiggerLogo/wiki/Asynchronous-Communication).

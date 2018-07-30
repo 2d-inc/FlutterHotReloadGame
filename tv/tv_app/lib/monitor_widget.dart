@@ -63,7 +63,7 @@ class MonitorState extends State<Monitor> with TickerProviderStateMixin
     static const double STDOUT_HEIGHT = 150.0 - STDOUT_PADDING;
     static const int STDOUT_MAX_LINES = 5;
     static const String targetDevice = '"iPhone 8"';
-    static const String logoAppLocation = "~/Projects/BiggerLogo/logo_app";
+    static const String logoAppLocation = "~/Projects/FlutterHotReloadGame/simulator_app";
     static const String backToLobbyMessage = "WAITING FOR 2-4 PLAYERS!";
 	static const int statsDropSeconds = 15;
 
