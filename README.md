@@ -35,7 +35,7 @@ For a more in-depth explanation, take a look at the [wiki page](https://github.c
 
 ## Custom Animations
 
-The animated components in the Tablet and TV App use the [2Dimensions](www.2dimensions.com) custom libraries, Nima and Flare. A more detailed tutorial on how to use them in Flutter is available [here](https://www.2dimensions.com/learn/manual/export/flutter).
+The animated components in the Tablet and TV App use the [2Dimensions](www.2dimensions.com) custom libraries, Nima and Flare. A more detailed tutorial on how to use them in Flutter is available [here](https://docs.2dimensions.com/support/nima/export/export-to-flutter).
 
 ## Network
 
